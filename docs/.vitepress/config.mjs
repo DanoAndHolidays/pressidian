@@ -1,18 +1,23 @@
 import { defineConfig } from 'vitepress'
+import sidebar from './sidebar.mjs' // 导入自动生成的侧边栏配置
+
+console.log(sidebar)
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     title: 'Pressidian',
     base: '/pressidian/',
-    description: '一个使用Obsidian笔记仓库构建的VitePress静态站点',
+    description: 'Dano的笔记博客',
     themeConfig: {
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             { text: '首页', link: '/' },
-            { text: '笔记', link: '/notes/' },
+            {
+                text: '笔记',
+                link: '/notes/前端/TS/TypeScript入门教程/1基础/0Hello TypeScript.md',
+            },
         ],
-
-        sidebar: { '/notes/': [{ text: '笔记目录', items: [] }] },
+        sidebar: sidebar,
 
         socialLinks: [
             {
