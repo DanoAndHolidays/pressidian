@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+.vite-inspect
+
+
+
+/cypress/videos/
+/cypress/screenshots/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+*.tsbuildinfo
+
+# 包管理器锁文件（根据您的选择）
+package-lock.json   # 如果使用 npm
+yarn.lock          # 如果使用 yarn
+pnpm-lock.yaml 
+
+# 本地服务器的存储数据
+server/save
+
+
+docs/.vitepress/dist/*
