@@ -11,7 +11,19 @@ import md from 'vite-plugin-md'
 import obsidianImagePlugin from '../../src/plugins/obsidian-image-plugin.js'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
+import { fileURLToPath } from 'url'
 export default defineConfig({
+    resolve: {
+        alias: {
+            vue: fileURLToPath(
+                new URL(
+                    '../../node_modules/vue/dist/vue.esm-bundler.js',
+                    import.meta.url
+                )
+            ),
+        },
+    },
+
     vue: {
         include: [/\.vue$/, /\.md$/],
         logLevel: 'verbose',
@@ -83,7 +95,7 @@ export default defineConfig({
             { text: '首页', link: '/' },
             {
                 text: '笔记',
-                link: '/notes/',
+                link: '/notes/前端/TS/TypeScript入门教程/1基础/0Hello TypeScript.md',
             },
             { text: '关于', link: '/notes/README.md' },
         ],

@@ -2,7 +2,7 @@ import fs from 'fs-extra'
 import path from 'path'
 
 // 递归生成侧边栏结构
-function generateSidebarItems(dir, baseUrl) {
+function generateSidebarItems(dir, baseUrl, baseDir) {
     const items = []
     const files = fs.readdirSync(dir, { withFileTypes: true })
 
@@ -14,7 +14,7 @@ function generateSidebarItems(dir, baseUrl) {
     directories.forEach((dirent) => {
         const dirPath = path.join(dir, dirent.name)
         const dirUrl = `/pressidian/${path.relative('docs', dirPath)}`
-        const children = generateSidebarItems(dirPath, dirUrl)
+        const children = generateSidebarItems(dirPath, dirUrl, baseDir)
 
         if (children.length > 0) {
             items.push({
@@ -33,7 +33,7 @@ function generateSidebarItems(dir, baseUrl) {
         items.push({
             text: fileName, // 文件名（如“1类型别名”）
             link: `${baseUrl}/${path
-                .relative('docs', path.join(dir, file.name))
+                .relative(baseDir, path.join(dir, file.name))
                 .replace(/\\/g, '/')}`, // 链接路径
         })
     })
@@ -51,7 +51,7 @@ async function generateSidebar() {
     const baseUrl = '/notes' // 基础路径（适配GitHub Pages）
 
     // 生成侧边栏结构
-    const sidebarItems = generateSidebarItems(notesDir, baseUrl)
+    const sidebarItems = generateSidebarItems(notesDir, baseUrl, notesDir)
 
     // 写入.mjs格式的配置文件（使用ES模块导出）
     const content = `export default ${JSON.stringify(

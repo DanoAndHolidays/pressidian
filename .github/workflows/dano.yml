@@ -14,10 +14,10 @@ jobs:
 
       - name: 安装依赖，初始化
         run: |
-          npm install
+          npm install --legacy-peer-deps
           npm run docs:build
 
-      - name: 部署一刻📺
+      - name: 部署Pressdian
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
