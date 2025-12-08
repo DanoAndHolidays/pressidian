@@ -12,7 +12,8 @@ import obsidianImagePlugin from '../../src/plugins/obsidian-image-plugin.js'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 import { fileURLToPath } from 'url'
-export default defineConfig({
+
+export default {
     resolve: {
         alias: {
             vue: fileURLToPath(
@@ -95,12 +96,13 @@ export default defineConfig({
             { text: '首页', link: '/' },
             {
                 text: '笔记',
-                link: '/notes/前端/TS/TypeScript入门教程/1基础/0Hello TypeScript.md',
+                link: '/notes/',
             },
             { text: '关于', link: '/notes/README.md' },
         ],
-        sidebar: sidebar,
-
+        sidebar:sidebar['/notes/'],
+    
+        
         socialLinks: [
             {
                 icon: 'github',
@@ -108,4 +110,4 @@ export default defineConfig({
             },
         ],
     },
-})
+}

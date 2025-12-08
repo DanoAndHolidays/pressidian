@@ -13,8 +13,8 @@ function generateSidebarItems(dir, baseUrl, baseDir) {
     // 处理文件夹（递归）
     directories.forEach((dirent) => {
         const dirPath = path.join(dir, dirent.name)
-        const dirUrl = `/pressidian/${path.relative('docs', dirPath)}`
-        const children = generateSidebarItems(dirPath, dirUrl, baseDir)
+        const dirUrl = path.relative(baseDir, dirPath).replace(/\\/g, '/')
+        const children = generateSidebarItems(dirPath, baseUrl, baseDir)
 
         if (children.length > 0) {
             items.push({
@@ -24,19 +24,21 @@ function generateSidebarItems(dir, baseUrl, baseDir) {
                 items: children,
             })
         }
-    })
-
-    // 处理MD文件
-    mdFiles.forEach((file) => {
-        const fileName = file.name.replace('.md', '')
-        if (fileName === 'index') return // 跳过index.md（可选）
-        items.push({
-            text: fileName, // 文件名（如“1类型别名”）
-            link: `${baseUrl}/${path
-                .relative(baseDir, path.join(dir, file.name))
-                .replace(/\\/g, '/')}`, // 链接路径
+    }),
+        // 处理MD文件
+        mdFiles.forEach((file) => {
+            const fileName = file.name.replace('.md', '')
+            if (fileName === 'index') return // 跳过index.md（可选）
+            items.push({
+                text: fileName, // 文件名（如“1类型别名”）
+                link: path.posix.join(
+                    baseUrl,
+                    path
+                        .relative(baseDir, path.join(dir, file.name))
+                        .replace(/\\/g, '/')
+                ), // 链接路径
+            })
         })
-    })
 
     return items
 }
@@ -61,7 +63,7 @@ async function generateSidebar() {
     )}`
     await fs.writeFile(sidebarOutputPath, content)
 
-    console.log('侧边栏配置生成完成（.mjs格式）')
+    console.log('侧边栏配置生成完成')
 }
 
 // 执行脚本
