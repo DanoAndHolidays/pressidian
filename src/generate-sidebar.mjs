@@ -13,7 +13,7 @@ function generateSidebarItems(dir, baseUrl) {
     // 处理文件夹（递归）
     directories.forEach((dirent) => {
         const dirPath = path.join(dir, dirent.name)
-        const dirUrl = `${baseUrl}/${dirent.name}`
+        const dirUrl = `/pressidian/${path.relative('docs', dirPath)}`
         const children = generateSidebarItems(dirPath, dirUrl)
 
         if (children.length > 0) {
@@ -32,7 +32,9 @@ function generateSidebarItems(dir, baseUrl) {
         if (fileName === 'index') return // 跳过index.md（可选）
         items.push({
             text: fileName, // 文件名（如“1类型别名”）
-            link: `${baseUrl}/${fileName}.md`, // 链接路径
+            link: `${baseUrl}/${path
+                .relative('docs', path.join(dir, file.name))
+                .replace(/\\/g, '/')}`, // 链接路径
         })
     })
 
@@ -40,7 +42,8 @@ function generateSidebarItems(dir, baseUrl) {
 }
 
 async function generateSidebar() {
-    const notesDir = path.join(process.cwd(), 'docs/notes') // 本地笔记目录
+    const notesDir = path.resolve(process.cwd(), 'docs/notes')
+    // 本地笔记目录
     const sidebarOutputPath = path.join(
         process.cwd(),
         'docs/.vitepress/sidebar.mjs'
