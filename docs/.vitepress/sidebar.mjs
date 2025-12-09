@@ -2,13 +2,9 @@ export default {
   "/notes/": [
     {
       "text": "公共技术",
-      "collapsible": true,
-      "collapsed": true,
       "items": [
         {
           "text": "AI IDE",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "TRAE",
@@ -18,8 +14,6 @@ export default {
         },
         {
           "text": "Bochs",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "常用操作",
@@ -29,8 +23,6 @@ export default {
         },
         {
           "text": "Docker",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "基础",
@@ -40,8 +32,6 @@ export default {
         },
         {
           "text": "Python",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "Pandas",
@@ -51,8 +41,6 @@ export default {
         },
         {
           "text": "SQL",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "数据库实验",
@@ -76,23 +64,15 @@ export default {
     },
     {
       "text": "前端",
-      "collapsible": true,
-      "collapsed": true,
       "items": [
         {
           "text": "TS",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "TypeScript入门教程",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "1基础",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "0Hello TypeScript",
@@ -142,8 +122,6 @@ export default {
                 },
                 {
                   "text": "2进阶",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "1类型别名",
@@ -185,8 +163,6 @@ export default {
                 },
                 {
                   "text": "3工程",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "1代码检查",
@@ -212,18 +188,12 @@ export default {
         },
         {
           "text": "三件套",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "CSS层叠样式表",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "css",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "hover",
@@ -263,8 +233,6 @@ export default {
             },
             {
               "text": "HTML",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "perload和prefetch",
@@ -274,13 +242,9 @@ export default {
             },
             {
               "text": "JS",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "优化",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "节流和防抖",
@@ -290,13 +254,9 @@ export default {
                 },
                 {
                   "text": "廖雪峰教程",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "2历史背景",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "2.1 JS历史",
@@ -306,8 +266,6 @@ export default {
                     },
                     {
                       "text": "3快速入门",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "3.1基本语法",
@@ -349,8 +307,6 @@ export default {
                     },
                     {
                       "text": "4函数",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "4.1 函数的定义与调用",
@@ -388,8 +344,6 @@ export default {
                     },
                     {
                       "text": "5标准对象",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "5.1 简述",
@@ -403,8 +357,6 @@ export default {
                     },
                     {
                       "text": "6对象",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "6.0 简述",
@@ -426,13 +378,9 @@ export default {
                     },
                     {
                       "text": "7浏览器",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "7.1DOM",
-                          "collapsible": true,
-                          "collapsed": true,
                           "items": [
                             {
                               "text": "7.1.1 浏览器对象",
@@ -480,8 +428,6 @@ export default {
                     },
                     {
                       "text": "8错误处理",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "8.0 简介",
@@ -501,8 +447,6 @@ export default {
                 },
                 {
                   "text": "手写代码",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "ES API",
@@ -520,13 +464,9 @@ export default {
                 },
                 {
                   "text": "现代JS教程与阮一峰ES6",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "0基础简介",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "JSDoc",
@@ -540,13 +480,9 @@ export default {
                     },
                     {
                       "text": "1数据类型与变量",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "Object",
-                          "collapsible": true,
-                          "collapsed": true,
                           "items": [
                             {
                               "text": "Iterator",
@@ -594,8 +530,6 @@ export default {
                     },
                     {
                       "text": "2函数",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "Generator函数",
@@ -629,8 +563,6 @@ export default {
                     },
                     {
                       "text": "3错误处理",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "错误处理",
@@ -640,8 +572,6 @@ export default {
                     },
                     {
                       "text": "4原型与类",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "原型",
@@ -655,13 +585,9 @@ export default {
                     },
                     {
                       "text": "5特殊内建对象",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "二进制与文件读取",
-                          "collapsible": true,
-                          "collapsed": true,
                           "items": [
                             {
                               "text": "二进制",
@@ -693,8 +619,6 @@ export default {
                     },
                     {
                       "text": "6异步编程",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "Promise与回调",
@@ -704,8 +628,6 @@ export default {
                     },
                     {
                       "text": "7模块",
-                      "collapsible": true,
-                      "collapsed": true,
                       "items": [
                         {
                           "text": "CJS和ESM",
@@ -729,13 +651,9 @@ export default {
         },
         {
           "text": "业务场景",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "超大文件上传",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "Web Worker",
@@ -759,13 +677,9 @@ export default {
         },
         {
           "text": "包管理工具",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "npm",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "npm",
@@ -781,8 +695,6 @@ export default {
         },
         {
           "text": "基本概念",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "MVVM与MVC",
@@ -792,13 +704,9 @@ export default {
         },
         {
           "text": "库",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "Babel",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "基础概念",
@@ -812,13 +720,9 @@ export default {
             },
             {
               "text": "React",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "1Describing the UI",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "0 Hello React",
@@ -852,8 +756,6 @@ export default {
                 },
                 {
                   "text": "2Adding Interactivity",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "1响应事件",
@@ -887,8 +789,6 @@ export default {
                 },
                 {
                   "text": "3Managing Sate",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "1用State响应输入",
@@ -922,8 +822,6 @@ export default {
                 },
                 {
                   "text": "4Escape Hatches",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "1使用ref引用值",
@@ -963,8 +861,6 @@ export default {
             },
             {
               "text": "Vue Router",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "params与query",
@@ -1012,8 +908,6 @@ export default {
         },
         {
           "text": "性能优化",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "图片预加载与懒加载",
@@ -1027,13 +921,9 @@ export default {
         },
         {
           "text": "构建打包",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "Vite",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "Vite",
@@ -1047,8 +937,6 @@ export default {
             },
             {
               "text": "Webpack",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "魔法注释Magic Comments",
@@ -1072,18 +960,12 @@ export default {
         },
         {
           "text": "框架",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "Vue",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "内置组件",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "keep-alive 和 transition",
@@ -1093,8 +975,6 @@ export default {
                 },
                 {
                   "text": "组件库开发",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "Card组件",
@@ -1148,8 +1028,6 @@ export default {
         },
         {
           "text": "测试",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "jest",
@@ -1167,18 +1045,12 @@ export default {
         },
         {
           "text": "浏览器与环境",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "Web API",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "DOM",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "DOM",
@@ -1196,8 +1068,6 @@ export default {
                 },
                 {
                   "text": "事件",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "EventTarget.addEventListener()",
@@ -1215,8 +1085,6 @@ export default {
                 },
                 {
                   "text": "网络请求",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "Fetch",
@@ -1274,8 +1142,6 @@ export default {
         },
         {
           "text": "版本管理工具",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "Git",
@@ -1285,13 +1151,9 @@ export default {
         },
         {
           "text": "面试",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "简历",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "9.3.25",
@@ -1331,13 +1193,9 @@ export default {
         },
         {
           "text": "项目笔记",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "个人主页",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "下落代码背景",
@@ -1347,8 +1205,6 @@ export default {
             },
             {
               "text": "小兔鲜",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "小兔鲜二级分类页",
@@ -1374,8 +1230,6 @@ export default {
             },
             {
               "text": "短剧",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "uniapp",
@@ -1401,13 +1255,9 @@ export default {
     },
     {
       "text": "后端",
-      "collapsible": true,
-      "collapsed": true,
       "items": [
         {
           "text": "Java",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "GUI图形用户界面",
@@ -1443,18 +1293,12 @@ export default {
     },
     {
       "text": "学习",
-      "collapsible": true,
-      "collapsed": true,
       "items": [
         {
           "text": "408",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "数据结构",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "第一章 绪论",
@@ -1492,8 +1336,6 @@ export default {
             },
             {
               "text": "计算机组成原理",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "第一章 计算机系统概述",
@@ -1513,8 +1355,6 @@ export default {
         },
         {
           "text": "大学课程",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "PPT内容页初稿",
@@ -1532,13 +1372,9 @@ export default {
         },
         {
           "text": "学校竞赛、项目",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "挑战杯",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "会议",
@@ -1560,13 +1396,9 @@ export default {
             },
             {
               "text": "数学建模",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "课程知识",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "AI工具使用详情",
@@ -1622,13 +1454,9 @@ export default {
             },
             {
               "text": "智能车",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "会议",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "第一次",
@@ -1638,8 +1466,6 @@ export default {
                 },
                 {
                   "text": "申报",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "ppt制作",
@@ -1665,18 +1491,12 @@ export default {
         },
         {
           "text": "技术",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "框架",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "Vue",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "智能车",
@@ -1686,8 +1506,6 @@ export default {
                 },
                 {
                   "text": "YOLO",
-                  "collapsible": true,
-                  "collapsed": true,
                   "items": [
                     {
                       "text": "YOLOv8",
@@ -1709,8 +1527,6 @@ export default {
         },
         {
           "text": "竞赛",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "常见的比赛",
@@ -1720,8 +1536,6 @@ export default {
         },
         {
           "text": "艺术",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "素描",
@@ -1731,13 +1545,9 @@ export default {
         },
         {
           "text": "英语",
-          "collapsible": true,
-          "collapsed": true,
           "items": [
             {
               "text": "词汇",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "六级单词",
@@ -1751,8 +1561,6 @@ export default {
             },
             {
               "text": "语法句法",
-              "collapsible": true,
-              "collapsed": true,
               "items": [
                 {
                   "text": "第一章 简单句",

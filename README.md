@@ -9,6 +9,8 @@
 ## 随时随地学，知识无界
 我将公开所有的笔记内容，你可以寻找自己感兴趣的部分学习，也欢迎你提出issue改进这个笔记站点
 
+目前侧边栏的问题还是没有解决，以后再说吧，我不行了
+
 ##### 致谢
 - [Obsidian](https://obsidian.md/)
 - [VitePress](https://vitepress.dev/)

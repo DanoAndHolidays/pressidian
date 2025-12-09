@@ -19,8 +19,7 @@ function generateSidebarItems(dir, baseUrl, baseDir) {
         if (children.length > 0) {
             items.push({
                 text: dirent.name, // 文件夹名（如“2进阶”）
-                collapsible: true,
-                collapsed: true,
+
                 items: children,
             })
         }

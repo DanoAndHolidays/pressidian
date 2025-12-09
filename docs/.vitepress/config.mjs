@@ -14,34 +14,10 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { fileURLToPath } from 'url'
 
 export default {
-    resolve: {
-        alias: {
-            vue: fileURLToPath(
-                new URL(
-                    '../../node_modules/vue/dist/vue.esm-bundler.js',
-                    import.meta.url
-                )
-            ),
-        },
-    },
-
-    vue: {
-        include: [/\.vue$/, /\.md$/],
-        logLevel: 'verbose',
-        transform(code, id) {
-            console.log('Processing file:', id)
-            return code
-        },
-        template: {
-            compilerOptions: {
-                isCustomElement: (tag) => tag.startsWith('vp-'),
-            },
-        },
-    },
     vite: {
         build: {
             rollupOptions: {
-                external: ['vue', 'vue/server-renderer'],
+                external: ['vue','vue/server-renderer'],
             },
         },
         ssr: {
@@ -100,9 +76,8 @@ export default {
             },
             { text: '关于', link: '/notes/README.md' },
         ],
-        sidebar:sidebar['/notes/'],
-    
-        
+        sidebar: sidebar['/notes/'],
+
         socialLinks: [
             {
                 icon: 'github',
