@@ -1,24 +1,25 @@
 ---
-# https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
 hero:
     name: 'Pressidian'
-    text: 'Dano的笔记博客'
-    tagline: 一个使用Obsidian笔记仓库构建的VitePress静态站点
+    text: 'Obsidian驱动的静态知识站点'
+    tagline: 无缝连接Obsidian笔记与VitePress静态网站的一体化解决方案
     actions:
         - theme: brand
-          text: Markdown Examples
+          text: 项目简介
           link: /markdown-examples
         - theme: alt
-          text: API Examples
+          text: API文档
           link: /api-examples
 
 features:
-    - title: 基于Obsidian笔记
-      details: 使用Obsidian笔记仓库，自动转化为VitePress所能使用的md格式
-    - title: 基于GitHub Actions与Pages的CI/CD
-      details: 就如同使用Obsidian一样，Push完就能自动更新同步
-    - title: 随时随地学，分享知识
-      details: 不能使用PC时，打开站点就能随时随地学。分享我的学习路程
+    - title: 笔记即站点
+      details: 直接使用Obsidian笔记仓库作为内容源，无需格式转换
+    - title: 自动化工作流
+      details: GitHub Actions自动构建部署，提交即发布
+    - title: 现代化阅读体验
+      details: 基于VitePress构建，支持响应式设计与暗黑模式
+    - title: 开放API支持
+      details: 提供丰富的运行时API，支持自定义功能扩展
 ---

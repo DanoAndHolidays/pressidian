@@ -27,23 +27,24 @@ const { theme, page, frontmatter } = useData()
 <pre>{{ frontmatter }}</pre>
 ```
 
+```vue
 <script setup>
 import { useData } from 'vitepress'
-
+// 获取站点、主题、页面和 frontmatter 数据
 const { site, theme, page, frontmatter } = useData()
-</script>
 
 ## Results
-
+```
 ### Theme Data
-<pre>{{ theme }}</pre>
+<pre>{{ site }}</pre>
 
 ### Page Data
-<pre>{{ page }}</pre>
+<pre>{{ theme }}</pre>
 
 ### Page Frontmatter
+<pre>{{ page }}</pre>
 <pre>{{ frontmatter }}</pre>
-
 ## More
-
+## 更多 API
 Check out the documentation for the [full list of runtime APIs](https://vitepress.dev/reference/runtime-api#usedata).
+查看[完整 API 参考](https://vitepress.dev/reference/runtime-api)了解所有可用运行时 API。
