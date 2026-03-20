@@ -3,17 +3,16 @@ import sidebar from './sidebar.mjs' // 导入自动生成的侧边栏配置
 
 // https://vitepress.dev/reference/site-config
 
-import obsidianImagePlugin from '../../src/plugins/obsidian-image-plugin.js'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const SITE_BASE = '/pressidian/'
+const ATTACHMENTS_PREFIX = `${SITE_BASE}notes/attachments/`
 
 export default {
     vite: {
         build: {
             rollupOptions: {
-                external: (source) =>
-                    source.startsWith(`${SITE_BASE}notes/attachments/`),
+                external: (source) => source.startsWith(ATTACHMENTS_PREFIX),
             },
         },
         ssr: {
@@ -44,7 +43,6 @@ export default {
     markdown: {
         preConfig: (md) => {
             md.options.base = SITE_BASE
-            obsidianImagePlugin(md)
         },
     },
     themeConfig: {

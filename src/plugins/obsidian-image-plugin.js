@@ -10,9 +10,9 @@ export default function obsidianImagePlugin(md) {
     md.inline.ruler.before('image', 'obsidian_image', (state, silent) => {
         const start = state.pos
         const source = state.src.slice(start)
-        const match = source.match(/^!\[\[([^\]]+)\]\]/)
+        const obsidianMatch = source.match(/^!\[\[([^\]]+)\]\]/)
 
-        if (!match) {
+        if (!obsidianMatch) {
             return false
         }
 
@@ -20,25 +20,21 @@ export default function obsidianImagePlugin(md) {
             return true
         }
 
-        const rawImageName = match[1].trim()
-        const [fileName] = rawImageName.split('|')
-        const imageName = fileName.trim()
         const base = normalizeBase(md.options.base)
 
-        const imageToken = state.push('image', 'img', 0)
-        const imageSrc = new URL(
-            `notes/attachments/${encodeURI(imageName)}`,
-            `http://localhost${base}`,
-        ).pathname
+        if (obsidianMatch) {
+            const rawImageName = obsidianMatch[1].trim()
+            const [fileName] = rawImageName.split('|')
+            const imageName = fileName.trim()
+            const imageSrc = new URL(
+                `notes/attachments/${encodeURI(imageName)}`,
+                `http://localhost${base}`,
+            ).pathname
 
-        imageToken.attrs = [
-            ['src', imageSrc],
-            ['alt', imageName],
-        ]
-        imageToken.content = imageName
-        imageToken.children = []
-
-        state.pos += match[0].length
-        return true
+            const imageToken = state.push('html_inline', '', 0)
+            imageToken.content = `<img src="${imageSrc}" alt="${imageName}">`
+            state.pos += obsidianMatch[0].length
+            return true
+        }
     })
 }

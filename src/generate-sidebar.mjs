@@ -1,6 +1,107 @@
 import fs from 'fs-extra'
 import path from 'path'
 
+const SITE_BASE = '/pressidian/'
+const ATTACHMENTS_PREFIX = `${SITE_BASE}notes/attachments/`
+const IMAGE_PLACEHOLDER_PREFIX = '__PRESSIDIAN_IMAGE_PLACEHOLDER__'
+
+function escapeHtml(value) {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+}
+
+function buildImageTag(src, alt) {
+    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`
+}
+
+function protectHtmlTags(content) {
+    const placeholders = []
+
+    const protectedContent = content.replace(/<img\b[^>]*\/?>/g, (match) => {
+        const placeholder = `${IMAGE_PLACEHOLDER_PREFIX}${placeholders.length}__`
+        placeholders.push(match)
+        return placeholder
+    })
+
+    return {
+        placeholders,
+        content: protectedContent,
+    }
+}
+
+function escapeRawHtml(content) {
+    return content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function restoreHtmlTags(content, placeholders) {
+    return placeholders.reduce((result, originalTag, index) => {
+        const placeholder = `${IMAGE_PLACEHOLDER_PREFIX}${index}__`
+        return result.replaceAll(placeholder, originalTag)
+    }, content)
+}
+
+function transformObsidianImages(content) {
+    return content.replace(/!\[\[([^\]]+)\]\]/g, (_, rawImageName) => {
+        const [fileName, alias = ''] = rawImageName.split('|')
+        const imageName = fileName.trim()
+        const alt = alias.trim() || imageName
+        const imageSrc = `${ATTACHMENTS_PREFIX}${encodeURI(imageName)}`
+
+        return buildImageTag(imageSrc, alt)
+    })
+}
+
+function transformMarkdownAttachmentImages(content) {
+    return content.replace(
+        /!\[([^\]]*)\]\(([^)]+)\)/g,
+        (match, rawAlt, rawSrc) => {
+            const src = rawSrc.trim()
+
+            if (!src.startsWith(ATTACHMENTS_PREFIX)) {
+                return match
+            }
+
+            return buildImageTag(src, rawAlt.trim())
+        },
+    )
+}
+
+function preprocessMarkdownFiles(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+    entries.forEach((entry) => {
+        const fullPath = path.join(dir, entry.name)
+
+        if (entry.isDirectory()) {
+            preprocessMarkdownFiles(fullPath)
+            return
+        }
+
+        if (!entry.isFile() || !entry.name.endsWith('.md')) {
+            return
+        }
+
+        const original = fs.readFileSync(fullPath, 'utf8')
+        const transformedWithImages = transformMarkdownAttachmentImages(
+            transformObsidianImages(original),
+        )
+        const { content: protectedContent, placeholders } = protectHtmlTags(
+            transformedWithImages,
+        )
+        const transformed = restoreHtmlTags(
+            escapeRawHtml(protectedContent),
+            placeholders,
+        )
+
+        if (transformed !== original) {
+            fs.writeFileSync(fullPath, transformed)
+        }
+    })
+}
+
 // 递归生成侧边栏结构
 function generateSidebarItems(dir, baseUrl, baseDir) {
     const items = []
@@ -45,6 +146,7 @@ function generateSidebarItems(dir, baseUrl, baseDir) {
 
 async function generateSidebar() {
     const notesDir = path.resolve(process.cwd(), 'docs/notes')
+    preprocessMarkdownFiles(notesDir)
     // 本地笔记目录
     const sidebarOutputPath = path.join(
         process.cwd(),
