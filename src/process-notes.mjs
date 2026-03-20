@@ -1,50 +1,72 @@
 import fs from 'fs-extra'
 import path from 'path'
 
-const SITE_BASE = '/pressidian/'
 const SOURCE_DIR = path.join(process.cwd(), 'docs/notes')
 const OUTPUT_DIR = path.join(process.cwd(), 'docs/generated-notes')
-const ATTACHMENTS_PREFIX = `${SITE_BASE}notes/attachments/`
-const IMAGE_PLACEHOLDER_PREFIX = '__PRESSIDIAN_IMAGE_PLACEHOLDER__'
+const ATTACHMENTS_DIRNAME = 'notes/attachments'
 
-function escapeHtml(value) {
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-}
-
-function buildImageLink(src, alt) {
-    return `[查看图片：${escapeHtml(alt)}](${src})`
+function buildImageMarkdown(src, alt) {
+    return `![${alt}](${src})`
 }
 
 function escapeRawHtml(content) {
     return content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function transformObsidianImages(content) {
+function toPosixPath(value) {
+    return value.replace(/\\/g, '/')
+}
+
+function getAttachmentRelativePath(outputFilePath, imageName) {
+    const outputDirectory = path.dirname(outputFilePath)
+    const attachmentFilePath = path.join(
+        process.cwd(),
+        'docs',
+        ATTACHMENTS_DIRNAME,
+        imageName,
+    )
+    const relativePath = path.relative(outputDirectory, attachmentFilePath)
+    return toPosixPath(relativePath)
+        .split('/')
+        .map(encodeURIComponent)
+        .join('/')
+}
+
+function transformObsidianImages(content, outputFilePath) {
     return content.replace(/!\[\[([^\]]+)\]\]/g, (_, rawImageName) => {
         const [fileName, alias = ''] = rawImageName.split('|')
         const imageName = fileName.trim()
         const alt = alias.trim() || imageName
-        const imageSrc = `${ATTACHMENTS_PREFIX}${encodeURI(imageName)}`
+        const imageSrc = getAttachmentRelativePath(outputFilePath, imageName)
 
-        return buildImageLink(imageSrc, alt)
+        return buildImageMarkdown(imageSrc, alt)
     })
 }
 
-function transformMarkdownAttachmentImages(content) {
+function transformMarkdownAttachmentImages(content, outputFilePath) {
     return content.replace(
         /!\[([^\]]*)\]\(([^)]+)\)/g,
         (match, rawAlt, rawSrc) => {
             const src = rawSrc.trim().replace(/^<|>$/g, '')
+            const decodedSrc = decodeURIComponent(src)
 
-            if (!src.startsWith(ATTACHMENTS_PREFIX)) {
+            if (
+                !decodedSrc.startsWith('/notes/attachments/') &&
+                !decodedSrc.startsWith('/pressidian/notes/attachments/') &&
+                !decodedSrc.startsWith('notes/attachments/') &&
+                !decodedSrc.startsWith('./notes/attachments/') &&
+                !decodedSrc.startsWith('../notes/attachments/')
+            ) {
                 return match
             }
 
-            return buildImageLink(src, rawAlt.trim() || src.split('/').pop())
+            const imageName = decodedSrc.split('/').pop()
+            const imageSrc = getAttachmentRelativePath(
+                outputFilePath,
+                imageName,
+            )
+
+            return buildImageMarkdown(imageSrc, rawAlt.trim() || imageName)
         },
     )
 }
@@ -58,9 +80,10 @@ function transformWikiLinks(content) {
     })
 }
 
-function transformMarkdown(content) {
+function transformMarkdown(content, outputFilePath) {
     const transformedWithImages = transformMarkdownAttachmentImages(
-        transformObsidianImages(transformWikiLinks(content)),
+        transformObsidianImages(transformWikiLinks(content), outputFilePath),
+        outputFilePath,
     )
     return escapeRawHtml(transformedWithImages)
 }
@@ -92,7 +115,7 @@ async function processDirectory(sourceDir, outputDir) {
         }
 
         const original = await fs.readFile(sourcePath, 'utf8')
-        const transformed = transformMarkdown(original)
+        const transformed = transformMarkdown(original, outputPath)
         await fs.outputFile(outputPath, transformed)
     }
 }
