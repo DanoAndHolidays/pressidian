@@ -1,24 +1,34 @@
 name: 打包Pressdian
 
 permissions:
-  contents: write
+    contents: write
 
-on: push
+on:
+    push:
+    workflow_dispatch:
+    schedule:
+        - cron: '0 23 * * *'
 jobs:
-  test-actions:
-    name: 测试Actions
-    runs-on: ubuntu-latest
-    steps:
-      - name: 读取仓库内容
-        uses: actions/checkout@v4
+    test-actions:
+        name: 测试Actions
+        runs-on: ubuntu-latest
+        steps:
+            - name: 读取仓库内容
+              uses: actions/checkout@v4
 
-      - name: 安装依赖，初始化
-        run: |
-          npm install --legacy-peer-deps
-          npm run docs:build
+            - name: 安装 Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
 
-      - name: 部署Pressdian
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: docs/.vitepress/dist
+            - name: 安装依赖，初始化
+              run: |
+                  npm install --legacy-peer-deps
+                  npm run docs:build
+
+            - name: 部署Pressdian
+              uses: JamesIves/github-pages-deploy-action@v4
+              with:
+                  branch: gh-pages
+                  folder: docs/.vitepress/dist

@@ -1,43 +1,6 @@
 import fs from 'fs-extra'
 import path from 'path'
 
-const SITE_BASE = '/pressidian/'
-
-function transformObsidianImages(content) {
-    return content.replace(/!\[\[([^\]]+)\]\]/g, (_, rawImageName) => {
-        const [fileName, alias = ''] = rawImageName.split('|')
-        const imageName = fileName.trim()
-        const alt = alias.trim() || imageName
-        const encodedImageName = encodeURI(imageName)
-
-        return `![${alt}](${SITE_BASE}notes/attachments/${encodedImageName})`
-    })
-}
-
-function preprocessMarkdownFiles(dir) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true })
-
-    entries.forEach((entry) => {
-        const fullPath = path.join(dir, entry.name)
-
-        if (entry.isDirectory()) {
-            preprocessMarkdownFiles(fullPath)
-            return
-        }
-
-        if (!entry.isFile() || !entry.name.endsWith('.md')) {
-            return
-        }
-
-        const original = fs.readFileSync(fullPath, 'utf8')
-        const transformed = transformObsidianImages(original)
-
-        if (transformed !== original) {
-            fs.writeFileSync(fullPath, transformed)
-        }
-    })
-}
-
 // 递归生成侧边栏结构
 function generateSidebarItems(dir, baseUrl, baseDir) {
     const items = []
@@ -82,7 +45,6 @@ function generateSidebarItems(dir, baseUrl, baseDir) {
 
 async function generateSidebar() {
     const notesDir = path.resolve(process.cwd(), 'docs/notes')
-    preprocessMarkdownFiles(notesDir)
     // 本地笔记目录
     const sidebarOutputPath = path.join(
         process.cwd(),

@@ -41,7 +41,6 @@ pnpm-lock.yaml
 server/save
 
 /docs/notes/
-!/docs/notes/.gitkeep
 /.cache/
 
 
