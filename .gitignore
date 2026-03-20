@@ -40,8 +40,5 @@ pnpm-lock.yaml
 # 本地服务器的存储数据
 server/save
 
-/docs/notes/
-/.cache/
-
 
 /docs/.vitepress/dist/*

@@ -10,12 +10,6 @@ const SITE_BASE = '/pressidian/'
 
 export default {
     vite: {
-        build: {
-            rollupOptions: {
-                external: (source) =>
-                    source.startsWith(`${SITE_BASE}notes/attachments/`),
-            },
-        },
         ssr: {
             external: [],
         },
