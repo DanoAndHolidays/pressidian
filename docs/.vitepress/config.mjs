@@ -6,15 +6,9 @@ import sidebar from './sidebar.mjs' // 导入自动生成的侧边栏配置
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const SITE_BASE = '/pressidian/'
-const ATTACHMENTS_PREFIX = `${SITE_BASE}notes/attachments/`
-
 export default {
+    ignoreDeadLinks: true,
     vite: {
-        build: {
-            rollupOptions: {
-                external: (source) => source.startsWith(ATTACHMENTS_PREFIX),
-            },
-        },
         ssr: {
             external: [],
         },
@@ -51,9 +45,9 @@ export default {
             { text: '首页', link: '/' },
             {
                 text: '笔记',
-                link: '/notes/',
+                link: '/generated-notes/',
             },
-            { text: '关于', link: '/notes/README' },
+            { text: '关于', link: '/generated-notes/README' },
         ],
         sidebar,
 
