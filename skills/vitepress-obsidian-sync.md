@@ -108,6 +108,61 @@ npm run process:notes
 
 这样做会损失内嵌展示，但构建成功率会明显提高。
 
+## 3.1 如果要恢复内嵌图片，不要把 base 写进内容里
+
+这是后来补充出来的一条关键经验。
+
+如果站点配置了 [`base: '/pressidian/'`](docs/.vitepress/config.mjs:35)，就不要在 Markdown 内容里再手工生成这种路径：
+
+```md
+![](/pressidian/notes/attachments/example.png)
+```
+
+这种写法在页面实际运行时，很容易和站点 base 再次叠加，变成：
+
+```text
+/pressidian/pressidian/notes/attachments/example.png
+```
+
+这就是典型的“双 base”错误。
+
+## 3.2 恢复内嵌图片的正确方式
+
+如果你已经确认构建链路能承载图片内嵌展示，正确方案不是站点绝对路径，而是：
+
+- 根据当前输出 Markdown 文件所在目录
+- 计算它到 [`docs/notes/attachments`](docs/notes/attachments) 的相对路径
+- 生成标准 Markdown 图片
+
+当前项目的实现是：
+
+- 图片输出：[`buildImageMarkdown()`](src/process-notes.mjs:8)
+- 相对路径计算：[`getAttachmentRelativePath()`](src/process-notes.mjs:20)
+
+例如，正确结果应该长这样：
+
+```md
+![](../../notes/attachments/example.png)
+```
+
+而不是：
+
+```md
+![](/pressidian/notes/attachments/example.png)
+```
+
+## 3.3 当前项目图片方案的最终结论
+
+这次排障后，图片策略已经从“普通链接兜底”升级为“相对路径 Markdown 图片”。
+
+最终方案满足三个目标：
+
+1. 图片能内嵌在文档里显示
+2. 不会产生双 [`base`](docs/.vitepress/config.mjs:35) 前缀
+3. [`npm run docs:build`](package.json:13) 仍然可以成功通过
+
+这说明在 VitePress + Obsidian 场景下，真正稳定的重点不是“用不用 Markdown 图片”，而是“图片路径是不是由输出文件相对位置推导出来的”。
+
 ## 4. 侧边栏只基于渲染目录生成
 
 运行：
@@ -229,6 +284,36 @@ npm run docs:build
 - 原始 HTML 影响 Markdown 解析
 - 渲染入口仍然是旧目录
 - VitePress 死链检查未关闭
+- 内容中手工写入了 [`/pressidian/`](docs/.vitepress/config.mjs:35)，导致路径双前缀
+
+## 一眼识别错误方案和正确方案
+
+### 错误方案
+
+在转换内容时直接写站点 base：
+
+```md
+![](/pressidian/notes/attachments/example.png)
+```
+
+特点：
+
+- 本地看起来像是“绝对路径更稳”
+- 但在有 [`base`](docs/.vitepress/config.mjs:35) 的站点里非常容易出错
+
+### 正确方案
+
+在转换内容时按输出文件位置生成相对图片路径：
+
+```md
+![](../../notes/attachments/example.png)
+```
+
+特点：
+
+- 不依赖站点 base 重复拼接
+- 预览和构建行为更一致
+- 更适合目录层级很深的 Obsidian 笔记
 
 ## 什么时候可以重新尝试内嵌图片
 
