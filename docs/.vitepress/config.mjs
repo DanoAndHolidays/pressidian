@@ -1,62 +1,31 @@
 import path from 'path'
 import sidebar from './sidebar.mjs' // 导入自动生成的侧边栏配置
 
-console.log(sidebar)
-
 // https://vitepress.dev/reference/site-config
-
-import { defineConfig } from 'vitepress'
-import md from 'vite-plugin-md'
 
 import obsidianImagePlugin from '../../src/plugins/obsidian-image-plugin.js'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
-import { fileURLToPath } from 'url'
+const SITE_BASE = '/pressidian/'
 
 export default {
     vite: {
-        build: {
-            rollupOptions: {
-                external: ['vue','vue/server-renderer'],
-            },
-        },
         ssr: {
             external: [],
         },
         plugins: [
-            md({
-                mode: 'vue',
-                components: true,
-                include: /notes\/.*\.md$/,
-                // 确认插件初始化
-                setup() {
-                    console.log('[vite-plugin-md] Plugin initialized')
-                },
-                exclude: /node_modules/,
-                debug: true,
-                logLevel: 'verbose',
-                transform(src, id) {
-                    console.log('[vite-plugin-md] Processing:', id)
-                    return src
-                },
-                markdownItSetup(md) {
-                    md.use(obsidianImagePlugin)
-                },
-            }),
             viteStaticCopy({
                 targets: [
                     {
-                        src: './notes/attachments/**/*',
-                        dest: 'public/notes/attachments',
+                        src: path.resolve(
+                            __dirname,
+                            '../notes/attachments/**/*',
+                        ),
+                        dest: 'notes/attachments',
                     },
                 ],
             }),
         ],
-        esbuild: {
-            jsxFactory: 'h',
-            jsxFragment: 'Fragment',
-            jsxInject: `import { defineComponent } from 'vue'`,
-        },
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, '../../'),
@@ -64,8 +33,14 @@ export default {
         },
     },
     title: 'Pressidian',
-    base: '/pressidian/',
+    base: SITE_BASE,
     description: 'Dano的笔记博客',
+    markdown: {
+        preConfig: (md) => {
+            md.options.base = SITE_BASE
+            obsidianImagePlugin(md)
+        },
+    },
     themeConfig: {
         // https://vitepress.dev/reference/default-theme-config
         nav: [
@@ -74,9 +49,9 @@ export default {
                 text: '笔记',
                 link: '/notes/',
             },
-            { text: '关于', link: '/notes/README.md' },
+            { text: '关于', link: '/notes/README' },
         ],
-        sidebar: sidebar['/notes/'],
+        sidebar,
 
         socialLinks: [
             {

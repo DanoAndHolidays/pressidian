@@ -3,23 +3,23 @@ layout: home
 
 hero:
     name: 'Pressidian'
-    text: 'Obsidian驱动的静态知识站点'
-    tagline: 无缝连接Obsidian笔记与VitePress静态网站的一体化解决方案
+    text: '面向长期积累的个人知识站点'
+    tagline: 基于 Obsidian 与 VitePress 搭建，把零散笔记整理为可浏览、可沉淀、可持续更新的在线知识库。
     actions:
         - theme: brand
-          text: 项目简介
-          link: /markdown-examples
+          text: 进入笔记
+          link: /notes/
         - theme: alt
-          text: API文档
-          link: /api-examples
+          text: 关于本站
+          link: /notes/README
 
 features:
-    - title: 笔记即站点
-      details: 直接使用Obsidian笔记仓库作为内容源，无需格式转换
-    - title: 自动化工作流
-      details: GitHub Actions自动构建部署，提交即发布
-    - title: 现代化阅读体验
-      details: 基于VitePress构建，支持响应式设计与暗黑模式
-    - title: 开放API支持
-      details: 提供丰富的运行时API，支持自定义功能扩展
+    - title: 分类清晰的笔记入口
+      details: 按前端、后端、数据库、工程化与学习主题分层整理，快速进入对应知识目录。
+    - title: 持续沉淀的学习过程
+      details: 从基础概念、实践记录到面试复盘，把日常输入输出沉淀为长期可复用的内容资产。
+    - title: 更适合阅读与回顾
+      details: 基于 VitePress 构建，支持响应式浏览、暗黑模式与结构化侧边栏，适合系统化阅读。
+    - title: 从记录到分享
+      details: 既保留 Obsidian 书写习惯，也能将笔记发布为静态站点，方便自查、归档与对外展示。
 ---

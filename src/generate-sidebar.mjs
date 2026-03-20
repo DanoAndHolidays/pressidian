@@ -1,6 +1,43 @@
 import fs from 'fs-extra'
 import path from 'path'
 
+const SITE_BASE = '/pressidian/'
+
+function transformObsidianImages(content) {
+    return content.replace(/!\[\[([^\]]+)\]\]/g, (_, rawImageName) => {
+        const [fileName, alias = ''] = rawImageName.split('|')
+        const imageName = fileName.trim()
+        const alt = alias.trim() || imageName
+        const encodedImageName = encodeURI(imageName)
+
+        return `![${alt}](${SITE_BASE}notes/attachments/${encodedImageName})`
+    })
+}
+
+function preprocessMarkdownFiles(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+    entries.forEach((entry) => {
+        const fullPath = path.join(dir, entry.name)
+
+        if (entry.isDirectory()) {
+            preprocessMarkdownFiles(fullPath)
+            return
+        }
+
+        if (!entry.isFile() || !entry.name.endsWith('.md')) {
+            return
+        }
+
+        const original = fs.readFileSync(fullPath, 'utf8')
+        const transformed = transformObsidianImages(original)
+
+        if (transformed !== original) {
+            fs.writeFileSync(fullPath, transformed)
+        }
+    })
+}
+
 // 递归生成侧边栏结构
 function generateSidebarItems(dir, baseUrl, baseDir) {
     const items = []
@@ -13,41 +50,43 @@ function generateSidebarItems(dir, baseUrl, baseDir) {
     // 处理文件夹（递归）
     directories.forEach((dirent) => {
         const dirPath = path.join(dir, dirent.name)
-        const dirUrl = path.relative(baseDir, dirPath).replace(/\\/g, '/')
         const children = generateSidebarItems(dirPath, baseUrl, baseDir)
 
         if (children.length > 0) {
             items.push({
                 text: dirent.name, // 文件夹名（如“2进阶”）
-
+                collapsed: true,
                 items: children,
             })
         }
-    }),
-        // 处理MD文件
-        mdFiles.forEach((file) => {
-            const fileName = file.name.replace('.md', '')
-            if (fileName === 'index') return // 跳过index.md（可选）
-            items.push({
-                text: fileName, // 文件名（如“1类型别名”）
-                link: path.posix.join(
-                    baseUrl,
-                    path
-                        .relative(baseDir, path.join(dir, file.name))
-                        .replace(/\\/g, '/')
-                ), // 链接路径
-            })
+    })
+
+    // 处理MD文件
+    mdFiles.forEach((file) => {
+        const fileName = file.name.replace('.md', '')
+        if (fileName === 'index') return // 跳过index.md（可选）
+
+        const relativePath = path
+            .relative(baseDir, path.join(dir, file.name))
+            .replace(/\\/g, '/')
+        const routePath = `${baseUrl}/${relativePath.replace(/\.md$/, '')}`
+
+        items.push({
+            text: fileName, // 文件名（如“1类型别名”）
+            link: routePath, // 链接路径
         })
+    })
 
     return items
 }
 
 async function generateSidebar() {
     const notesDir = path.resolve(process.cwd(), 'docs/notes')
+    preprocessMarkdownFiles(notesDir)
     // 本地笔记目录
     const sidebarOutputPath = path.join(
         process.cwd(),
-        'docs/.vitepress/sidebar.mjs'
+        'docs/.vitepress/sidebar.mjs',
     ) // 输出配置路径
     const baseUrl = '/notes' // 基础路径（适配GitHub Pages）
 
@@ -58,7 +97,7 @@ async function generateSidebar() {
     const content = `export default ${JSON.stringify(
         { '/notes/': sidebarItems },
         null,
-        2
+        2,
     )}`
     await fs.writeFile(sidebarOutputPath, content)
 

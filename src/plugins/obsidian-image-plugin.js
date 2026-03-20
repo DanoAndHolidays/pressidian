@@ -1,27 +1,44 @@
-import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
+function normalizeBase(base = '/') {
+    if (!base || base === '/') {
+        return '/'
+    }
+
+    return `${base.replace(/\/+$/, '')}/`
+}
 
 export default function obsidianImagePlugin(md) {
-    // 处理Obsidian图片链接格式: ![[]]
-    md.inline.ruler.before('text', 'obsidian_image', (state) => {
-        for (let i = 0; i < state.tokens.length; i++) {
-            const token = state.tokens[i]
-            if (token.type === 'inline') {
-                for (let j = 0; j < token.children.length; j++) {
-                    const child = token.children[j]
-                    if (child.type === 'text') {
-                        // 将![[图片名]]转换为![图片名](/notes/attachments/图片名)
-                        child.content = child.content.replace(
-                            /\!\[\[(.*?)\]\]/g,
-                            (match, imageName) => {
-                                // 处理可能的文件扩展名
-                                const formattedName = imageName.trim()
-                                return `![${formattedName}](/notes/attachments/${formattedName})`
-                            }
-                        )
-                    }
-                }
-            }
+    md.inline.ruler.before('image', 'obsidian_image', (state, silent) => {
+        const start = state.pos
+        const source = state.src.slice(start)
+        const match = source.match(/^!\[\[([^\]]+)\]\]/)
+
+        if (!match) {
+            return false
         }
+
+        if (silent) {
+            return true
+        }
+
+        const rawImageName = match[1].trim()
+        const [fileName] = rawImageName.split('|')
+        const imageName = fileName.trim()
+        const base = normalizeBase(md.options.base)
+
+        const imageToken = state.push('image', 'img', 0)
+        const imageSrc = new URL(
+            `notes/attachments/${encodeURI(imageName)}`,
+            `http://localhost${base}`,
+        ).pathname
+
+        imageToken.attrs = [
+            ['src', imageSrc],
+            ['alt', imageName],
+        ]
+        imageToken.content = imageName
+        imageToken.children = []
+
+        state.pos += match[0].length
+        return true
     })
 }
