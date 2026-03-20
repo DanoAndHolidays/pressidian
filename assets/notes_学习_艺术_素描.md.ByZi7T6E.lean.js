@@ -1,0 +1,1 @@
+import{_ as e,c as t,o as a}from"./chunks/framework.B7Y1jjX-.js";const m=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"notes/学习/艺术/素描.md","filePath":"notes/学习/艺术/素描.md"}'),o={name:"notes/学习/艺术/素描.md"};function s(n,r,c,_,p,d){return a(),t("div")}const f=e(o,[["render",s]]);export{m as __pageData,f as default};
