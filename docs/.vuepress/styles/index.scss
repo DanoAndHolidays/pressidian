@@ -1,0 +1,86 @@
+:root {
+  --c-accent: #e7793f;
+  --c-accent-hover: #c95e31;
+  --c-accent-bg: #f5ded0;
+  --c-text: #26352b;
+  --c-text-mute: #727b70;
+  --c-border: #ded6c5;
+  --c-bg: #fffaf0;
+  --c-bg-elv: #f7f2e8;
+  --c-bg-light: #f7f2e8;
+  --navbar-c-bg: color-mix(in srgb, #fffaf0 90%, transparent);
+}
+
+html.dark {
+  --c-accent: #f08a50;
+  --c-accent-hover: #ffab7c;
+  --c-accent-bg: #513323;
+  --c-text: #f3eddf;
+  --c-text-mute: #a2aa9d;
+  --c-border: #34483a;
+  --c-bg: #101914;
+  --c-bg-elv: #17231c;
+  --c-bg-light: #17231c;
+  --navbar-c-bg: color-mix(in srgb, #101914 90%, transparent);
+}
+
+body {
+  font-family: "Avenir Next", Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.vp-navbar {
+  border-bottom: 1px solid var(--c-border);
+  backdrop-filter: blur(16px);
+}
+
+.vp-navbar .vp-site-name {
+  font-family: Georgia, "Songti SC", serif;
+  letter-spacing: -0.03em;
+}
+
+[vp-content] {
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+[vp-content] h1,
+[vp-content] h2,
+[vp-content] h3 {
+  font-family: Georgia, "Songti SC", serif;
+  letter-spacing: -0.025em;
+}
+
+[vp-content] h1 {
+  font-size: clamp(2.3rem, 5vw, 3.8rem);
+  font-weight: 500;
+}
+
+[vp-content] a {
+  text-underline-offset: 4px;
+}
+
+[vp-content] blockquote {
+  border-inline-start-color: var(--c-accent);
+  background: var(--c-bg-light);
+  padding: 0.9rem 1.2rem;
+  border-radius: 0 12px 12px 0;
+}
+
+[vp-content] code:not(pre code) {
+  color: var(--c-accent-hover);
+  background: var(--c-accent-bg);
+  border-radius: 5px;
+}
+
+.vp-back-to-top-button {
+  color: var(--c-accent);
+}
+
+.showcase-page .vp-page [vp-content] {
+  max-width: 1120px;
+}
+
+.showcase-page .vp-page-meta,
+.showcase-page .vp-page-nav {
+  display: none;
+}

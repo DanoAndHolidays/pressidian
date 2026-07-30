@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Vue 组件与 Render 函数",
+    "description": "从组件边界、选项对象到 Render 函数，建立 Vue 组件的完整心智模型。",
+    "path": "/notes/vue-components.html",
+    "date": "2026-07-30",
+    "tags": [
+      "Vue",
+      "JavaScript"
+    ],
+    "status": "evergreen",
+    "readingTime": 12
+  }
+]

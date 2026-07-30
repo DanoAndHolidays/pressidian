@@ -1,20 +1,29 @@
 # Pressidian
-一个使用Obsidian笔记仓库构建的VitePress静态站点
-博客地址：https://danoandholidays.github.io/pressidian/
-项目地址：https://github.com/DanoAndHolidays/pressidian
-## 基于Obsidian
-你可以克隆我的仓库，修改配置为自己的Obsidian仓库，即可实现一个自己的笔记博客
-## 全自动的CI/CD
-每次写完笔记push到远程仓库，就会自动构建并部署，保持博客的最新
-## 随时随地学，知识无界
-我将公开所有的笔记内容，你可以寻找自己感兴趣的部分学习，也欢迎你提出issue改进这个笔记站点
 
-目前侧边栏的问题还是没有解决，以后再说吧，我不行了
+Dano 的前端作品集与数字花园，将个人主页、项目经历和 Obsidian 技术笔记统一在一个站点中。
 
-##### 致谢
-- [Obsidian](https://obsidian.md/)
-- [VitePress](https://vitepress.dev/)
-- [Vite](https://vitejs.dev/)
-- [Vue](https://vuejs.org/)
-- [React](https://reactjs.org/)
-- [TRAE](https://trae.js.org/)
+线上地址：[https://danoandholidays.github.io/pressidian/](https://danoandholidays.github.io/pressidian/)
+
+## 主要能力
+
+- 橙色狐狸数字花园首页
+- 项目、技能、经历与联系方式
+- 自动生成的笔记索引、标签筛选和搜索
+- Obsidian `[[双链]]` 与 `![[附件]]` 转换
+- 每天从 `DanoAndHolidays/ObsidianSave` 拉取最新笔记
+- GitHub Actions 自动构建并发布到 GitHub Pages
+
+## 本地开发
+
+```bash
+npm install
+npm run docs:dev
+```
+
+## 构建
+
+```bash
+npm run docs:build
+```
+
+外部 Vault 与自动部署配置见 [AUTOMATION.md](./AUTOMATION.md)。
