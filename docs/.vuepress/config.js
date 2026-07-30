@@ -43,7 +43,7 @@ export default defineUserConfig({
   description: 'Dano 的前端作品与数字花园',
   base,
   head: [
-    ['meta', { name: 'theme-color', content: '#2e5943' }],
+    ['meta', { name: 'theme-color', content: '#24251f' }],
     ['meta', { name: 'author', content: 'Dano' }],
     ['link', { rel: 'icon', href: `${base}favicon.svg`, type: 'image/svg+xml' }],
   ],
