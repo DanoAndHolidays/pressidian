@@ -170,7 +170,11 @@ for (const note of notes) {
       || filesByPath.get(a[0]).title.localeCompare(filesByPath.get(b[0]).title, 'zh-CN'))
     .slice(0, 6)
     .map(([candidateKey, meta]) => ({ path: filesByPath.get(candidateKey).path, relation: meta.relation }))
+}
 
+// Relationship scoring needs every note's source path. Remove build-only
+// metadata only after the full graph has been calculated.
+for (const note of notes) {
   delete note._file
   delete note._body
 }
