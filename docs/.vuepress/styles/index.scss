@@ -84,3 +84,13 @@ body {
 .showcase-page .vp-page-nav {
   display: none;
 }
+
+// The knowledge navigator replaces the default in-page heading list on note
+// articles. The default list still powers VuePress' sidebar open/close state.
+.knowledge-sidebar + .vp-sidebar-items {
+  display: none;
+}
+
+.knowledge-sidebar {
+  min-height: 100%;
+}

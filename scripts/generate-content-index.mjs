@@ -57,6 +57,47 @@ const toRoute = (file) => {
   return `/${relative.replace(/README\.md$/i, '').replace(/\.md$/i, '.html')}`
 }
 
+const normalizePath = (value) => path.resolve(value).toLowerCase()
+
+const extractLinkedFiles = (body, sourceFile, filesByPath, filesByName) => {
+  const linked = new Set()
+  const addLink = (rawTarget) => {
+    const target = rawTarget.trim().replace(/^<|>$/g, '').split('#')[0].split('?')[0]
+    if (!target || /^(?:[a-z]+:|\/\/|#)/i.test(target)) return
+
+    let decodedTarget = target
+    try {
+      decodedTarget = decodeURIComponent(target)
+    } catch {
+      // Keep malformed URLs readable instead of making indexing fail.
+    }
+
+    if (/\.md$/i.test(decodedTarget)) {
+      const resolved = normalizePath(path.resolve(path.dirname(sourceFile), decodedTarget))
+      if (filesByPath.has(resolved)) linked.add(resolved)
+      return
+    }
+
+    const byName = filesByName.get(path.basename(decodedTarget).toLowerCase())
+    if (byName?.length === 1) linked.add(byName[0])
+  }
+
+  for (const match of body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) addLink(match[1])
+  for (const match of body.matchAll(/\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]+)?\]\]/g)) addLink(match[1])
+  return linked
+}
+
+const sharedDirectoryDepth = (firstFile, secondFile) => {
+  const meaningfulSegments = (file) => path.relative(notesDir, path.dirname(file))
+    .split(path.sep)
+    .filter((segment) => segment && segment.toLowerCase() !== 'obsidian')
+  const first = meaningfulSegments(firstFile)
+  const second = meaningfulSegments(secondFile)
+  let depth = 0
+  while (first[depth] && first[depth] === second[depth]) depth += 1
+  return depth
+}
+
 const files = (await walk(notesDir)).filter((file) => path.basename(file).toLowerCase() !== 'readme.md')
 const notes = []
 
@@ -79,7 +120,59 @@ for (const file of files) {
     tags: Array.isArray(data.tags) ? data.tags : data.tags ? String(data.tags).split(',').map((tag) => tag.trim()) : ['Note'],
     status: data.status || 'seedling',
     readingTime: Number(data.readingTime) || readingTime(body),
+    _file: file,
+    _body: body,
   })
+}
+
+const filesByPath = new Map(notes.map((note) => [normalizePath(note._file), note]))
+const filesByName = new Map()
+for (const note of notes) {
+  const key = path.basename(note._file, '.md').toLowerCase()
+  filesByName.set(key, [...(filesByName.get(key) || []), normalizePath(note._file)])
+}
+
+const outgoing = new Map()
+const incoming = new Map(notes.map((note) => [normalizePath(note._file), new Set()]))
+for (const note of notes) {
+  const sourceKey = normalizePath(note._file)
+  const targets = extractLinkedFiles(note._body, note._file, filesByPath, filesByName)
+  targets.delete(sourceKey)
+  outgoing.set(sourceKey, targets)
+  for (const target of targets) incoming.get(target)?.add(sourceKey)
+}
+
+for (const note of notes) {
+  const sourceKey = normalizePath(note._file)
+  const scores = new Map()
+  const addCandidate = (candidateKey, score, relation) => {
+    if (candidateKey === sourceKey || !filesByPath.has(candidateKey)) return
+    const previous = scores.get(candidateKey)
+    if (!previous || score > previous.score) scores.set(candidateKey, { score, relation })
+  }
+
+  for (const target of outgoing.get(sourceKey) || []) addCandidate(target, 100, '正文关联')
+  for (const target of incoming.get(sourceKey) || []) addCandidate(target, 90, '反向链接')
+
+  for (const candidate of notes) {
+    const candidateKey = normalizePath(candidate._file)
+    if (candidateKey === sourceKey || scores.has(candidateKey)) continue
+    const sharedTags = note.tags.filter((tag) => candidate.tags.includes(tag)).length
+    const sameDirectory = path.dirname(note._file) === path.dirname(candidate._file)
+    const directoryDepth = sharedDirectoryDepth(note._file, candidate._file)
+    const score = sharedTags * 4 + (sameDirectory ? 8 : 0) + directoryDepth
+    if (score > 0) addCandidate(candidateKey, score, sameDirectory ? '同一路径' : '共同主题')
+  }
+
+  note.related = [...scores.entries()]
+    .sort((a, b) => b[1].score - a[1].score
+      || filesByPath.get(b[0]).date.localeCompare(filesByPath.get(a[0]).date)
+      || filesByPath.get(a[0]).title.localeCompare(filesByPath.get(b[0]).title, 'zh-CN'))
+    .slice(0, 6)
+    .map(([candidateKey, meta]) => ({ path: filesByPath.get(candidateKey).path, relation: meta.relation }))
+
+  delete note._file
+  delete note._body
 }
 
 notes.sort((a, b) => b.date.localeCompare(a.date))
