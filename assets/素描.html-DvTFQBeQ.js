@@ -1,0 +1,1 @@
+import{_ as t,c as e,o}from"./app-bavn2f3i.js";const a={};function n(c,s){return o(),e("div")}const i=t(a,[["render",n]]),_=JSON.parse('{"path":"/notes/obsidian/%E5%AD%A6%E4%B9%A0/%E8%89%BA%E6%9C%AF/%E7%B4%A0%E6%8F%8F.html","title":"","lang":"zh-CN","frontmatter":{},"git":{},"filePathRelative":"notes/obsidian/学习/艺术/素描.md"}');export{i as comp,_ as data};
