@@ -10,6 +10,7 @@
  * Chunk sizes are measured from the rendered HTML rather than guessed, so a
  * 500-note folder is split while a 3-note folder stays whole.
  */
+import { createHash } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 
@@ -31,6 +32,12 @@ export interface DocumentsManifest {
 export interface PublishOptions {
   /** Directory the JSON files are written to (usually `<root>/public/notes`). */
   outputDir: string
+  /**
+   * Vite `base`. Attachment URLs are baked into the published HTML, so this has
+   * to be the real build base — a hard-coded `/vault/` produces image paths
+   * that 404 on GitHub Pages, where the site lives under `/pressidian/`.
+   */
+  base?: string
   /** Also mirror the output here, for build pipelines that copy `public/` early. */
   mirrorDir?: string
   /** Target chunk size in bytes. Chunks are allowed to overshoot for one note. */
@@ -42,6 +49,16 @@ export interface PublishOptions {
 const DEFAULT_BUDGET = 3 * 1024 * 1024
 
 const safeName = (value: string) => value.replace(/[^\w\u4e00-\u9fff-]+/g, '-')
+
+/**
+ * Content hash for a published file name.
+ *
+ * The chunk contents change on every sync, and GitHub Pages serves static files
+ * with caching headers, so a stable file name means a returning visitor keeps
+ * reading yesterday's note bodies. Hashing the payload makes a rebuild produce
+ * new URLs, exactly like Vite's own asset hashing.
+ */
+const contentHash = (body: string) => createHash('sha1').update(body).digest('hex').slice(0, 8)
 
 /** Folder segments below `/notes/`, used to label and group a chunk. */
 function segmentsOf(route: string): string[] {
@@ -105,7 +122,8 @@ function packChunks(
 
 export async function publishDocuments(options: PublishOptions): Promise<DocumentsManifest> {
   const budget = options.chunkBudget ?? DEFAULT_BUDGET
-  const index = await buildContentIndex('/vault/')
+  const base = options.base?.endsWith('/') ? options.base : `${options.base ?? '/'}/`
+  const index = await buildContentIndex(`${base}vault/`)
   const routes = Object.keys(index.renderers)
 
   // Render once, keeping the payload in memory: chunk packing needs real sizes,
@@ -131,10 +149,6 @@ export async function publishDocuments(options: PublishOptions): Promise<Documen
   for (const [name, chunkRoutes] of [...chunks.entries()].sort((a, b) =>
     a[0].localeCompare(b[0], 'zh-CN'),
   )) {
-    const file = `g${position}-${safeName(name)}.json`
-    position += 1
-    groups[name] = file
-
     const documents: Record<string, NoteDocument> = {}
     for (const route of chunkRoutes) {
       const document_ = rendered[route]
@@ -142,7 +156,12 @@ export async function publishDocuments(options: PublishOptions): Promise<Documen
       documents[route] = document_
       routeGroup[route] = name
     }
-    files.push({ file, body: JSON.stringify({ group: name, documents }) })
+
+    const body = JSON.stringify({ group: name, documents })
+    const file = `g${position}-${safeName(name)}.${contentHash(body)}.json`
+    position += 1
+    groups[name] = file
+    files.push({ file, body })
   }
 
   const manifest: DocumentsManifest = {

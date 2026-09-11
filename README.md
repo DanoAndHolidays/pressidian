@@ -42,10 +42,24 @@ npm run dev
 ## 构建
 
 ```bash
-npm run build      # 输出到 dist/
-npm run preview    # 本地预览构建结果
+npm run build      # 输出到 dist/，base 默认 /pressidian/
+npm run preview    # 快速本地预览（注意：它把 dist/ 当根，不模拟子路径）
 npm run typecheck  # vue-tsc 类型检查
 ```
+
+要验证接近线上的效果，用 [`scripts/serve-pages.mjs`](scripts/serve-pages.mjs)，
+它按 GitHub Pages 的方式服务，见 [AGENT.md](./AGENT.md#本地验证要用带子路径的静态服务器)。
+
+## 路由说明
+
+站点使用 **hash 路由**（URL 形如 `/pressidian/#/notes/xxx`）。
+
+GitHub Pages 没有 rewrite 规则，而常见的 `404.html` 兜底方案在这里行不通：
+浏览器不会执行 404 响应里的 ES module，应用无法启动。
+hash 路由让所有地址都命中磁盘上唯一的 `index.html`，笔记链接因此可以直接分享和刷新。
+
+要换回普通路径（history）模式，需要托管平台支持 rewrite，
+相关说明写在 [`src/router/index.ts`](src/router/index.ts)。
 
 ## 目录结构
 

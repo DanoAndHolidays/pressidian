@@ -53,7 +53,9 @@ watch(
   { immediate: true },
 )
 
-const share = () => copy(`${window.location.origin}${window.location.pathname}`)
+// Copies the full address, hash included — under hash routing the route lives
+// in `location.hash`, so `pathname` alone would share the site root.
+const share = () => copy(window.location.href)
 </script>
 
 <template>

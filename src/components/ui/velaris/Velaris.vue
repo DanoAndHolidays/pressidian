@@ -3,25 +3,51 @@
  * Velaris — animated simplex-noise backdrop with colour blending, a vignette
  * glow and film grain.
  *
- * Ported to Vue from the original React component. The upgrade over the source
+ * Ported to Vue from the original React component. The upgrades over the source
  * version: the render loop pauses when the canvas scrolls out of view or the
  * tab is backgrounded, the device pixel ratio is clamped, and the whole effect
  * collapses to a static CSS gradient for reduced-motion visitors or on devices
  * without WebGL — so it can sit behind real content without costing frames.
+ *
+ * Palettes are resolved per theme: the light palette is a warm haze that reads
+ * as part of the paper, the dark palette is the deep ember nebula.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { cn } from '@/lib/utils'
+import { useUiStore } from '@/stores/ui'
+
+type Palette = { bg: string; colors: string[]; glow: number; vignette: number }
 
 const props = withDefaults(
   defineProps<{
-    bg?: string
-    colors?: string[]
+    /** Shader background. `[light, dark]` swaps with the theme. */
+    bg?: string | [string, string]
+    /** Shader colour stops. `[light, dark]` swaps with the theme. */
+    colors?: string[] | [string[], string[]]
     speed?: number
     grain?: number
     height?: string
     class?: string
+    /**
+     * Centre glow strength. The original shader hard-codes 0.3, which washes a
+     * light palette out to near-white and destroys text contrast, so the light
+     * value is much lower. Accepts `[light, dark]`.
+     */
+    glow?: number | [number, number]
+    /**
+     * Vignette strength: 1.0 leaves the palette untouched, lower values push
+     * the corners down. The original drops them to 20%, which reads as dirty
+     * grey edges on a light palette. Accepts `[light, dark]`.
+     */
+    vignette?: number | [number, number]
     /** Drop the canvas entirely and render the static gradient fallback. */
     staticFallback?: boolean
+    /**
+     * Follow the active theme instead of using the first palette for both.
+     * Turn off when the surface behind the canvas is deliberately dark.
+     */
+    themed?: boolean
   }>(),
   {
     bg: '#000000',
@@ -30,9 +56,41 @@ const props = withDefaults(
     grain: 0.3,
     height: '100vh',
     class: undefined,
+    glow: 0.3,
+    vignette: 0.8,
     staticFallback: false,
+    themed: true,
   },
 )
+
+const { isDark } = storeToRefs(useUiStore())
+
+/**
+ * Resolves the props, which may each be a single value or a `[light, dark]`
+ * pair.
+ *
+ * `Array.isArray` alone cannot separate `string[]` from `[string, string]`, so
+ * the guards look at the element type: a colour pair holds strings, a palette
+ * pair holds arrays.
+ */
+const isBgPair = (value: string | [string, string]): value is [string, string] =>
+  Array.isArray(value) && typeof value[0] === 'string'
+
+const isColorsPair = (value: string[] | [string[], string[]]): value is [string[], string[]] =>
+  Array.isArray(value) && Array.isArray(value[0])
+
+const isNumberPair = (value: number | [number, number]): value is [number, number] =>
+  Array.isArray(value)
+
+const palette = computed<Palette>(() => {
+  const index = props.themed && isDark.value ? 1 : 0
+  return {
+    bg: isBgPair(props.bg) ? props.bg[index] : (props.bg as string),
+    colors: isColorsPair(props.colors) ? props.colors[index] : (props.colors as string[]),
+    glow: isNumberPair(props.glow) ? props.glow[index] : (props.glow as number),
+    vignette: isNumberPair(props.vignette) ? props.vignette[index] : (props.vignette as number),
+  }
+})
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -55,6 +113,8 @@ varying vec2 vUv;
 uniform vec2  u_resolution;
 uniform float u_time;
 uniform float u_grain;
+uniform float u_glow;
+uniform float u_vignette;
 uniform vec3  u_colors[4];
 uniform vec3  u_bg;
 
@@ -108,10 +168,11 @@ void main() {
   col = mix(col, u_colors[2], smoothstep(-0.3, 0.4, n3) * 0.6);
   col = mix(col, u_colors[3], smoothstep(0.0, 0.7, n1 * n2) * 0.5);
 
-  float glow = smoothstep(0.8, 0.0, dist) * 0.3;
+  float glow = smoothstep(0.8, 0.0, dist) * u_glow;
   col += u_colors[1] * glow;
 
-  col = mix(col * 0.2, col, vignette);
+  // 1.0 keeps the palette untouched; below that the corners fall away.
+  col = mix(col * (1.0 - u_vignette * 0.8), col, vignette);
 
   float grain = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453 + u_time);
   col += (grain - 0.5) * u_grain * 0.1;
@@ -142,21 +203,26 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 function refreshPalette() {
-  const key = `${props.bg}|${props.colors.join(',')}`
+  const { bg, colors } = palette.value
+  const key = `${bg}|${colors.join(',')}`
   if (key === parsedKey) return
   parsedKey = key
-  parsedBg = hexToRgb(props.bg)
-  const slots = props.colors.slice(0, 4)
+  parsedBg = hexToRgb(bg)
+  const slots = colors.slice(0, 4)
   while (slots.length < 4) slots.push(slots.at(-1) ?? '#000000')
   parsedColors = new Float32Array(slots.flatMap(hexToRgb))
-}
-
-const fallbackStyle = computed(() => ({
-  background: `radial-gradient(120% 110% at 22% 12%, ${props.colors[0] ?? '#f0642f'} 0%, transparent 55%),
-    radial-gradient(95% 95% at 82% 28%, ${props.colors[1] ?? '#f0642f'} 0%, transparent 52%),
-    radial-gradient(130% 120% at 50% 108%, ${props.colors[2] ?? '#b84924'} 0%, transparent 58%),
-    ${props.bg}`,
-}))
+}const fallbackStyle = computed(() => {
+  const { bg, colors, glow } = palette.value
+  // The CSS fallback stands in for the shader, so the centre glow is folded
+  // into a radial gradient rather than dropped.
+  const centre = Math.round(Math.min(0.9, 0.35 + glow) * 100)
+  return {
+    background: `radial-gradient(75% 70% at 38% 42%, ${colors[1]} 0%, transparent ${centre}%),
+      radial-gradient(120% 110% at 22% 12%, ${colors[0]} 0%, transparent 55%),
+      radial-gradient(130% 120% at 50% 108%, ${colors[2]} 0%, transparent 58%),
+      ${bg}`,
+  }
+})
 
 let gl: WebGLRenderingContext | null = null
 let program: WebGLProgram | null = null
@@ -172,6 +238,8 @@ const uniform = {
   res: null as WebGLUniformLocation | null,
   time: null as WebGLUniformLocation | null,
   grain: null as WebGLUniformLocation | null,
+  glow: null as WebGLUniformLocation | null,
+  vignette: null as WebGLUniformLocation | null,
   colors: null as WebGLUniformLocation | null,
   bg: null as WebGLUniformLocation | null,
 }
@@ -220,6 +288,8 @@ function init(): boolean {
   uniform.res = gl.getUniformLocation(program, 'u_resolution')
   uniform.time = gl.getUniformLocation(program, 'u_time')
   uniform.grain = gl.getUniformLocation(program, 'u_grain')
+  uniform.glow = gl.getUniformLocation(program, 'u_glow')
+  uniform.vignette = gl.getUniformLocation(program, 'u_vignette')
   uniform.colors = gl.getUniformLocation(program, 'u_colors')
   uniform.bg = gl.getUniformLocation(program, 'u_bg')
 
@@ -250,6 +320,8 @@ function frame(timestamp: number) {
   gl.uniform2f(uniform.res, canvasRef.value.width, canvasRef.value.height)
   gl.uniform1f(uniform.time, elapsed * props.speed)
   gl.uniform1f(uniform.grain, props.grain)
+  gl.uniform1f(uniform.glow, palette.value.glow)
+  gl.uniform1f(uniform.vignette, palette.value.vignette)
   gl.uniform3f(uniform.bg, parsedBg[0], parsedBg[1], parsedBg[2])
   gl.uniform3fv(uniform.colors, parsedColors)
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
@@ -267,6 +339,13 @@ function pause() {
   if (raf != null) cancelAnimationFrame(raf)
   raf = null
 }
+
+// A theme switch only changes uniforms, so the loop never needs restarting —
+// but the very first frame after a switch should not wait for a stale frame.
+watch(palette, () => {
+  parsedKey = ''
+  if (gl) schedule()
+})
 
 onMounted(() => {
   if (props.staticFallback) return
@@ -337,7 +416,7 @@ watch(
   <div
     ref="containerRef"
     :style="{ height }"
-    :class="cn('relative w-full overflow-hidden bg-forest', props.class)"
+    :class="cn('relative w-full overflow-hidden', props.class)"
     :data-velaris="failed ? 'static' : 'live'"
   >
     <div

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -45,8 +45,23 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+/**
+ * Hash history, deliberately.
+ *
+ * GitHub Pages is a static file server with no rewrite rules, so a deep link
+ * like `/pressidian/notes/whatever` has no file behind it. The usual remedy —
+ * copying the entry to `404.html` — does not work here: the host answers the
+ * request with a 404 status, and a browser refuses to execute an ES module
+ * served under a 404, so the app never boots.
+ *
+ * Hash routing sidesteps the problem entirely: every URL resolves to the one
+ * `index.html` on disk, and the route lives after the `#`. It also keeps local
+ * previews and any future static host working without per-host configuration.
+ * The trade-off is the `#` in shared links, which is worth it for a garden
+ * whose notes must be linkable.
+ */
 export const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, saved) {
     if (saved) return saved

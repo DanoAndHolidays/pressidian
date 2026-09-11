@@ -13,7 +13,7 @@ const base = process.env.BASE_PATH || '/'
 const indexOnly = process.env.PRESSIDIAN_INDEX_ONLY === '1'
 
 export default defineConfig(({ command }) => ({
-  base,
+  base: command === 'build' ? process.env.BASE_PATH || '/pressidian/' : base,
   plugins: [
     vue(),
     tailwindcss(),

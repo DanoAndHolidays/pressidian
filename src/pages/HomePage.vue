@@ -22,7 +22,21 @@ import { useSpotlight } from '@/composables/useInteractions'
 const notes = useNotesStore()
 const { onPointerMove } = useSpotlight()
 
-const HERO_COLORS = ['#f0642f', '#b84924', '#7a2f16', '#1b1d17']
+/**
+ * Hero palette, per theme.
+ *
+ * The light stops are deliberate: a pale palette plus the shader's centre glow
+ * (which the original hard-codes at 0.3) blows the middle out to near-white and
+ * flattens the headline. These sit lower and warmer, and `glow`/`vignette` are
+ * turned down so the amplitude stays controlled.
+ */
+const HERO_BG: [string, string] = ['#f1e4d2', '#15170f']
+const HERO_COLORS: [string[], string[]] = [
+  ['#eda06a', '#d1774a', '#b05f38', '#f1e4d2'],
+  ['#f0642f', '#b84924', '#7a2f16', '#1b1d17'],
+]
+const HERO_GLOW: [number, number] = [0.1, 0.3]
+const HERO_VIGNETTE: [number, number] = [0.34, 0.8]
 
 const latest = computed(() => notes.notes[0])
 const recent = computed(() => notes.notes.slice(0, 5))
@@ -46,20 +60,29 @@ const mapNodes = [
 <template>
   <div class="relative">
     <!-- ================= HERO ================= -->
-    <section class="shell-wide pt-6 pb-4">
+    <!--
+      Full-bleed: no radius, no border, no gutter. The section owns the whole
+      viewport under the fixed header so the backdrop reads as the page rather
+      than as a card floating on it.
+    -->
+    <section>
       <Velaris
         :colors="HERO_COLORS"
-        bg="#15170f"
+        :bg="HERO_BG"
+        :glow="HERO_GLOW"
+        :vignette="HERO_VIGNETTE"
         :speed="1.25"
         :grain="0.34"
         height="auto"
-        class="min-h-[86svh] rounded-[2rem] border border-white/8 shadow-[var(--shadow-lg)]"
+        class="min-h-[calc(100svh-68px)]"
       >
-        <div class="relative flex min-h-[86svh] flex-col justify-between p-6 sm:p-10 lg:p-14">
+        <div
+          class="relative mx-auto flex min-h-[calc(100svh-68px)] w-full max-w-[94rem] flex-col justify-between px-5 pt-10 pb-8 sm:px-8 lg:px-12"
+        >
           <!-- top rail -->
           <div class="flex flex-wrap items-center justify-between gap-4">
             <span
-              class="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/8 px-3.5 py-1.5 font-mono text-[0.6rem] tracking-[0.18em] text-white/75 uppercase backdrop-blur"
+              class="inline-flex items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-3.5 py-1.5 font-mono text-[0.6rem] tracking-[0.18em] text-hero-muted uppercase backdrop-blur"
             >
               <i
                 class="size-1.5 rounded-full bg-ember [animation:pulse-dot_2.4s_ease-out_infinite]"
@@ -68,14 +91,14 @@ const mapNodes = [
               vault online · {{ notes.stats.total }} notes indexed
             </span>
             <span
-              class="hidden font-mono text-[0.6rem] tracking-[0.2em] text-white/45 uppercase sm:block"
+              class="hidden font-mono text-[0.6rem] tracking-[0.2em] text-hero-muted uppercase sm:block"
             >
               WebGL · simplex noise · {{ notes.stats.links }} links mapped
             </span>
           </div>
 
           <!-- headline -->
-          <div class="max-w-4xl py-10">
+          <div class="max-w-4xl py-8">
             <DecryptText
               as="h1"
               :text="PROFILE.headline"
@@ -83,11 +106,11 @@ const mapNodes = [
               :stagger="46"
               :start-delay="420"
               :loop="false"
-              class="!text-white [text-shadow:0_2px_40px_rgba(0,0,0,0.45)]"
+              class="!text-hero-fg"
             />
 
             <p
-              class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-white/72"
+              class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-hero-muted"
               style="--reveal-delay: 620ms"
             >
               {{ PROFILE.intro }}
@@ -103,7 +126,7 @@ const mapNodes = [
               </RouterLink>
               <RouterLink
                 to="/about"
-                class="group inline-flex items-center gap-2 border-b border-white/25 pb-1 text-[0.84rem] text-white/85 transition-colors hover:border-ember hover:text-ember"
+                class="group inline-flex items-center gap-2 border-b border-hero-line pb-1 text-[0.84rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
               >
                 从这里认识我
                 <ArrowUpRight :size="14" class="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -112,35 +135,35 @@ const mapNodes = [
           </div>
 
           <!-- hero footer: latest note + map -->
-          <div class="grid gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-end">
+          <div class="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:items-end">
             <RouterLink
               v-if="latest"
               :to="latest.path"
-              class="group relative overflow-hidden rounded-2xl border border-white/12 bg-white/6 p-5 backdrop-blur-md transition-colors duration-500 hover:border-ember/45 hover:bg-white/10"
+              class="group relative overflow-hidden rounded-2xl border border-hero-line bg-hero-surface p-5 backdrop-blur-md transition-colors duration-500 hover:border-ember/45 hover:bg-hero-surface-strong"
             >
               <div class="flex items-center justify-between gap-3">
                 <span class="font-mono text-[0.58rem] tracking-[0.18em] text-ember uppercase">
                   latest planting
                 </span>
-                <span class="font-mono text-[0.58rem] text-white/45">
+                <span class="font-mono text-[0.58rem] text-hero-muted">
                   {{ relativeTime(latest.date) }}
                 </span>
               </div>
-              <h2 class="mt-3 font-serif text-xl leading-snug text-white">
+              <h2 class="mt-3 font-serif text-xl leading-snug text-hero-fg">
                 {{ latest.title }}
               </h2>
-              <p class="mt-1.5 line-clamp-2 text-[0.8rem] leading-relaxed text-white/62">
+              <p class="mt-1.5 line-clamp-2 text-[0.8rem] leading-relaxed text-hero-muted">
                 {{ latest.description }}
               </p>
-              <div class="mt-3 flex items-center gap-3 font-mono text-[0.6rem] text-white/50">
+              <div class="mt-3 flex items-center gap-3 font-mono text-[0.6rem] text-hero-muted">
                 <span>{{ formatDate(latest.date) }}</span>
-                <span class="size-1 rounded-full bg-white/25" />
+                <span class="size-1 rounded-full bg-hero-line" />
                 <span>{{ latest.readingTime }} 分钟</span>
-                <span class="size-1 rounded-full bg-white/25" />
+                <span class="size-1 rounded-full bg-hero-line" />
                 <span>{{ latest.tags.slice(0, 2).join(' / ') }}</span>
               </div>
               <span
-                class="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/12 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:[animation:sheen_1.1s_ease-out]"
+                class="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-hero-surface-strong to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:[animation:sheen_1.1s_ease-out]"
                 aria-hidden="true"
               />
             </RouterLink>
@@ -154,11 +177,11 @@ const mapNodes = [
                 :href="node.to.startsWith('http') ? node.to : undefined"
                 :target="node.to.startsWith('http') ? '_blank' : undefined"
                 :rel="node.to.startsWith('http') ? 'noreferrer' : undefined"
-                class="group rounded-xl border border-white/12 bg-white/6 p-3.5 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
+                class="group rounded-xl border border-hero-line bg-hero-surface p-3.5 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
               >
                 <component :is="node.icon" :size="15" class="text-ember" />
-                <p class="mt-2.5 font-serif text-lg leading-none text-white">{{ node.value() }}</p>
-                <p class="mt-1 font-mono text-[0.56rem] tracking-[0.12em] text-white/50 uppercase">
+                <p class="mt-2.5 font-serif text-lg leading-none text-hero-fg">{{ node.value() }}</p>
+                <p class="mt-1 font-mono text-[0.56rem] tracking-[0.12em] text-hero-muted uppercase">
                   {{ node.label }}
                 </p>
               </component>

@@ -69,10 +69,70 @@ public/notes/g*.json           按文件夹 + 体积上限分块的正文
 
 ### 不要在内容层重复拼接站点 base
 
-`BASE_PATH` 由 Vite 统一注入。渲染管线生成附件 URL 时会拼上 `config.base`，
-应用层用 `import.meta.env.BASE_URL`。**任何地方都不应该手写 `/pressidian/`**。
+`BASE_PATH` 由 Vite 统一注入，构建时的默认值是 `/pressidian/`（见 [`vite.config.ts`](vite.config.ts)）。
+渲染管线生成附件 URL 时会拼上这个 base，应用层用 `import.meta.env.BASE_URL`。
+**任何地方都不应该硬编码站点路径**。
 
-如果出现图片 404 或路径里出现双前缀，先查这条。
+这条踩过两次：
+
+1. `publishDocuments()` 曾经把 assetBase 写成 `'/vault/'`，
+   于是笔记里的图片成了 `/vault/xxx.png`，在 `/pressidian/` 下全部 404。
+   现在它接收 `base` 参数，由插件把 `config.base` 传进去。
+2. `index.html` 里的 favicon 曾经写成 `/favicon.svg`（绝对路径不经过 base），
+   现在用 `%BASE_URL%favicon.svg`。
+
+`npm run build` 之后可以自查：`dist/index.html` 里的资源应该是
+`/pressidian/assets/...`，笔记 JSON 里的图片应该是 `/pressidian/vault/...`。
+
+### 路由使用 hash 模式，这是刻意的
+
+见 [`src/router/index.ts`](src/router/index.ts)。
+
+GitHub Pages 是纯静态托管，没有 rewrite 规则，所以 `/pressidian/notes/xxx`
+在磁盘上找不到对应文件。
+
+**常见的 `404.html` 兜底方案在这里不成立**：GitHub 会以 404 状态码返回
+`404.html`，而浏览器**不会执行 404 响应里的 ES module**，应用根本不会启动。
+这个结论是在本地用 [`scripts/serve-pages.mjs`](scripts/serve-pages.mjs)
+复现出来的，不是推测。
+
+所以路由改成 `createWebHashHistory`：所有 URL 都命中磁盘上唯一的
+`index.html`，路由放在 `#` 后面。代价是分享链接里带 `#`，
+换来的是任何静态托管上都能直接打开笔记链接。
+
+如果以后要换回 history 模式，前提是托管平台支持 rewrite
+（Netlify 的 `_redirects`、Vercel 的 `rewrites`、或自己的服务器）。
+
+### 发布出来的 JSON 文件名必须带内容哈希
+
+[`vite/documents.ts`](vite/documents.ts) 里的分块文件名形如
+`g10-前端-面试.559e3f3f.json`。
+
+GitHub Pages 会给静态文件带缓存头。如果文件名固定，重新部署后
+**回访用户会继续读旧笔记**——文件名没变，浏览器直接用缓存。
+这和 Vite 给 JS/CSS 加哈希是同一个道理，只是这里是手写的。
+
+`manifest.json` 的名字不能带哈希（阅读器要能找到它），所以它的
+URL 会带一个 `?v=<构建时间戳>` 查询参数。这个参数来自
+`virtual:notes-meta` 的 `generatedAt`，随 JS bundle 一起更新。
+
+### 本地验证要用带子路径的静态服务器
+
+`vite preview` **不能**验证部署效果：它把 `dist/` 当作 web root，
+而线上是 `/pressidian/` 前缀。曾经因为这个盲区，把资源路径错误的
+构建推上线过一次。
+
+正确的做法是用 [`scripts/serve-pages.mjs`](scripts/serve-pages.mjs)：
+
+```bash
+npm run build
+# 模拟 gh-pages 的实际布局：web root 下放一个 pressidian/ 目录
+mkdir -p /tmp/pages/pressidian && cp -r dist/* /tmp/pages/pressidian/
+node scripts/serve-pages.mjs /tmp/pages 4182
+# 打开 http://127.0.0.1:4182/pressidian/
+```
+
+它按原样服务给定目录，未命中的路径返回 404，与 GitHub Pages 一致。
 
 ### 日期是推断出来的，不是声称的
 

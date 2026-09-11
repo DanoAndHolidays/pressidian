@@ -1,3 +1,4 @@
+import { generatedAt } from 'virtual:notes-meta'
 import type { NoteDocument } from '@/lib/notes/types'
 
 interface DocumentsManifest {
@@ -33,9 +34,26 @@ let manifestPromise: Promise<DocumentsManifest> | null = null
 const chunkPromises = new Map<string, Promise<DocumentsChunk>>()
 const documentsByRoute = new Map<string, NoteDocument>()
 
-function url(file: string, params: Record<string, string> = {}): string {
+/**
+ * Cache key for the manifest.
+ *
+ * Chunk files carry a content hash in their name, but the manifest that points
+ * at them cannot — its name is fixed so the reader can find it. Without a key,
+ * a returning visitor would keep the previous manifest and therefore keep
+ * loading the previous chunks even though fresh ones were published. The build
+ * timestamp is bundled with the metadata, so a new deploy invalidates it while
+ * a normal reload still hits the cache.
+ */
+const cacheKey = encodeURIComponent(generatedAt || 'dev')
+
+const BASE = `${import.meta.env.BASE_URL}notes/`
+
+/** Manifest URL carries the build key; chunk URLs do not need one. */
+const manifestUrl = () => `${BASE}manifest.json?v=${cacheKey}`
+
+const chunkUrl = (file: string, params: Record<string, string> = {}) => {
   const query = new URLSearchParams(params).toString()
-  return `${import.meta.env.BASE_URL}notes/${file}${query ? `?${query}` : ''}`
+  return `${BASE}${file}${query ? `?${query}` : ''}`
 }
 
 /** Index of URL-shaped route keys, so `引入-Crate` finds `引入 Crate`. */
@@ -56,7 +74,7 @@ function toKey(value: string): string {
 const routeKeys = new Map<string, string>()
 
 async function getManifest(): Promise<DocumentsManifest> {
-  manifestPromise ??= fetch(url('manifest.json'))
+  manifestPromise ??= fetch(manifestUrl())
     .then((response) => {
       if (!response.ok) throw new Error(`笔记索引加载失败（HTTP ${response.status}）`)
       return response.json() as Promise<DocumentsManifest>
@@ -78,7 +96,7 @@ function getChunk(file: string, params: Record<string, string>): Promise<Documen
   let pending = chunkPromises.get(key)
   if (pending) return pending
 
-  pending = fetch(url(file, params))
+  pending = fetch(chunkUrl(file, params))
     .then((response) => {
       if (!response.ok) throw new Error(`笔记内容加载失败（HTTP ${response.status}）`)
       return response.json() as Promise<DocumentsChunk>

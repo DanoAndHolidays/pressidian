@@ -185,7 +185,13 @@ const experiments = computed(() => [
   },
 ])
 
-const LAB_COLORS = ['#f0642f', '#a8401f', '#33180c', '#101109']
+const LAB_BG: [string, string] = ['#f0e3d1', '#101109']
+const LAB_COLORS: [string[], string[]] = [
+  ['#e79a63', '#cd7448', '#a95a35', '#f0e3d1'],
+  ['#f0642f', '#a8401f', '#33180c', '#101109'],
+]
+const LAB_GLOW: [number, number] = [0.12, 0.3]
+const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
 </script>
 
 <template>
@@ -277,28 +283,30 @@ const LAB_COLORS = ['#f0642f', '#a8401f', '#33180c', '#101109']
     <section v-reveal class="pt-16">
       <Velaris
         :colors="LAB_COLORS"
-        bg="#101109"
+        :bg="LAB_BG"
+        :glow="LAB_GLOW"
+        :vignette="LAB_VIGNETTE"
         :speed="1.6"
         :grain="0.4"
         height="auto"
-        class="min-h-[20rem] rounded-[1.75rem] border border-white/8"
+        class="min-h-[20rem] rounded-[1.75rem] border border-hero-line"
       >
         <div class="flex min-h-[20rem] flex-col justify-between p-7 sm:p-9">
-          <span class="font-mono text-[0.6rem] tracking-[0.18em] text-white/50 uppercase">
+          <span class="font-mono text-[0.6rem] tracking-[0.18em] text-hero-muted uppercase">
             GPU · fragment shader · no dependencies
           </span>
           <div class="max-w-2xl">
-            <h2 class="font-serif text-[clamp(1.6rem,3.8vw,2.6rem)] leading-[1.1] tracking-[-0.04em] text-white">
+            <h2 class="font-serif text-[clamp(1.6rem,3.8vw,2.6rem)] leading-[1.1] tracking-[-0.04em] text-hero-fg">
               橙色星云是同一段着色器在跑。
             </h2>
-            <p class="mt-3 text-[0.86rem] leading-relaxed text-white/62">
+            <p class="mt-3 text-[0.86rem] leading-relaxed text-hero-muted">
               三层 Simplex 噪声互相扰动，再叠上暗角与胶片颗粒。首屏、关于页和这里用的是同一个组件，只是换了调色板。
             </p>
             <a
               href="https://github.com/DanoAndHolidays/Pressidian"
               target="_blank"
               rel="noreferrer"
-              class="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2.5 text-[0.8rem] text-white/85 transition-colors hover:border-ember hover:text-ember"
+              class="mt-6 inline-flex items-center gap-2 rounded-full border border-hero-line px-4 py-2.5 text-[0.8rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
             >
               <Github :size="14" />
               在 GitHub 上看源码

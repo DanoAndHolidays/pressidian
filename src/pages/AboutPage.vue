@@ -9,7 +9,13 @@ import { compactNumber } from '@/lib/format'
 
 const notes = useNotesStore()
 
-const ABOUT_COLORS = ['#f0642f', '#8c3a1c', '#4a2413', '#141510']
+const ABOUT_BG: [string, string] = ['#f0e3d1', '#141510']
+const ABOUT_COLORS: [string[], string[]] = [
+  ['#e79a63', '#cd7448', '#a95a35', '#f0e3d1'],
+  ['#f0642f', '#8c3a1c', '#4a2413', '#141510'],
+]
+const ABOUT_GLOW: [number, number] = [0.12, 0.3]
+const ABOUT_VIGNETTE: [number, number] = [0.3, 0.8]
 
 const kindMeta = {
   work: { label: 'Experience', tone: 'var(--ember)' },
@@ -31,29 +37,31 @@ const facts = computed(() => [
     <!-- ============ HERO ============ -->
     <Velaris
       :colors="ABOUT_COLORS"
-      bg="#141510"
+      :bg="ABOUT_BG"
+      :glow="ABOUT_GLOW"
+      :vignette="ABOUT_VIGNETTE"
       :speed="1"
       :grain="0.3"
       height="auto"
-      class="min-h-[24rem] rounded-[2rem] border border-white/8"
+      class="min-h-[24rem] rounded-[2rem] border border-hero-line"
     >
       <div class="grid min-h-[24rem] items-center gap-8 p-7 sm:p-10 lg:grid-cols-[1.4fr_auto]">
         <div>
           <p class="font-mono text-[0.6rem] tracking-[0.2em] text-ember uppercase">About Dano</p>
           <h1
-            class="mt-4 font-serif text-[clamp(1.9rem,4.6vw,3.4rem)] leading-[1.08] tracking-[-0.05em] text-white"
+            class="mt-4 font-serif text-[clamp(1.9rem,4.6vw,3.4rem)] leading-[1.08] tracking-[-0.05em] text-hero-fg"
           >
             写代码，做产品，<br />
             也整理一路上的判断。
           </h1>
-          <p class="mt-5 max-w-xl text-[0.9rem] leading-relaxed text-white/70">
+          <p class="mt-5 max-w-xl text-[0.9rem] leading-relaxed text-hero-muted">
             Crafting high-performance, immersive digital experiences where code meets art.
             我把做过的事、踩过的坑和想清楚的问题，都留在这座花园里。
           </p>
         </div>
 
         <div class="flex items-center gap-6">
-          <FoxMark :size="120" variant="portrait" class="drop-shadow-[0_20px_50px_rgba(0,0,0,0.45)]" />
+          <FoxMark :size="120" variant="portrait" class="drop-shadow-[0_20px_50px_rgba(0,0,0,0.28)]" />
         </div>
       </div>
     </Velaris>

@@ -607,6 +607,7 @@ export function notesPlugin(options: NotesPluginOptions = {}): Plugin {
       const manifest = await publishDocuments({
         outputDir: DOCUMENTS_DIR,
         mirrorDir: options.documentsMirrorDir,
+        base: config?.base,
         onProgress: (done, total) => {
           if (done % 150 === 0) this.info(`[pressidian] 渲染笔记 ${done}/${total}`)
         },
@@ -614,6 +615,12 @@ export function notesPlugin(options: NotesPluginOptions = {}): Plugin {
       this.info(
         `[pressidian] public/notes · ${manifest.count} 篇 · ${Object.keys(manifest.groups).length} 个分组`,
       )
+    },
+
+    async closeBundle() {
+      // Deep links are handled by the router's hash history, so no 404.html is
+      // needed here. See the note in `src/router/index.ts` for why the usual
+      // static-host fallback does not work on GitHub Pages.
     },
 
     resolveId(id) {

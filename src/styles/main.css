@@ -46,6 +46,15 @@
   --color-jade: var(--jade);
   --color-amber: var(--amber);
 
+  /* Foreground tokens for content sitting on the Velaris hero backdrop. The
+     backdrop follows the theme, so these flip with it instead of being
+     hard-coded light-on-dark. */
+  --color-hero-fg: var(--hero-fg);
+  --color-hero-muted: var(--hero-muted);
+  --color-hero-line: var(--hero-line);
+  --color-hero-surface: var(--hero-surface);
+  --color-hero-surface-strong: var(--hero-surface-strong);
+
   --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -86,6 +95,12 @@
   --selection: color-mix(in oklab, var(--ember) 26%, transparent);
   --glass: color-mix(in oklab, var(--paper) 72%, transparent);
   --glass-line: color-mix(in oklab, var(--paper) 45%, var(--line));
+  /* Hero foreground: the light backdrop is a warm haze, so text is ink. */
+  --hero-fg: #1d1a14;
+  --hero-muted: color-mix(in oklab, #1d1a14 72%, transparent);
+  --hero-line: color-mix(in oklab, #1d1a14 16%, transparent);
+  --hero-surface: color-mix(in oklab, #fffaf2 58%, transparent);
+  --hero-surface-strong: color-mix(in oklab, #fffaf2 84%, transparent);
   color-scheme: light;
 }
 
@@ -112,6 +127,13 @@
   --selection: color-mix(in oklab, var(--ember) 32%, transparent);
   --glass: color-mix(in oklab, var(--paper) 66%, transparent);
   --glass-line: color-mix(in oklab, var(--line) 80%, transparent);
+  /* Hero foreground: the dark backdrop is a deep ember nebula, so text is warm
+     off-white. */
+  --hero-fg: #f8f4ea;
+  --hero-muted: color-mix(in oklab, #f8f4ea 68%, transparent);
+  --hero-line: color-mix(in oklab, #f8f4ea 16%, transparent);
+  --hero-surface: color-mix(in oklab, #ffffff 8%, transparent);
+  --hero-surface-strong: color-mix(in oklab, #ffffff 14%, transparent);
   color-scheme: dark;
 }
 
