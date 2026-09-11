@@ -47,7 +47,7 @@ const facts = computed(() => [
     >
       <div class="grid min-h-[24rem] items-center gap-8 p-7 sm:p-10 lg:grid-cols-[1.4fr_auto]">
         <div>
-          <p class="font-mono text-[0.6rem] tracking-[0.2em] text-ember uppercase">About Dano</p>
+          <p class="font-mono text-[0.7rem] tracking-[0.2em] text-ember uppercase">About Dano</p>
           <h1
             class="mt-4 font-serif text-[clamp(1.9rem,4.6vw,3.4rem)] leading-[1.08] tracking-[-0.05em] text-hero-fg"
           >
@@ -69,7 +69,7 @@ const facts = computed(() => [
     <!-- ============ FACTS ============ -->
     <section v-reveal class="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
       <div v-for="fact in facts" :key="fact.label" class="bg-paper px-5 py-4">
-        <p class="font-mono text-[0.56rem] tracking-[0.18em] text-faint uppercase">{{ fact.label }}</p>
+        <p class="font-mono text-[0.72rem] tracking-[0.14em] text-faint uppercase">{{ fact.label }}</p>
         <p class="mt-2 font-serif text-[1.1rem] leading-snug">{{ fact.value }}</p>
       </div>
     </section>
@@ -83,7 +83,7 @@ const facts = computed(() => [
             时间线上的一些节点
           </h2>
         </div>
-        <p class="font-mono text-[0.62rem] text-faint">
+        <p class="font-mono text-[0.7rem] text-faint">
           {{ TIMELINE.length }} 段经历
         </p>
       </header>
@@ -102,9 +102,9 @@ const facts = computed(() => [
           />
 
           <div class="pt-1">
-            <p class="font-mono text-[0.66rem] tracking-[0.06em] text-faint">{{ entry.period }}</p>
+            <p class="font-mono text-[0.72rem] tracking-[0.06em] text-faint">{{ entry.period }}</p>
             <p
-              class="mt-1 font-mono text-[0.58rem] tracking-[0.14em] uppercase"
+              class="mt-1 font-mono text-[0.7rem] tracking-[0.14em] uppercase"
               :style="{ color: kindMeta[entry.kind].tone }"
             >
               {{ kindMeta[entry.kind].label }}
@@ -214,7 +214,7 @@ const facts = computed(() => [
           class="group flex items-center justify-between gap-4 rounded-2xl border border-line bg-paper px-5 py-4 transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
         >
           <span>
-            <span class="block font-mono text-[0.58rem] tracking-[0.16em] text-faint uppercase">
+            <span class="block font-mono text-[0.7rem] tracking-[0.13em] text-faint uppercase">
               {{ contact.label }}
             </span>
             <span class="mt-1 block font-serif text-[1.05rem] transition-colors group-hover:text-ember">

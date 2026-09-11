@@ -264,9 +264,12 @@
 
 @utility eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  /* 0.7rem (11.2px) is the floor for anything meant to be read; the tracking
+     stays loose because uppercase Latin needs the air, but 0.18em was wide
+     enough to make short labels feel detached from their headings. */
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ember);
 }

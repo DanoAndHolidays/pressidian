@@ -21,7 +21,7 @@ const meta = computed(() => STATUS_META[props.status ?? 'seedling'] ?? STATUS_ME
 <template>
   <span
     v-if="variant === 'dot'"
-    :class="cn('inline-flex items-center gap-2 font-mono text-[0.62rem] tracking-[0.1em] uppercase', $props.class)"
+    :class="cn('inline-flex items-center gap-2 font-mono text-[0.7rem] tracking-[0.1em] uppercase', $props.class)"
     :title="meta.hint"
   >
     <i
@@ -36,7 +36,7 @@ const meta = computed(() => STATUS_META[props.status ?? 'seedling'] ?? STATUS_ME
     v-else-if="variant === 'chip'"
     :class="
       cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.68rem] font-medium',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.72rem] font-medium',
         $props.class,
       )
     "

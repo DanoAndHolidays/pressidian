@@ -210,7 +210,7 @@ const groupIcon = (group: Command['group']) => {
             />
             <button
               type="button"
-              class="rounded border border-line px-1.5 py-0.5 font-mono text-[0.6rem] text-faint transition-colors hover:border-ember/40 hover:text-ember"
+              class="rounded border border-line px-1.5 py-0.5 font-mono text-[0.7rem] text-faint transition-colors hover:border-ember/40 hover:text-ember"
               @click="close"
             >
               ESC
@@ -221,7 +221,7 @@ const groupIcon = (group: Command['group']) => {
             <template v-if="flat.length">
               <div v-for="section in grouped" :key="section.key" class="px-2 pb-1">
                 <p
-                  class="flex items-center gap-2 px-2.5 py-2 font-mono text-[0.58rem] tracking-[0.18em] text-faint uppercase"
+                  class="flex items-center gap-2 px-2.5 py-2 font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase"
                 >
                   <component :is="groupIcon(section.key)" :size="11" />
                   {{ section.key }}
@@ -246,7 +246,7 @@ const groupIcon = (group: Command['group']) => {
                 >
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-[0.88rem]">{{ item.label }}</span>
-                    <span class="block truncate font-mono text-[0.62rem] text-faint">
+                    <span class="block truncate font-mono text-[0.7rem] text-faint">
                       {{ item.hint }}
                     </span>
                   </span>
@@ -274,7 +274,7 @@ const groupIcon = (group: Command['group']) => {
           </div>
 
           <footer
-            class="flex items-center justify-between border-t border-line px-4 py-2.5 font-mono text-[0.6rem] text-faint"
+            class="flex items-center justify-between border-t border-line px-4 py-2.5 font-mono text-[0.7rem] text-faint"
           >
             <span class="flex items-center gap-3">
               <span class="flex items-center gap-1"><CornerDownLeft :size="11" /> 打开</span>

@@ -64,7 +64,7 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
         <FoxMark :size="30" class="transition-transform duration-500 group-hover:-rotate-6" />
         <span class="flex flex-col leading-none">
           <span class="font-serif text-[1.24rem] tracking-[-0.04em]">Pressidian</span>
-          <span class="font-mono text-[0.52rem] tracking-[0.24em] text-faint uppercase">
+          <span class="font-mono text-[0.72rem] tracking-[0.24em] text-faint uppercase">
             digital garden
           </span>
         </span>
@@ -101,7 +101,7 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
           <span class="hidden md:inline">搜索笔记、项目…</span>
           <span class="md:hidden">搜索</span>
           <kbd
-            class="ml-1 rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-[0.62rem] text-faint"
+            class="ml-1 rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-[0.7rem] text-faint"
           >
             {{ shortcutLabel }}
           </kbd>
@@ -170,11 +170,11 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
             "
           >
             <span class="font-serif text-lg">{{ item.label }}</span>
-            <span class="font-mono text-[0.6rem] tracking-[0.14em] text-faint uppercase">
+            <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
               {{ item.hint }}
             </span>
           </RouterLink>
-          <p class="mt-2 px-3 font-mono text-[0.6rem] tracking-[0.16em] text-faint uppercase">
+          <p class="mt-2 px-3 font-mono text-[0.7rem] tracking-[0.13em] text-faint uppercase">
             {{ notes.stats.total }} 篇笔记 · {{ notes.stats.links }} 条关联
           </p>
         </nav>

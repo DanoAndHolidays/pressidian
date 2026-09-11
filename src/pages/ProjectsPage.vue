@@ -24,7 +24,7 @@ const visible = computed(() =>
         <span class="text-gradient-ember italic">把想法做出来。</span>
       </h1>
       <div class="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-[0.8rem] text-muted">
-        <span class="font-mono text-[0.68rem] tracking-[0.12em] uppercase">
+        <span class="font-mono text-[0.72rem] tracking-[0.12em] uppercase">
           {{ PROJECTS.length }} 个已发布项目
         </span>
         <span class="hidden h-3 w-px bg-line sm:block" />
@@ -77,7 +77,7 @@ const visible = computed(() =>
             :style="{ background: project.accent }"
             aria-hidden="true"
           />
-          <span class="font-mono text-[0.62rem] tracking-[0.12em] text-faint uppercase lg:mt-1">
+          <span class="font-mono text-[0.7rem] tracking-[0.12em] text-faint uppercase lg:mt-1">
             {{ project.focus }}
           </span>
         </div>
@@ -98,7 +98,7 @@ const visible = computed(() =>
             <span
               v-for="tech in project.tech"
               :key="tech"
-              class="rounded-full border border-line bg-paper px-2.5 py-1 font-mono text-[0.62rem] text-ink-soft"
+              class="rounded-full border border-line bg-paper px-2.5 py-1 font-mono text-[0.7rem] text-ink-soft"
             >
               {{ tech }}
             </span>
@@ -106,7 +106,7 @@ const visible = computed(() =>
 
           <dl class="mt-6 flex flex-wrap gap-x-8 gap-y-3">
             <div v-for="fact in project.facts" :key="fact.label">
-              <dt class="font-mono text-[0.56rem] tracking-[0.16em] text-faint uppercase">
+              <dt class="font-mono text-[0.72rem] tracking-[0.13em] text-faint uppercase">
                 {{ fact.label }}
               </dt>
               <dd class="mt-0.5 font-serif text-[1rem]">{{ fact.value }}</dd>

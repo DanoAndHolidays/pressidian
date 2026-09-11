@@ -49,11 +49,15 @@ const statusList = computed(() =>
   })),
 )
 
+/**
+ * Hero shortcuts. `cjk` is the display label; `latin` is only kept so the mono
+ * stat under each one still reads as a technical figure rather than prose.
+ */
 const mapNodes = [
-  { key: 'notes', label: '知识笔记', value: () => `${notes.stats.total}`, to: '/notes', icon: BookOpen },
-  { key: 'projects', label: '项目路径', value: () => `${PROJECTS.length}`, to: '/projects', icon: Compass },
-  { key: 'lab', label: '狐狸实验室', value: () => 'LAB', to: '/lab', icon: FlaskConical },
-  { key: 'github', label: '开源足迹', value: () => 'OSS', to: 'https://github.com/DanoAndHolidays', icon: Github },
+  { key: 'notes', cjk: '知识笔记', value: () => `${notes.stats.total}`, to: '/notes', icon: BookOpen },
+  { key: 'projects', cjk: '项目路径', value: () => `${PROJECTS.length}`, to: '/projects', icon: Compass },
+  { key: 'lab', cjk: '狐狸实验室', value: () => 'LAB', to: '/lab', icon: FlaskConical },
+  { key: 'github', cjk: '开源足迹', value: () => 'OSS', to: 'https://github.com/DanoAndHolidays', icon: Github },
 ] as const
 </script>
 
@@ -77,60 +81,80 @@ const mapNodes = [
         class="min-h-[calc(100svh-68px)]"
       >
         <div
-          class="relative mx-auto flex min-h-[calc(100svh-68px)] w-full max-w-[94rem] flex-col justify-between px-5 pt-10 pb-8 sm:px-8 lg:px-12"
+          class="relative mx-auto flex min-h-[calc(100svh-68px)] w-full max-w-[94rem] flex-col px-5 pt-8 pb-8 sm:px-8 lg:px-12"
         >
-          <!-- top rail -->
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <span
-              class="inline-flex items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-3.5 py-1.5 font-mono text-[0.6rem] tracking-[0.18em] text-hero-muted uppercase backdrop-blur"
-            >
-              <i
-                class="size-1.5 rounded-full bg-ember [animation:pulse-dot_2.4s_ease-out_infinite]"
-                aria-hidden="true"
+          <!--
+            The rail and the copy are one flex group with a fixed gap, so the
+            pills always sit 26px above the headline. Leaving them as separate
+            `justify-between` rows let the gap stretch to 164px on a tall
+            viewport, which made them read as two unrelated blocks.
+
+            Both pills use the hero's UI sans at 13.6px with no tracking and no
+            uppercase — the rail used to be 9.6px uppercase mono at 1.7px
+            tracking above an 83px serif headline at -3.7px, i.e. two type
+            languages in one screen. Mono is kept for the digits, where it
+            carries meaning, and `text-ember` marks emphasis the same way the
+            header's active nav item does. The second pill is `hidden` rather
+            than removed on small screens so the first never shifts.
+          -->
+          <div class="flex flex-1 flex-col gap-[26px] pt-[10%]">
+            <div class="flex flex-wrap items-center gap-3">
+              <span
+                class="inline-flex items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-4 py-2 text-[0.85rem] text-hero-fg backdrop-blur"
+              >
+                <i
+                  class="size-1.5 rounded-full bg-ember [animation:pulse-dot_2.4s_ease-out_infinite]"
+                  aria-hidden="true"
+                />
+                vault online
+                <span class="text-ember" aria-hidden="true">·</span>
+                <span class="font-mono text-[0.78rem] text-ember">{{ notes.stats.total }}</span>
+                notes indexed
+              </span>
+              <span
+                class="hidden items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-4 py-2 text-[0.85rem] text-hero-muted backdrop-blur sm:inline-flex"
+              >
+                WebGL 着色器
+                <span class="text-ember" aria-hidden="true">·</span>
+                <span class="font-mono text-[0.78rem] text-ember">{{ notes.stats.links }}</span>
+                links mapped
+              </span>
+            </div>
+
+            <div class="flex max-w-4xl flex-1 flex-col justify-center">
+              <DecryptText
+                as="h1"
+                :text="PROFILE.headline"
+                trigger="mount"
+                :stagger="46"
+                :start-delay="420"
+                :loop="false"
+                class="!text-hero-fg"
               />
-              vault online · {{ notes.stats.total }} notes indexed
-            </span>
-            <span
-              class="hidden font-mono text-[0.6rem] tracking-[0.2em] text-hero-muted uppercase sm:block"
-            >
-              WebGL · simplex noise · {{ notes.stats.links }} links mapped
-            </span>
-          </div>
 
-          <!-- headline -->
-          <div class="max-w-4xl py-8">
-            <DecryptText
-              as="h1"
-              :text="PROFILE.headline"
-              trigger="mount"
-              :stagger="46"
-              :start-delay="420"
-              :loop="false"
-              class="!text-hero-fg"
-            />
-
-            <p
-              class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-hero-muted"
-              style="--reveal-delay: 620ms"
-            >
-              {{ PROFILE.intro }}
-            </p>
-
-            <div class="animate-rise mt-9 flex flex-wrap items-center gap-4" style="--reveal-delay: 780ms">
-              <RouterLink
-                to="/notes"
-                class="group inline-flex items-center gap-2.5 rounded-full bg-ember px-5 py-3 text-[0.84rem] font-semibold text-[#1b1206] shadow-[var(--shadow-ember)] transition-all duration-500 hover:-translate-y-0.5 hover:bg-ember-soft"
+              <p
+                class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-hero-muted"
+                style="--reveal-delay: 620ms"
               >
-                进入知识花园
-                <ArrowRight :size="15" class="transition-transform duration-500 group-hover:translate-x-1" />
-              </RouterLink>
-              <RouterLink
-                to="/about"
-                class="group inline-flex items-center gap-2 border-b border-hero-line pb-1 text-[0.84rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
-              >
-                从这里认识我
-                <ArrowUpRight :size="14" class="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </RouterLink>
+                {{ PROFILE.intro }}
+              </p>
+
+              <div class="animate-rise mt-9 flex flex-wrap items-center gap-4" style="--reveal-delay: 780ms">
+                <RouterLink
+                  to="/notes"
+                  class="group inline-flex items-center gap-2.5 rounded-full bg-ember px-5 py-3 text-[0.875rem] font-semibold text-[#1b1206] shadow-[var(--shadow-ember)] transition-all duration-500 hover:-translate-y-0.5 hover:bg-ember-soft"
+                >
+                  进入知识花园
+                  <ArrowRight :size="15" class="transition-transform duration-500 group-hover:translate-x-1" />
+                </RouterLink>
+                <RouterLink
+                  to="/about"
+                  class="group inline-flex items-center gap-1.5 border-b border-hero-line pb-1 text-[0.875rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
+                >
+                  从这里认识我
+                  <ArrowUpRight :size="14" class="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </RouterLink>
+              </div>
             </div>
           </div>
 
@@ -142,20 +166,20 @@ const mapNodes = [
               class="group relative overflow-hidden rounded-2xl border border-hero-line bg-hero-surface p-5 backdrop-blur-md transition-colors duration-500 hover:border-ember/45 hover:bg-hero-surface-strong"
             >
               <div class="flex items-center justify-between gap-3">
-                <span class="font-mono text-[0.58rem] tracking-[0.18em] text-ember uppercase">
+                <span class="font-mono text-[0.72rem] tracking-[0.14em] text-ember uppercase">
                   latest planting
                 </span>
-                <span class="font-mono text-[0.58rem] text-hero-muted">
+                <span class="text-[0.76rem] text-hero-muted">
                   {{ relativeTime(latest.date) }}
                 </span>
               </div>
               <h2 class="mt-3 font-serif text-xl leading-snug text-hero-fg">
                 {{ latest.title }}
               </h2>
-              <p class="mt-1.5 line-clamp-2 text-[0.8rem] leading-relaxed text-hero-muted">
+              <p class="mt-1.5 line-clamp-2 text-[0.82rem] leading-relaxed text-hero-muted">
                 {{ latest.description }}
               </p>
-              <div class="mt-3 flex items-center gap-3 font-mono text-[0.6rem] text-hero-muted">
+              <div class="mt-3 flex items-center gap-3 text-[0.76rem] text-hero-muted">
                 <span>{{ formatDate(latest.date) }}</span>
                 <span class="size-1 rounded-full bg-hero-line" />
                 <span>{{ latest.readingTime }} 分钟</span>
@@ -179,11 +203,11 @@ const mapNodes = [
                 :rel="node.to.startsWith('http') ? 'noreferrer' : undefined"
                 class="group rounded-xl border border-hero-line bg-hero-surface p-3.5 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
               >
-                <component :is="node.icon" :size="15" class="text-ember" />
-                <p class="mt-2.5 font-serif text-lg leading-none text-hero-fg">{{ node.value() }}</p>
-                <p class="mt-1 font-mono text-[0.56rem] tracking-[0.12em] text-hero-muted uppercase">
-                  {{ node.label }}
-                </p>
+                <div class="flex items-baseline justify-between gap-2">
+                  <span class="text-[0.85rem] text-hero-fg">{{ node.cjk }}</span>
+                  <component :is="node.icon" :size="14" class="shrink-0 translate-y-0.5 text-ember" />
+                </div>
+                <p class="mt-2.5 font-serif text-xl leading-none text-hero-fg">{{ node.value() }}</p>
               </component>
             </div>
           </div>
@@ -207,7 +231,7 @@ const mapNodes = [
           :key="stat.label"
           class="group bg-paper px-5 py-4 transition-colors duration-500 hover:bg-paper-2"
         >
-          <p class="font-mono text-[0.58rem] tracking-[0.18em] text-faint uppercase">
+          <p class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
             {{ stat.label }}
           </p>
           <p class="mt-2 font-serif text-2xl tracking-[-0.03em] transition-colors group-hover:text-ember">
@@ -252,7 +276,7 @@ const mapNodes = [
 
           <div class="flex items-center justify-between gap-3">
             <NoteStatusBadge :status="note.status" />
-            <span class="font-mono text-[0.58rem] text-faint">{{ relativeTime(note.date) }}</span>
+            <span class="font-mono text-[0.7rem] text-faint">{{ relativeTime(note.date) }}</span>
           </div>
 
           <h3
@@ -264,7 +288,7 @@ const mapNodes = [
             {{ note.description }}
           </p>
 
-          <div class="mt-auto flex items-center justify-between pt-5 font-mono text-[0.6rem] text-faint">
+          <div class="mt-auto flex items-center justify-between pt-5 font-mono text-[0.7rem] text-faint">
             <span class="truncate">{{ note.tags.slice(0, 2).join(' / ') }}</span>
             <span class="flex shrink-0 items-center gap-2">
               {{ note.readingTime }} MIN
@@ -288,7 +312,7 @@ const mapNodes = [
               同步新的 Obsidian 笔记后，这块空地会自动长出内容。
             </p>
           </div>
-          <span class="font-mono text-[0.6rem] tracking-[0.14em] text-faint uppercase">
+          <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
             等待栽种 →
           </span>
         </RouterLink>
@@ -373,7 +397,7 @@ const mapNodes = [
           />
 
           <div class="relative flex items-start justify-between gap-3">
-            <span class="font-mono text-[0.6rem] tracking-[0.16em] text-ember">
+            <span class="font-mono text-[0.7rem] tracking-[0.13em] text-ember">
               {{ project.index }} · {{ project.focus }}
             </span>
             <ArrowUpRight
@@ -392,7 +416,7 @@ const mapNodes = [
             <span
               v-for="tech in project.tech.slice(0, 3)"
               :key="tech"
-              class="rounded-full border border-line px-2 py-0.5 font-mono text-[0.58rem] text-faint"
+              class="rounded-full border border-line px-2 py-0.5 font-mono text-[0.7rem] text-faint"
             >
               {{ tech }}
             </span>
@@ -412,7 +436,7 @@ const mapNodes = [
           { label: 'Open source', value: PROFILE.openSource },
           { label: 'Education', value: PROFILE.education },
         ]" :key="item.label" class="px-5 py-5">
-          <p class="font-mono text-[0.58rem] tracking-[0.18em] text-ember uppercase">
+          <p class="font-mono text-[0.7rem] tracking-[0.14em] text-ember uppercase">
             {{ item.label }}
           </p>
           <p class="mt-2 font-serif text-[1.05rem] leading-snug">{{ item.value }}</p>
@@ -444,7 +468,7 @@ const mapNodes = [
             <span class="block text-[0.9rem] transition-colors group-hover:text-ember">
               {{ item.label }}
             </span>
-            <span class="block font-mono text-[0.58rem] tracking-[0.12em] text-faint uppercase">
+            <span class="block font-mono text-[0.7rem] tracking-[0.12em] text-faint uppercase">
               {{ item.hint }}
             </span>
           </span>

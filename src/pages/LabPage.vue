@@ -212,7 +212,7 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
 
       <div class="pointer-events-none absolute inset-0 flex flex-col justify-between p-7 sm:p-9">
         <div class="flex items-start justify-between gap-4">
-          <span class="font-mono text-[0.6rem] tracking-[0.16em] text-white/55 uppercase">
+          <span class="font-mono text-[0.7rem] tracking-[0.13em] text-white/55 uppercase">
             Interactive grid · move your cursor
           </span>
           <FoxMark :size="60" />
@@ -238,7 +238,7 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
             实验记录
           </h2>
         </div>
-        <span class="font-mono text-[0.62rem] text-faint">
+        <span class="font-mono text-[0.7rem] text-faint">
           {{ experiments.filter((item) => item.live).length }} 项在线
         </span>
       </header>
@@ -252,7 +252,7 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
           :class="item.live ? 'hover:-translate-y-1 hover:border-ember/45 hover:shadow-[var(--shadow-sm)]' : 'border-dashed'"
         >
           <div class="flex items-start justify-between gap-3">
-            <span class="font-mono text-[0.6rem] tracking-[0.16em] text-ember">{{ item.id }}</span>
+            <span class="font-mono text-[0.7rem] tracking-[0.13em] text-ember">{{ item.id }}</span>
             <component
               :is="item.icon"
               :size="16"
@@ -265,7 +265,7 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
           <p class="mt-3 text-[0.84rem] leading-relaxed text-muted">{{ item.detail }}</p>
 
           <span
-            class="mt-5 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[0.58rem] tracking-[0.12em] uppercase"
+            class="mt-5 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[0.7rem] tracking-[0.12em] uppercase"
             :class="item.live ? 'border-jade/40 text-jade' : 'border-line text-faint'"
           >
             <i
@@ -292,7 +292,7 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
         class="min-h-[20rem] rounded-[1.75rem] border border-hero-line"
       >
         <div class="flex min-h-[20rem] flex-col justify-between p-7 sm:p-9">
-          <span class="font-mono text-[0.6rem] tracking-[0.18em] text-hero-muted uppercase">
+          <span class="font-mono text-[0.7rem] tracking-[0.14em] text-hero-muted uppercase">
             GPU · fragment shader · no dependencies
           </span>
           <div class="max-w-2xl">

@@ -90,7 +90,7 @@ const clearFilters = () => {
           :key="stat.label"
           class="bg-paper px-4 py-3.5"
         >
-          <p class="font-mono text-[0.56rem] tracking-[0.16em] text-faint uppercase">
+          <p class="font-mono text-[0.72rem] tracking-[0.13em] text-faint uppercase">
             {{ stat.label }}
           </p>
           <p class="mt-1.5 font-serif text-xl tracking-[-0.02em]">{{ stat.value }}</p>
@@ -183,7 +183,7 @@ const clearFilters = () => {
             type="button"
             :class="
               cn(
-                'shrink-0 rounded-full border px-2.5 py-1 font-mono text-[0.64rem] transition-colors duration-300',
+                'shrink-0 rounded-full border px-2.5 py-1 font-mono text-[0.72rem] transition-colors duration-300',
                 notes.activeTag === '全部'
                   ? 'border-ember bg-ember/12 text-ember'
                   : 'border-line text-muted hover:border-ember/40 hover:text-ink',
@@ -199,7 +199,7 @@ const clearFilters = () => {
             type="button"
             :class="
               cn(
-                'shrink-0 rounded-full border px-2.5 py-1 font-mono text-[0.64rem] transition-colors duration-300',
+                'shrink-0 rounded-full border px-2.5 py-1 font-mono text-[0.72rem] transition-colors duration-300',
                 notes.activeTag === tag.tag
                   ? 'border-ember bg-ember/12 text-ember'
                   : 'border-line text-muted hover:border-ember/40 hover:text-ink',
@@ -234,7 +234,7 @@ const clearFilters = () => {
         <button
           v-if="hasFilters"
           type="button"
-          class="ml-auto flex items-center gap-1.5 font-mono text-[0.64rem] text-ember transition-opacity hover:opacity-70"
+          class="ml-auto flex items-center gap-1.5 font-mono text-[0.72rem] text-ember transition-opacity hover:opacity-70"
           @click="clearFilters"
         >
           <X :size="12" />
@@ -253,11 +253,11 @@ const clearFilters = () => {
 
       <div>
         <div class="mb-4 flex items-baseline justify-between gap-4">
-          <p class="font-mono text-[0.68rem] tracking-[0.12em] text-faint uppercase">
+          <p class="font-mono text-[0.72rem] tracking-[0.12em] text-faint uppercase">
             {{ filtered.length }} 篇 · {{ notes.activeTag }}
           </p>
           <p
-            class="hidden font-mono text-[0.62rem] text-faint sm:block"
+            class="hidden font-mono text-[0.7rem] text-faint sm:block"
             title="笔记日期取自正文或文件名；同步月份是内容最后一次从 Obsidian 仓库拉取的时间"
           >
             内容跨度 {{ notes.dateRange.span }} · 同步于 {{ notes.dateRange.syncedLabel }}
@@ -280,7 +280,7 @@ const clearFilters = () => {
             />
             <div class="flex items-center justify-between gap-3">
               <NoteStatusBadge :status="note.status" />
-              <span class="font-mono text-[0.58rem] text-faint">{{ relativeTime(note.date) }}</span>
+              <span class="font-mono text-[0.7rem] text-faint">{{ relativeTime(note.date) }}</span>
             </div>
             <h2
               class="mt-4 font-serif text-[1.24rem] leading-snug tracking-[-0.02em] transition-colors group-hover:text-ember"
@@ -290,7 +290,7 @@ const clearFilters = () => {
             <p class="mt-2 line-clamp-2 text-[0.8rem] leading-relaxed text-muted">
               {{ note.description }}
             </p>
-            <div class="mt-auto flex items-center justify-between pt-4 font-mono text-[0.58rem] text-faint">
+            <div class="mt-auto flex items-center justify-between pt-4 font-mono text-[0.7rem] text-faint">
               <span class="truncate">{{ note.segments.slice(-2).join(' / ') || '笔记库' }}</span>
               <span class="flex shrink-0 items-center gap-2">
                 {{ note.readingTime }} MIN
@@ -313,12 +313,12 @@ const clearFilters = () => {
               <p class="font-serif text-lg leading-none text-ember">
                 {{ note.date.slice(8, 10) }}
               </p>
-              <p class="mt-1 font-mono text-[0.56rem] text-faint">{{ note.date.slice(0, 7) }}</p>
+              <p class="mt-1 font-mono text-[0.72rem] text-faint">{{ note.date.slice(0, 7) }}</p>
             </div>
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-3">
                 <NoteStatusBadge :status="note.status" />
-                <span class="font-mono text-[0.58rem] text-faint">
+                <span class="font-mono text-[0.7rem] text-faint">
                   {{ note.tags.slice(0, 3).join(' / ') }}
                 </span>
               </div>
@@ -331,7 +331,7 @@ const clearFilters = () => {
                 {{ note.description }}
               </p>
             </div>
-            <div class="shrink-0 pt-1 text-right font-mono text-[0.58rem] text-faint">
+            <div class="shrink-0 pt-1 text-right font-mono text-[0.7rem] text-faint">
               <p>{{ note.readingTime }} MIN</p>
               <p class="mt-1 flex items-center justify-end gap-1.5">
                 {{ note.degree }} 关联

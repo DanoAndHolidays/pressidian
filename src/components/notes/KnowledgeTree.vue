@@ -64,7 +64,7 @@ const isActive = (path: string) => current.value === path
           <span class="min-w-0 flex-1 truncate text-[0.8rem] text-ink-soft group-hover:text-ink">
             {{ child.label }}
           </span>
-          <span class="shrink-0 font-mono text-[0.56rem] text-faint">{{ child.count }}</span>
+          <span class="shrink-0 font-mono text-[0.72rem] text-faint">{{ child.count }}</span>
         </button>
 
         <Transition
@@ -111,7 +111,7 @@ const isActive = (path: string) => current.value === path
         class="mb-2 flex items-center justify-between gap-2 border-b border-line px-2 pb-2"
       >
         <span class="eyebrow">Knowledge paths</span>
-        <span class="font-mono text-[0.58rem] text-faint">{{ notes.stats.total }} 篇</span>
+        <span class="font-mono text-[0.7rem] text-faint">{{ notes.stats.total }} 篇</span>
       </div>
     </li>
     <KnowledgeTree :node="notes.tree" :depth="0" />

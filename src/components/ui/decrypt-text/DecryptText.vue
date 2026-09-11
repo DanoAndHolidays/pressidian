@@ -367,7 +367,15 @@ const onPointerEnter = () => {
       <span aria-hidden="true" class="text-jade select-none">{{ prompt }}</span>
       <span aria-hidden="true" class="select-none">
         <template v-for="(word, w) in words" :key="w">
-          <span class="inline-block whitespace-pre">
+          <!--
+            `whitespace-pre` used to sit here, which turned each space-delimited
+            run into one unbreakable box. That is fine for Latin words but wrong
+            for CJK: a Chinese headline has no spaces, so the entire line became
+            a single atom and overflowed the viewport by 107px on a 390px screen.
+            Leaving the wrapper breakable lets CJK wrap per character while
+            Latin still wraps at the explicit spaces between runs.
+          -->
+          <span class="inline-block">
             <span
               v-for="item in word"
               :key="item.i"
@@ -390,7 +398,7 @@ const onPointerEnter = () => {
     <span v-else class="block" aria-hidden="true">
       <span class="select-none">
         <template v-for="(word, w) in words" :key="w">
-          <span class="inline-block whitespace-pre">
+          <span class="inline-block">
             <span
               v-for="item in word"
               :key="item.i"

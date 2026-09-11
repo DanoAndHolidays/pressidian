@@ -66,7 +66,7 @@ const share = () => copy(window.location.href)
         <div class="sticky top-[6.5rem] max-h-[calc(100svh-8.5rem)] overflow-y-auto pr-1">
           <RouterLink
             to="/notes"
-            class="mb-3 inline-flex items-center gap-1.5 font-mono text-[0.62rem] tracking-[0.12em] text-faint uppercase transition-colors hover:text-ember"
+            class="mb-3 inline-flex items-center gap-1.5 font-mono text-[0.7rem] tracking-[0.12em] text-faint uppercase transition-colors hover:text-ember"
           >
             <ChevronLeft :size="12" />
             返回索引
@@ -94,7 +94,7 @@ const share = () => copy(window.location.href)
             :class="tocOpen ? 'border-ember/50 text-ember' : 'text-ink-soft'"
             @click="tocOpen = !tocOpen"
           >
-            大纲 <span class="font-mono text-[0.6rem] text-faint">{{ headings.length }}</span>
+            大纲 <span class="font-mono text-[0.7rem] text-faint">{{ headings.length }}</span>
           </button>
         </div>
 
@@ -118,7 +118,7 @@ const share = () => copy(window.location.href)
         <header v-if="note" class="border-b border-line pb-7">
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <NoteStatusBadge :status="note.status" variant="chip" />
-            <span class="font-mono text-[0.62rem] text-faint">
+            <span class="font-mono text-[0.7rem] text-faint">
               {{ note.segments.slice(0, 3).join(' / ') || '笔记库' }}
             </span>
           </div>
@@ -132,7 +132,7 @@ const share = () => copy(window.location.href)
             {{ note.description }}
           </p>
 
-          <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[0.62rem] text-faint">
+          <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[0.7rem] text-faint">
             <span>{{ formatDate(note.date) }} · {{ relativeTime(note.date) }}</span>
             <span>{{ note.readingTime }} 分钟阅读</span>
             <span>{{ compactNumber(note.weight) }} 字</span>
@@ -159,7 +159,7 @@ const share = () => copy(window.location.href)
           class="my-12 rounded-2xl border border-dashed border-line-strong/70 px-6 py-14 text-center"
         >
           <p class="font-serif text-xl">这篇笔记暂时无法渲染。</p>
-          <p class="mt-2 font-mono text-[0.68rem] text-faint">{{ failure }}</p>
+          <p class="mt-2 font-mono text-[0.72rem] text-faint">{{ failure }}</p>
         </div>
 
         <div
@@ -182,7 +182,7 @@ const share = () => copy(window.location.href)
             class="group rounded-xl border border-line bg-paper p-4 transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
             @pointerenter="prefetchNoteGroup(neighbours.previous.path)"
           >
-            <span class="font-mono text-[0.58rem] tracking-[0.14em] text-faint uppercase">上一篇</span>
+            <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">上一篇</span>
             <p class="mt-2 font-serif text-[1.02rem] leading-snug transition-colors group-hover:text-ember">
               {{ neighbours.previous.title }}
             </p>
@@ -193,7 +193,7 @@ const share = () => copy(window.location.href)
             class="group rounded-xl border border-line bg-paper p-4 text-right transition-all duration-500 hover:-translate-y-1 hover:border-ember/45 sm:col-start-2"
             @pointerenter="prefetchNoteGroup(neighbours.next.path)"
           >
-            <span class="font-mono text-[0.58rem] tracking-[0.14em] text-faint uppercase">下一篇</span>
+            <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">下一篇</span>
             <p class="mt-2 font-serif text-[1.02rem] leading-snug transition-colors group-hover:text-ember">
               {{ neighbours.next.title }}
             </p>
@@ -217,7 +217,7 @@ const share = () => copy(window.location.href)
                     <span class="block truncate text-[0.86rem] transition-colors group-hover:text-ember">
                       {{ entry.note.title }}
                     </span>
-                    <span class="block font-mono text-[0.58rem] text-faint">{{ entry.relation }}</span>
+                    <span class="block font-mono text-[0.7rem] text-faint">{{ entry.relation }}</span>
                   </span>
                 </RouterLink>
               </li>
@@ -237,7 +237,7 @@ const share = () => copy(window.location.href)
                     <span class="block truncate text-[0.86rem] transition-colors group-hover:text-ember">
                       {{ entry.title }}
                     </span>
-                    <span class="block font-mono text-[0.58rem] text-faint">
+                    <span class="block font-mono text-[0.7rem] text-faint">
                       {{ entry.segments.slice(-2).join(' / ') || '笔记库' }}
                     </span>
                   </span>
@@ -273,7 +273,7 @@ const share = () => copy(window.location.href)
           <p v-else class="mt-4 text-[0.76rem] text-faint">这篇笔记没有分级标题。</p>
 
           <div class="mt-8 border-t border-line pt-5">
-            <p class="font-mono text-[0.58rem] tracking-[0.14em] text-faint uppercase">Reading</p>
+            <p class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">Reading</p>
             <div class="mt-2.5 h-1 overflow-hidden rounded-full bg-paper-3">
               <div
                 class="h-full origin-left rounded-full bg-gradient-to-r from-ember to-amber"

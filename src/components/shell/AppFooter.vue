@@ -37,7 +37,7 @@ const marquee = computed(() => [
           <span
             v-for="item in marquee"
             :key="`${pass}-${item}`"
-            class="flex shrink-0 items-center gap-8 font-mono text-[0.62rem] tracking-[0.2em] text-faint uppercase"
+            class="flex shrink-0 items-center gap-8 font-mono text-[0.7rem] tracking-[0.2em] text-faint uppercase"
           >
             {{ item }}
             <i class="size-1 rounded-full bg-ember/60" aria-hidden="true" />
@@ -63,7 +63,7 @@ const marquee = computed(() => [
             class="size-1.5 rounded-full bg-ember [animation:pulse-dot_2.4s_ease-out_infinite]"
             aria-hidden="true"
           />
-          <span class="font-mono text-[0.62rem] tracking-[0.12em] text-muted uppercase">
+          <span class="font-mono text-[0.7rem] tracking-[0.12em] text-muted uppercase">
             vault synced · {{ syncLabel }}
           </span>
         </div>
@@ -97,7 +97,7 @@ const marquee = computed(() => [
               rel="noreferrer"
               class="group flex items-baseline justify-between gap-3 border-b border-line pb-2 text-[0.86rem] transition-colors hover:border-ember/50 hover:text-ember"
             >
-              <span class="font-mono text-[0.6rem] tracking-[0.14em] text-faint uppercase">
+              <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
                 {{ contact.label }}
               </span>
               <span class="text-ink-soft group-hover:text-ember">{{ contact.value }}</span>
@@ -134,7 +134,7 @@ const marquee = computed(() => [
     </div>
 
     <div
-      class="shell flex flex-col gap-2 border-t border-line py-6 font-mono text-[0.62rem] text-faint sm:flex-row sm:items-center sm:justify-between"
+      class="shell flex flex-col gap-2 border-t border-line py-6 font-mono text-[0.7rem] text-faint sm:flex-row sm:items-center sm:justify-between"
     >
       <span>© {{ year }} {{ PROFILE.name }} & Fox · 用 Vue 3 与 Tailwind 重建</span>
       <span class="tracking-[0.12em] uppercase">{{ PROFILE.city }} · CN</span>
