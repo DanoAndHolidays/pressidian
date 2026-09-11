@@ -2,277 +2,168 @@
 
 这份文档写给后续接手这个仓库的人，也写给会继续修改它的 agent。
 
-先说结论：这个项目不是“把 [`docs/notes`](docs/notes) 直接丢给 VitePress 渲染”这么简单。远程 Obsidian 笔记里包含 wiki 链接、附件图片、原始 HTML、以及不一定存在的相对链接。如果直接渲染，构建很容易失败。
+先说结论：站点在 2.0 版本从 VuePress 迁移到了 **Vite + Vue 3 + TypeScript + Tailwind v4**。
+迁移的原因不是"想换框架"，而是旧方案的两处硬约束：
 
-## 先理解当前的工作流
+1. VuePress 把 Markdown 编译成 Vue SFC，随手写的 HTML 或未闭合标签会让**整站构建失败**。
+2. 主题层被 VuePress 的布局体系限制，无法做首屏 WebGL、逐字动画、命令面板这类交互。
 
-当前构建链路不是单步构建，而是这条流水线：
-
-1. 运行 [`scripts/sync-notes.mjs`](scripts/sync-notes.mjs)
-2. 把远程仓库同步到 [`docs/notes`](docs/notes)
-3. 运行 [`src/process-notes.mjs`](src/process-notes.mjs)
-4. 把原始笔记转换到 [`docs/generated-notes`](docs/generated-notes)
-5. 运行 [`src/generate-sidebar.mjs`](src/generate-sidebar.mjs)
-6. 基于 [`docs/generated-notes`](docs/generated-notes) 生成侧边栏
-7. 再执行 [`vitepress build docs`](package.json:13)
-
-对应脚本入口在 [`prepare-notes`](package.json:9)。
-
-## 为什么 [`docs/notes`](docs/notes) 不能直接渲染
-
-最开始的思路是：同步远程仓库到 [`docs/notes`](docs/notes)，然后让 VitePress 直接渲染它。
-
-这个方案在实践里遇到了几个问题：
-
-### 1. Obsidian 图片语法会触发构建问题
-
-远程笔记里有很多类似 [`![[xxx.png]]`](src/process-notes.mjs:27) 的写法，也有标准 Markdown 图片写法。
-
-如果直接保留成 VitePress 能识别的图片资源路径，Vite 在构建时会尝试把这些资源当作模块导入。遇到绝对路径或特殊文件名时，就会出现“Rollup failed to resolve import”的错误。
-
-### 2. 原始 HTML 内容不稳定
-
-部分笔记里混有原始 HTML。VitePress 在解析 Markdown 时会把它们当成可渲染标签，而不是普通文本。这会带来不可控的兼容问题。
-
-### 3. 远程笔记中的链接并不总是完整
-
-有些链接来自 Obsidian 的 wiki link，有些是相对路径，有些本身就是死链。VitePress 默认会在构建阶段检查死链，最后直接导致 build fail。
-
-## 为什么要引入 [`docs/generated-notes`](docs/generated-notes)
-
-[`docs/notes`](docs/notes) 是“原始同步区”。
-
-[`docs/generated-notes`](docs/generated-notes) 是“站点渲染区”。
-
-这两个目录分开后，有几个明显好处：
-
-- 原始笔记保持同步结果，不做人工维护
-- 渲染层可以做清洗、转义、兼容处理
-- 出问题时更容易定位：是同步问题，还是渲染转换问题
-- 不会在构建时反复污染原始笔记内容
-
-如果以后要调整渲染策略，优先改 [`src/process-notes.mjs`](src/process-notes.mjs)，不要直接改远程同步下来的文件。
-
-## 为什么图片最终改成了普通链接
-
-这是这次排障里最关键的结论。
-
-一开始尝试过这些方案：
-
-- 直接保留 Markdown 图片
-- 转成 HTML [`<img>`](src/process-notes.mjs:18)
-- 通过静态资源复制插件托管附件
-
-这些方案都没有彻底解决构建问题。根因是：**只要 Markdown 里仍然出现会被 VitePress 识别成图片资源的写法，它就可能在构建阶段尝试解析成导入。**
-
-最终稳定方案是：
-
-- 把图片统一转换成普通链接
-- 例如输出 [`[查看图片：xxx](...)`](src/process-notes.mjs:19)
-- 这样页面里仍能访问附件，但构建阶段不会把它当模块导入
-
-代价是图片不再内嵌展示，而是点击打开。
-
-这不是最漂亮的展示方式，但它是目前最稳、最适合自动化构建的方案。
-
-## 后续又遇到的一个关键问题：图片路径出现双 base
-
-在把图片重新改回内嵌显示之后，又暴露出一个新的问题。
-
-页面里生成出的图片路径一度变成了类似这样：
+## 现在的构建链路
 
 ```text
-/pressidian/pressidian/notes/attachments/xxx.png
+GitHub Actions
+  └─ checkout 笔记仓库到 .obsidian-source
+      └─ npm run sync:obsidian -- --source .obsidian-source
+          └─ 复制 Markdown + 附件到 content/notes/obsidian/
+              └─ npm run build（vite build）
+                  ├─ buildStart       扫描仓库、建立链接图、复制附件、写 content/.index.json
+                  ├─ buildEnd         逐篇渲染、按体积分块写 public/notes/*.json
+                  └─ 输出 dist/
+                      └─ 部署 dist/ 到 gh-pages
 ```
 
-这个问题不是静态资源没复制成功，而是**内容层自己提前把站点 base 写进去了**。
+关键点：**笔记正文在构建期渲染成 HTML**，运行时只做一次 `fetch`。
+浏览器不需要下载 markdown-it，也不需要下载 Shiki —— 它们只在构建期跑。
 
-### 错误成因
+## 各层职责
 
-当时的图片转换逻辑会直接生成带站点前缀的绝对路径，比如：
+### 同步层：[`scripts/sync-obsidian.mjs`](scripts/sync-obsidian.mjs)
 
-```md
-![](/pressidian/notes/attachments/example.png)
+只做复制，不做转换。
+
+旧的同步脚本会把 `[[双链]]`、`![[附件]]` 提前改写成 Markdown 链接、还会转义原始 HTML。
+现在不需要了：那些语法由渲染管线在拥有完整笔记图谱的前提下解析，这样
+**同步下来的内容始终是仓库的忠实镜像**，出问题时可以直接和 Obsidian 对比。
+
+附件同时复制到 `public/vault/`，文件名带内容哈希，避免重新同步后命中旧缓存。
+
+### 内容层：[`vite/`](vite)
+
+| 文件 | 职责 |
+| --- | --- |
+| [`vite/vault.ts`](vite/vault.ts) | 扫描仓库、解析 frontmatter、路径与 slug 规范化、附件命名 |
+| [`vite/markdown.ts`](vite/markdown.ts) | Obsidian 语法改写、markdown-it 渲染、Shiki 高亮 |
+| [`vite/notes-plugin.ts`](vite/notes-plugin.ts) | Vite 插件：元数据虚拟模块、附件同步、渲染器注册表 |
+| [`vite/documents.ts`](vite/documents.ts) | 渲染全部笔记并按体积分块发布为 JSON |
+
+元数据通过 `virtual:notes-meta` 以虚拟模块注入，随首屏一起到达，
+所以树、标签和搜索是**即时**的，不需要网络请求。
+
+正文则发布成静态 JSON：
+
+```text
+public/notes/manifest.json     路由表（约 70 KB）
+public/notes/g*.json           按文件夹 + 体积上限分块的正文
 ```
 
-而 VitePress 本身已经在 [`docs/.vitepress/config.mjs`](docs/.vitepress/config.mjs) 中配置了 [`base: '/pressidian/'`](docs/.vitepress/config.mjs:35)。
+`content/.index.json` 是同一份图谱的可读快照，方便 diff 和排查，站点不依赖它。
 
-于是页面渲染时，base 和内容里的前缀再次叠加，最终变成双 [`/pressidian`](docs/.vitepress/config.mjs:35)。
+### 应用层：`src/`
 
-### 最终正确方案
+- [`src/stores/notes.ts`](src/stores/notes.ts)：元数据、标签统计、目录树、关联、排序、搜索
+- [`src/stores/documents.ts`](src/stores/documents.ts)：正文缓存与加载状态
+- [`src/lib/notes/loader.ts`](src/lib/notes/loader.ts)：manifest + 分块 JSON 的获取与路由归一化
+- [`src/components/ui/`](src/components/ui)：通用组件，按 shadcn-vue 约定一目录一组件
 
-不要在内容里手工写站点 base。
+## 必须遵守的约定
 
-正确做法是：**按当前 Markdown 文件位置计算图片的相对路径**。
+### 不要在内容层重复拼接站点 base
 
-当前实现入口在 [`getAttachmentRelativePath()`](src/process-notes.mjs:20)。
+`BASE_PATH` 由 Vite 统一注入。渲染管线生成附件 URL 时会拼上 `config.base`，
+应用层用 `import.meta.env.BASE_URL`。**任何地方都不应该手写 `/pressidian/`**。
 
-也就是说，生成图片时应该产出类似：
+如果出现图片 404 或路径里出现双前缀，先查这条。
 
-```md
-![](../../notes/attachments/example.png)
-```
+### 日期是推断出来的，不是声称的
 
-而不是：
+笔记仓库里**没有 `date:` frontmatter**（587 篇里只有 10 篇有）。
 
-```md
-![](/pressidian/notes/attachments/example.png)
-```
+而且 `git clone` 会把所有文件的 mtime 设成检出时间，
+所以直接用 mtime 会让 567 篇笔记看起来都写于同一秒。
 
-### 这个结论很重要
+当前策略（[`inferDate()`](vite/notes-plugin.ts)）按可靠性排序：
 
-以后只要项目本身配置了 [`base`](docs/.vitepress/config.mjs:35)，就要默认遵守一条规则：
+1. frontmatter 里的 `updated` / `date` / `created` / `modified`
+2. 文件名开头的 `2026-07-30-标题`
+3. 正文前 40 行中的日期（跳过 `Last Format Time:` 这类导出元数据行）
+4. 全库出现次数最多的日期
 
-- **内容层不要重复拼接站点 base**
+**永远不用 mtime**。前端用 `dateSource` 区分，推断出来的日期显示为 `~2026.07.30`。
 
-如果后续再出现路径里双前缀、资源点击后 404、预览和构建环境路径不一致，优先检查是不是又在内容里写死了 base。
+`8/11/2026` 是歧义的（美式是 8 月 11 日，其他地方是 11 月 8 日），
+因此只有"第一个数字 > 12"或"第二个数字 > 12"时才接受，其余一律忽略。
 
-## 为什么启用 [`ignoreDeadLinks: true`](docs/.vitepress/config.mjs:10)
+### 成熟度也是推断的
 
-远程 Obsidian 笔记不是严格受控的文档源，它天然会包含：
+同样没有 `status:` frontmatter。当前用链接图谱推断
+（[`deriveStatus()`](vite/notes-plugin.ts)）：
 
-- 文件后来被删除的旧链接
-- 还没同步过来的相对链接
-- 不标准的 wiki link
+- `evergreen`：出入度 ≥ 5、被引用 ≥ 2 次、正文 ≥ 1200 字
+- `growing`：出入度 ≥ 2、正文 ≥ 500 字，且有入链或 ≥ 2 条出链
+- `seedling`：其余
 
-VitePress 默认把死链当成构建失败条件。对于这个项目，这个默认行为不适合。
+如果以后在 Obsidian 里加了 `status:`，显式值会自动优先，不需要改代码。
 
-这里的目标是“每天自动同步并稳定构建出站点”，而不是“保证所有远程笔记链接都完全正确”。
+### 虚拟模块只用来传元数据
 
-所以最终选择在 [`docs/.vitepress/config.mjs`](docs/.vitepress/config.mjs) 中启用 [`ignoreDeadLinks: true`](docs/.vitepress/config.mjs:10)。
+**不要把正文放进虚拟模块。**
 
-这意味着：
+`import('virtual:xxx')` 的动态导入会被 Rollup 的输出格式包装重写，
+具名导出被压缩成 `_` / `g` 这类别名，拿到的可能是 `undefined` 而不是模块命名空间。
+这个坑在迁移过程中踩了三次（具名导出、default 导出、命名空间导入都不行）。
 
-- 个别笔记里的坏链接不会再阻塞整个站点发布
-- 页面仍然能正常生成
-- 维护成本显著下降
+正文一律走 `public/` 下的静态 JSON —— 完全在打包器之外，不会被改写。
 
-## 当前必须遵守的维护约定
+### 附件命名规则只有一份
 
-### 不要提交同步目录
+[`assetPublicName()`](vite/vault.ts) 同时被同步脚本和渲染管线使用。
+如果改了哈希算法或文件名清洗规则，两边会同时改到，否则 `![[图片.png]]` 会指向不存在的文件。
 
-[`docs/notes`](.gitignore:43) 和 [`docs/generated-notes`](.gitignore:44) 都在 [`.gitignore`](.gitignore) 里。
+### Tailwind 需要显式排除内容目录
 
-原因：
+`content/` 和 `public/vault/` 里有几百 MB 的 Markdown 和媒体文件。
+[`src/styles/main.css`](src/styles/main.css) 里的 `@source not` 指令把它们排除在
+类名扫描之外；删掉这几行会让开发服务器启动和热更新变得非常慢。
 
-- [`docs/notes`](docs/notes) 是外部仓库同步产物
-- [`docs/generated-notes`](docs/generated-notes) 是构建前的中间产物
+### Vite 的 watcher 必须忽略 `public/vault/`
 
-这两个目录都不应该成为手工维护内容。
+[`vite.config.ts`](vite.config.ts) 里 `server.watch.ignored` 包含 `**/public/vault/**`。
+插件在启动时会把附件复制进去，如果 watcher 跟着这些文件走，
+复制本身会被当成变更，触发整页重载并陷入循环，开发服务器会直接崩溃。
 
-### 不要把笔记重新切回 [`/notes/`](docs/notes)
+## 排查顺序
 
-当前导航和侧边栏都已经切到 [`/generated-notes/`](docs/.vitepress/config.mjs:48)。
+**树或搜索是空的** → 元数据虚拟模块的问题，看 `content/notes/obsidian/` 有没有内容，
+再跑 `npm run content:index`。
 
-如果你把渲染入口重新指向 [`docs/notes`](docs/notes)，之前遇到的构建问题大概率会再次出现。
+**笔记打不开 / 提示"暂时无法渲染"** → 打开 Network 面板看 `manifest.json` 和 `g*.json`：
+- 404 → `public/notes/` 没生成，检查构建日志里有没有 `[pressidian] public/notes`
+- 返回 HTML 而不是 JSON → 请求的文件名不存在，检查 `manifest.json` 里的 `groups`
+- 路由对不上 → [`resolveRoute()`](src/lib/notes/loader.ts) 的归一化，
+  注意 `routeGroup` 是按**规范路由**索引的，不是按归一化后的 key
 
-### 不要轻易恢复图片内嵌渲染
+**图片不显示** → 检查 `public/vault/` 里有没有对应哈希文件，
+再确认 `![[...]]` 解析出的路径是否带上了 `BASE_PATH`。
 
-如果后续有人想恢复 `<img>` 或 Markdown 图片，请先确认：
+**代码块没有颜色** → Shiki 在构建期跑。检查 JSON 里有没有 `class="shiki"`；
+配色由 [`prose.css`](src/styles/prose.css) 里的 `--shiki-light` / `--shiki-dark` 规则控制。
 
-- 构建时 Vite 不会把它们解析成失败的资源导入
-- SSR 阶段不会再报附件路径解析错误
-- 远程仓库中的所有图片路径都能稳定映射
-- 生成出来的图片路径没有重复叠加 [`base`](docs/.vitepress/config.mjs:35)
-
-在没有完整验证前，不要改回去。
-
-## 当前图片策略已经升级
-
-最初为了绕开构建问题，项目把图片退化成普通链接。
-
-后续在排查清楚路径规则后，图片策略已经升级为：
-
-- 保持 Markdown 内嵌图片
-- 使用相对路径而不是站点绝对路径
-- 继续通过 [`vite-plugin-static-copy`](docs/.vitepress/config.mjs:16) 复制附件目录
-
-当前核心实现位于：
-
-- 图片 Markdown 输出：[`buildImageMarkdown()`](src/process-notes.mjs:8)
-- 相对路径计算：[`getAttachmentRelativePath()`](src/process-notes.mjs:20)
-- Obsidian 图片转换：[`transformObsidianImages()`](src/process-notes.mjs:35)
-- 旧图片路径兼容转换：[`transformMarkdownAttachmentImages()`](src/process-notes.mjs:46)
-
-这说明项目现在的目标不再只是“能构建”，而是进一步达成：
-
-- 图片可以内嵌显示
-- 构建仍然稳定
-- 不会再出现双前缀路径
-
-## 每天 7 点自动构建的含义
-
-定时任务配置在 [`.github/workflows/dano.yml`](.github/workflows/dano.yml)。
-
-它的职责是：
-
-- 定时执行同步
-- 重新生成可渲染笔记目录
-- 重新生成侧边栏
-- 执行 VitePress 构建
-
-这个设计的重点不是“缓存旧内容”，而是“每次构建都拿最新远程笔记”。
-
-## 遇到问题时怎么查
-
-按这个顺序排查，通常最快。
-
-### 先看同步有没有成功
-
-运行：
-
-```bash
-npm run sync-notes
-```
-
-确认 [`docs/notes`](docs/notes) 已经被更新。
-
-### 再看渲染目录能不能生成
-
-运行：
-
-```bash
-npm run process:notes
-```
-
-如果这里失败，重点检查 [`src/process-notes.mjs`](src/process-notes.mjs) 的文本转换逻辑。
-
-### 再看侧边栏是否正常
-
-运行：
-
-```bash
-npm run generate:sidebar
-```
-
-然后检查 [`docs/.vitepress/sidebar.mjs`](docs/.vitepress/sidebar.mjs) 是否基于 [`docs/generated-notes`](docs/generated-notes) 生成。
-
-### 最后看完整构建
-
-运行：
-
-```bash
-npm run docs:build
-```
-
-如果失败，优先判断是哪一类：
-
-- 附件资源解析失败
-- Markdown 中原始 HTML 导致解析异常
-- wiki link 或相对链接导致死链
-- 路由入口仍指向旧目录
-- 图片路径是否错误地重复拼接了 [`base`](docs/.vitepress/config.mjs:35)
+**构建很慢** → 慢在 `buildEnd` 逐篇渲染，约 600 篇需要 40 秒左右。
+日志会每 150 篇打一次进度。这与笔记数量线性相关，属于预期。
 
 ## 如果以后要优化
 
-最值得继续优化的方向有两个：
+按收益排序：
 
-1. 在 [`src/process-notes.mjs`](src/process-notes.mjs) 中做更智能的 wiki link 解析
-2. 尝试恢复一部分安全的图片内嵌渲染，而不是全部退化成链接
+1. **给笔记加日期和成熟度 frontmatter**，让推断逻辑退居兜底。
+2. **正文分块再细一点**：目前单块上限 3 MB，最大的文件夹仍需下载几 MB。
+   可以按二级目录再切，或者改用首屏预取。
+3. **恢复数学公式**：仓库里有 `$...$` 写法（数学建模笔记），目前不渲染。
+   接入 KaTeX 需要在 [`vite/markdown.ts`](vite/markdown.ts) 里加插件，
+   并把 KaTeX 的 CSS 一起打包。
+4. **双链 hover 预览**：图谱已经有了，缺的是浮层 UI。
 
-但在做这些优化之前，先保住两件事：
+但在做这些之前，先保住两件事：
 
-- [`npm run docs:build`](package.json:13) 必须稳定通过
+- `npm run build` 必须稳定通过
 - 每天定时构建不能被单篇笔记内容拖垮
-
-这是当前仓库最重要的维护原则。

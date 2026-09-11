@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#151612" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)" />
+    <meta name="author" content="Dano" />
+    <meta
+      name="description"
+      content="Pressidian — Dano 的前端作品与数字花园：项目、经历，以及持续生长的 Obsidian 技术笔记。"
+    />
+    <title>Pressidian · Dano 的数字花园</title>
+    <script>
+      // Resolve the colour scheme before first paint so the paper never flashes.
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('pressidian-theme')
+          const dark =
+            stored === 'dark' ||
+            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        } catch {
+          /* private mode — fall back to the light palette */
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

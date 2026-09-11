@@ -1,14 +1,24 @@
+/**
+ * Syncs the remote Obsidian vault into `content/notes/obsidian`.
+ *
+ * Since the site moved off VuePress, the sync layer no longer needs to rewrite
+ * `[[wiki links]]`, `![[embeds]]` or escape raw HTML: the markdown pipeline in
+ * `vite/markdown.ts` resolves all of that against the live note graph, which
+ * means the synced copy stays a faithful mirror of the vault. This script only
+ * copies files and remembers what it wrote so deleted notes disappear.
+ */
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+
+import { assetPublicName } from '../vite/vault.ts'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argIndex = process.argv.indexOf('--source')
 const sourceArg = argIndex >= 0 ? process.argv[argIndex + 1] : null
 const sourceDir = path.resolve(sourceArg || process.env.OBSIDIAN_SOURCE_DIR || '')
-const outputDir = path.join(root, 'docs', 'notes', 'obsidian')
-const assetDir = path.join(outputDir, '_assets')
+const outputDir = path.join(root, 'content', 'notes', 'obsidian')
+const publicDir = path.join(root, 'public', 'vault')
 const manifestFile = path.join(outputDir, '.sync-manifest.json')
 
 if (!sourceArg && !process.env.OBSIDIAN_SOURCE_DIR) {
@@ -19,81 +29,89 @@ if (!sourceArg && !process.env.OBSIDIAN_SOURCE_DIR) {
 const sourceStat = await fs.stat(sourceDir).catch(() => null)
 if (!sourceStat?.isDirectory()) throw new Error(`Obsidian source does not exist: ${sourceDir}`)
 
-const ignored = new Set(['.git', '.obsidian', 'node_modules', 'templates', '.trash'])
-const mediaExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif'])
+const ignoredDirectories = new Set([
+  '.git',
+  '.obsidian',
+  '.trash',
+  '.claude',
+  '.agents',
+  '.github',
+  'node_modules',
+  'templates',
+  '__MACOSX',
+])
+
+const mediaExtensions = new Set([
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.avif',
+  '.bmp',
+  '.pdf',
+])
+
+/** Skips OS/VCS debris and Obsidian's own bookkeeping files. */
+const shouldSkip = (name) =>
+  ignoredDirectories.has(name) ||
+  name.startsWith('._') ||
+  name === '.DS_Store' ||
+  name === 'Thumbs.db'
 
 const walk = async (dir) => {
   const entries = await fs.readdir(dir, { withFileTypes: true })
   const files = []
   for (const entry of entries) {
-    if (entry.name.startsWith('.') || ignored.has(entry.name)) continue
+    if (shouldSkip(entry.name)) continue
     const fullPath = path.join(dir, entry.name)
-    if (entry.isDirectory()) files.push(...await walk(fullPath))
+    if (entry.isDirectory()) files.push(...(await walk(fullPath)))
     else if (entry.isFile()) files.push(fullPath)
   }
   return files
 }
 
 const files = await walk(sourceDir)
-const markdownFiles = files.filter((file) =>
-  path.extname(file).toLowerCase() === '.md'
-  && path.basename(file).toLowerCase() !== 'readme.md')
+const markdownFiles = files.filter((file) => {
+  const extension = path.extname(file).toLowerCase()
+  if (extension !== '.md' && extension !== '.markdown') return false
+  return path.basename(file).toLowerCase() !== 'readme.md'
+})
 const mediaFiles = files.filter((file) => mediaExtensions.has(path.extname(file).toLowerCase()))
-const noteMap = new Map(markdownFiles.map((file) => [path.basename(file, '.md').toLowerCase(), file]))
-const mediaMap = new Map(mediaFiles.map((file) => [path.basename(file).toLowerCase(), file]))
+
 const written = new Set()
 
-const escapeRawHtmlOutsideCode = (content) => content
-  .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g)
-  .map((segment, index) => index % 2
-    ? segment
-    : segment.replaceAll('<', '&lt;').replaceAll('>', '&gt;'))
-  .join('')
-
-await fs.mkdir(assetDir, { recursive: true })
-
-const copyAsset = async (name) => {
-  const source = mediaMap.get(path.basename(name).toLowerCase())
-  if (!source) return null
-  const hash = createHash('sha1').update(path.relative(sourceDir, source)).digest('hex').slice(0, 7)
-  const outputName = `${hash}-${path.basename(source)}`
-  const target = path.join(assetDir, outputName)
+const copyInto = async (source, targetRelative) => {
+  const target = path.join(outputDir, targetRelative)
+  await fs.mkdir(path.dirname(target), { recursive: true })
   await fs.copyFile(source, target)
-  written.add(path.relative(outputDir, target).replaceAll('\\', '/'))
-  return outputName
+  written.add(targetRelative.replaceAll('\\', '/'))
 }
 
-for (const source of markdownFiles) {
-  const relative = path.relative(sourceDir, source)
-  const target = path.join(outputDir, relative)
-  const targetDir = path.dirname(target)
-  let content = await fs.readFile(source, 'utf8')
+/**
+ * Media is published under a content-hashed name so a re-sync cannot be served
+ * from a stale cache. The rule is shared with the markdown pipeline through
+ * `assetPublicName()`, which is what rewrites `![[x.png]]` into a URL — one
+ * definition keeps the two sides in agreement.
+ */
+const publicNameFor = (relative) => assetPublicName(relative, relative)
 
-  const embeds = [...content.matchAll(/!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g)]
-  for (const match of embeds) {
-    const assetName = await copyAsset(match[1].trim())
-    if (!assetName) continue
-    const relativeAsset = path.relative(targetDir, path.join(assetDir, assetName)).replaceAll('\\', '/')
-    content = content.replace(match[0], `![${path.parse(match[1]).name}](${relativeAsset})`)
-  }
+for (const file of markdownFiles) {
+  await copyInto(file, path.relative(sourceDir, file))
+}
 
-  content = content.replace(/\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]/g, (full, rawName, alias) => {
-    const name = rawName.trim()
-    const linked = noteMap.get(name.toLowerCase())
-    if (!linked) return alias || name
-    const linkedTarget = path.join(outputDir, path.relative(sourceDir, linked))
-    const href = path.relative(targetDir, linkedTarget).replaceAll('\\', '/')
-    return `[${alias || name}](${href.startsWith('.') ? href : `./${href}`})`
-  })
-
-  // VuePress pages are compiled as Vue SFCs. Unbalanced HTML from free-form
-  // Obsidian notes can otherwise break the whole site build, so render it as
-  // readable text while leaving fenced code examples untouched.
-  content = escapeRawHtmlOutsideCode(content)
-
-  await fs.mkdir(targetDir, { recursive: true })
-  await fs.writeFile(target, content, 'utf8')
-  written.add(path.relative(outputDir, target).replaceAll('\\', '/'))
+// Media keeps its vault-relative path so `![[img.png]]` and `![](./img.png)`
+// resolve by name *and* by path in the markdown pipeline.
+const publishedAssets = new Set()
+await fs.rm(publicDir, { recursive: true, force: true })
+for (const file of mediaFiles) {
+  const relative = path.relative(sourceDir, file).replaceAll('\\', '/')
+  await copyInto(file, relative)
+  const target = path.join(publicDir, publicNameFor(relative))
+  await fs.mkdir(path.dirname(target), { recursive: true })
+  await fs.copyFile(file, target)
+  publishedAssets.add(path.basename(target))
 }
 
 const oldManifest = JSON.parse(await fs.readFile(manifestFile, 'utf8').catch(() => '[]'))
@@ -105,4 +123,7 @@ for (const relative of oldManifest) {
 }
 
 await fs.writeFile(manifestFile, `${JSON.stringify([...written].sort(), null, 2)}\n`, 'utf8')
-console.log(`[sync:obsidian] synced ${markdownFiles.length} notes and ${[...written].filter((item) => item.startsWith('_assets/')).length} assets`)
+console.log(
+  `[sync:obsidian] synced ${markdownFiles.length} notes, ${mediaFiles.length} attachments ` +
+    `(${publishedAssets.size} published to public/vault)`,
+)

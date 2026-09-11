@@ -29,12 +29,18 @@ coverage
 
 *.tsbuildinfo
 
-# VuePress 生成目录
+# 构建产物：内容索引、笔记 JSON、同步过来的附件
+# 三者都在构建/同步时重新生成，只保留 public/favicon.svg
+/content/.index.json
+/content/notes/obsidian/
+/.obsidian-source/
+/public/notes/
+/public/vault/
+
+# 旧 VuePress 站点的生成目录（保留是因为栈迁移前的历史文件仍在仓库里）
 /docs/.vuepress/.temp/
 /docs/.vuepress/.cache/
 /docs/.vuepress/dist/
 
 # 设计方向稿只保留在本地
 /design-previews/
-/.obsidian-source/
-/docs/notes/obsidian/

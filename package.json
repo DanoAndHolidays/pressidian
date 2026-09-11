@@ -1,6 +1,6 @@
 {
   "name": "pressidian",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,26 +8,33 @@
   },
   "scripts": {
     "dev": "vite",
-    "design:dev": "vite design-previews",
     "build": "vite build",
     "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "content:index": "node scripts/generate-content-index.mjs",
     "sync:obsidian": "node scripts/sync-obsidian.mjs",
-    "docs:dev": "node scripts/generate-content-index.mjs && vuepress dev docs",
-    "docs:build": "node scripts/generate-content-index.mjs && vuepress build docs"
+    "design:dev": "vite design-previews"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^1.0.0",
+    "markdown-it": "^14.3.1",
+    "markdown-it-anchor": "^10.0.0",
+    "markdown-it-task-lists": "^2.1.1",
     "pinia": "^3.0.3",
+    "shiki": "^3.23.0",
+    "tailwind-merge": "^3.6.0",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^22.20.2",
     "@vitejs/plugin-vue": "^6.0.1",
-    "@vuepress/bundler-vite": "^2.0.0-rc.24",
-    "@vuepress/theme-default": "^2.0.0-rc.112",
-    "sass-embedded": "^1.93.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
     "vite": "^7.1.7",
-    "vite-plugin-vue-devtools": "^8.0.2",
-    "vuepress": "^2.0.0-rc.24"
+    "vue-tsc": "^3.3.11"
   }
 }

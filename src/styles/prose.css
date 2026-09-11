@@ -1,0 +1,434 @@
+/* ==========================================================================
+   Note typography
+   Hand-rolled rather than `@tailwindcss/typography` so the reading rhythm can
+   be tuned for mixed Chinese/English technical notes: CJK needs looser leading
+   and no extra inter-word spacing, code needs to stay legible at 0.84em.
+   ========================================================================== */
+
+.prose-pressidian {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.95;
+  letter-spacing: 0.004em;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.prose-pressidian > * + * {
+  margin-top: 1.15em;
+}
+
+/* ---------- headings ---------- */
+
+.prose-pressidian h1,
+.prose-pressidian h2,
+.prose-pressidian h3,
+.prose-pressidian h4 {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  scroll-margin-top: 6.5rem;
+  text-wrap: balance;
+}
+
+.prose-pressidian h1 {
+  font-size: 1.9rem;
+  line-height: 1.2;
+  margin-top: 2.4em;
+}
+
+.prose-pressidian h2 {
+  font-size: 1.52rem;
+  line-height: 1.28;
+  margin-top: 2.6em;
+  padding-bottom: 0.42em;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+
+/* An ember tick on the left edge of every h2 — a quiet anchor. */
+.prose-pressidian h2::before {
+  content: '';
+  position: absolute;
+  left: -1.1rem;
+  top: 0.42em;
+  width: 3px;
+  height: 0.92em;
+  border-radius: 99px;
+  background: var(--ember);
+  opacity: 0.85;
+}
+
+.prose-pressidian h3 {
+  font-size: 1.2rem;
+  line-height: 1.35;
+  margin-top: 2.1em;
+}
+
+.prose-pressidian h4 {
+  font-size: 1.02rem;
+  margin-top: 1.8em;
+}
+
+.prose-pressidian h2:hover::after,
+.prose-pressidian h3:hover::after {
+  content: '#';
+  margin-left: 0.5em;
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  color: var(--ember);
+  opacity: 0.7;
+}
+
+/* ---------- text ---------- */
+
+.prose-pressidian p {
+  margin-block: 1.15em;
+}
+
+.prose-pressidian strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.prose-pressidian em {
+  font-style: italic;
+}
+
+.prose-pressidian a {
+  color: var(--ember-deep);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--ember) 40%, transparent);
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease,
+    background-color 0.25s ease;
+  padding: 0 0.08em;
+}
+
+.prose-pressidian a:hover {
+  color: var(--ember);
+  border-bottom-color: var(--ember);
+  background: color-mix(in oklab, var(--ember) 10%, transparent);
+}
+
+.prose-pressidian hr {
+  margin-block: 2.6em;
+  border: 0;
+  border-top: 1px dashed var(--line-strong);
+}
+
+/* ---------- lists ---------- */
+
+.prose-pressidian ul,
+.prose-pressidian ol {
+  padding-left: 1.4em;
+  margin-block: 1.1em;
+}
+
+.prose-pressidian ul {
+  list-style: none;
+}
+
+.prose-pressidian ul > li {
+  position: relative;
+  padding-left: 0.15em;
+}
+
+.prose-pressidian ul > li::before {
+  content: '';
+  position: absolute;
+  left: -0.95em;
+  top: 0.78em;
+  width: 5px;
+  height: 5px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ember) 65%, var(--line-strong));
+}
+
+.prose-pressidian ol {
+  list-style: decimal;
+}
+
+.prose-pressidian ol > li::marker {
+  color: var(--ember);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.prose-pressidian li {
+  margin-block: 0.42em;
+}
+
+.prose-pressidian li > ul,
+.prose-pressidian li > ol {
+  margin-block: 0.4em;
+}
+
+.prose-pressidian li::marker {
+  color: var(--ember);
+}
+
+/* Task lists (`markdown-it-task-lists`) */
+.prose-pressidian .task-list-item {
+  padding-left: 0;
+}
+
+.prose-pressidian .task-list-item::before {
+  display: none;
+}
+
+.prose-pressidian .task-list-item input[type='checkbox'] {
+  margin-right: 0.55em;
+  width: 0.95em;
+  height: 0.95em;
+  accent-color: var(--ember);
+  vertical-align: -0.1em;
+}
+
+.prose-pressidian .task-list-item-checked {
+  color: var(--faint);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--faint) 50%, transparent);
+}
+
+/* ---------- quotes ---------- */
+
+.prose-pressidian blockquote {
+  margin-block: 1.5em;
+  padding: 0.85em 1.15em;
+  border-left: 2px solid var(--ember);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: color-mix(in oklab, var(--ember) 6%, var(--paper-2));
+  color: var(--ink-soft);
+}
+
+.prose-pressidian blockquote > *:first-child {
+  margin-top: 0;
+}
+.prose-pressidian blockquote > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- code ---------- */
+
+.prose-pressidian code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: color-mix(in oklab, var(--ember) 9%, var(--paper-3));
+  color: var(--ember-deep);
+  padding: 0.16em 0.42em;
+  border-radius: 5px;
+  white-space: break-spaces;
+}
+
+.prose-pressidian .pressidian-code,
+.prose-pressidian pre.shiki,
+.prose-pressidian pre.shiki-fallback {
+  margin-block: 1.6em;
+  padding: 1.05rem 1.15rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  overflow-x: auto;
+  font-size: 0.84rem;
+  line-height: 1.72;
+  tab-size: 2;
+  background: var(--paper-2);
+  position: relative;
+}
+
+.prose-pressidian pre.shiki {
+  background: var(--paper) !important;
+}
+
+.prose-pressidian pre.shiki code,
+.prose-pressidian pre.shiki-fallback code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+  white-space: pre;
+}
+
+/* Language label, injected by the markdown pipeline via `data-lang`. */
+.prose-pressidian pre[data-lang]::after {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.55rem;
+  right: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.prose-pressidian pre[data-lang='']::after,
+.prose-pressidian pre[data-lang='text']::after {
+  display: none;
+}
+
+/*
+ * Shiki dual themes (`defaultColor: false`).
+ *
+ * Highlighted tokens carry `--shiki-light` / `--shiki-dark`, so each element
+ * needs a token-level rule that also covers children — a single rule on `pre`
+ * would not reach the nested spans. The surface colour is softened into the
+ * page palette (`color-mix` … `transparent`) rather than used raw, so a code
+ * block reads as part of the paper instead of a foreign card.
+ */
+.dark .prose-pressidian pre.shiki,
+.dark .prose-pressidian pre.shiki *,
+.prose-pressidian pre.shiki,
+.prose-pressidian pre.shiki * {
+  background-color: transparent;
+}
+
+.prose-pressidian pre.shiki {
+  color: var(--shiki-light);
+  background-color: color-mix(in oklab, var(--shiki-light-bg) 88%, var(--paper)) !important;
+}
+
+.prose-pressidian pre.shiki * {
+  color: var(--shiki-light);
+}
+
+.dark .prose-pressidian pre.shiki {
+  color: var(--shiki-dark);
+  background-color: color-mix(in oklab, var(--shiki-dark-bg) 88%, var(--paper)) !important;
+}
+
+.dark .prose-pressidian pre.shiki * {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+
+/* ---------- tables ---------- */
+
+.prose-pressidian table {
+  width: 100%;
+  margin-block: 1.7em;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.prose-pressidian thead {
+  background: var(--paper-2);
+}
+
+.prose-pressidian th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.prose-pressidian th,
+.prose-pressidian td {
+  padding: 0.62em 0.85em;
+  border: 1px solid var(--line);
+}
+
+.prose-pressidian tbody tr:nth-child(even) {
+  background: color-mix(in oklab, var(--paper-2) 60%, transparent);
+}
+
+.prose-pressidian tbody tr:hover {
+  background: color-mix(in oklab, var(--ember) 6%, transparent);
+}
+
+/* ---------- media ---------- */
+
+.prose-pressidian img {
+  display: block;
+  margin: 1.8em auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  background: var(--paper);
+}
+
+.prose-pressidian video,
+.prose-pressidian iframe {
+  display: block;
+  width: 100%;
+  margin-block: 1.8em;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+}
+
+.prose-pressidian figure {
+  margin-block: 1.8em;
+}
+
+.prose-pressidian figcaption {
+  margin-top: 0.6em;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--faint);
+}
+
+/* ---------- details ---------- */
+
+.prose-pressidian details {
+  margin-block: 1.3em;
+  padding: 0.9em 1.1em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper-2);
+}
+
+.prose-pressidian summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.prose-pressidian details[open] summary {
+  margin-bottom: 0.7em;
+  color: var(--ember);
+}
+
+/* ---------- misc ---------- */
+
+.prose-pressidian mark {
+  background: color-mix(in oklab, var(--amber) 32%, transparent);
+  color: inherit;
+  padding: 0.05em 0.28em;
+  border-radius: 4px;
+}
+
+.prose-pressidian kbd {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 0.1em 0.4em;
+  background: var(--paper-3);
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .prose-pressidian {
+    font-size: 0.92rem;
+    line-height: 1.9;
+  }
+  .prose-pressidian h2 {
+    font-size: 1.32rem;
+  }
+  .prose-pressidian h2::before {
+    left: -0.7rem;
+  }
+  .prose-pressidian h3 {
+    font-size: 1.1rem;
+  }
+}
