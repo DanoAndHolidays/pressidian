@@ -1,65 +1,262 @@
-/* Shared by the pre-JavaScript startup screen and in-app content loading. */
-.garden-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  color: var(--ink, #1d1e19);
-  font-family: 'Avenir Next', 'Segoe UI', 'Microsoft YaHei', sans-serif;
-  text-align: center;
-}
-.garden-loading__eyebrow {
-  margin: 0;
-  color: var(--muted, #6f6f67);
-  font-family: Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-}
-.garden-loading__signature { display: block; width: min(360px, 78vw); height: auto; }
-.garden-loading__label { margin: 0; font-size: 13px; letter-spacing: 0.08em; }
-.garden-loading__line {
-  width: 120px;
-  height: 2px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: rgb(240 100 47 / 0.14);
-}
-.garden-loading__line::after {
-  content: '';
-  display: block;
-  width: 45%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ff6500, #ffb000);
-  animation: garden-line 1.6s ease-in-out infinite;
-}
-#garden-boot {
+/* ==========================================================================
+   Pre-JavaScript boot screen
+   Linked directly from `index.html`, *not* imported by the app, so it applies
+   on the very first paint — before Tailwind, before the Vue bundle, before
+   anything Vite emits.
+
+   It reproduces the opening frame of `BootSequence.vue` so the handover from
+   static HTML to the Vue sequence is invisible. To keep that seam tight, the
+   geometry below must stay in step with the corresponding rules in that
+   component: same 680px frame, same 8px/dashed palette, same type scale. The
+   three log lines are the one intentional duplication — the component is the
+   authority, this file just matches its opening state.
+   ========================================================================== */
+
+.pboot {
   position: fixed;
   inset: 0;
   z-index: 100;
-  min-height: 100svh;
-  padding: 24px;
-  box-sizing: border-box;
-  background: #f4f1e8;
-  background-image: radial-gradient(ellipse at 50% 43%, rgb(255 157 57 / 0.1), transparent 55%);
-  transition: opacity 0.28s ease, visibility 0.28s ease;
+  display: grid;
+  place-content: center;
+  padding: 1.5rem;
+  overflow: hidden;
+  background: #05070a;
+  color: #6ef08a;
+  font-family: 'VT323', 'SFMono-Regular', Consolas, 'PingFang SC', 'Microsoft YaHei', monospace;
+  transition: opacity 0.22s steps(4, end);
 }
-.dark #garden-boot { background-color: #121310; color: #f2eee2; }
-.dark #garden-boot .garden-loading__eyebrow { color: #9c9c92; }
-#garden-boot.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
-#garden-boot.has-error .garden-loading__line { display: none; }
-html[data-booting] { overflow: hidden; }
-.garden-loading__retry { color: inherit; font-size: 13px; text-underline-offset: 5px; }
-.garden-loading__retry[hidden] { display: none; }
-.garden-loading--inline { min-height: 220px; padding-block: 2rem; gap: 1rem; }
-.garden-loading--inline .garden-loading__signature { width: min(240px, 70vw); }
-@keyframes garden-line {
-  0% { transform: translateX(-110%); }
-  100% { transform: translateX(330%); }
+
+.pboot.is-ready {
+  opacity: 0;
+  pointer-events: none;
 }
+
+/* ---- console frame ------------------------------------------------------ */
+.pboot__console {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.pboot__frame {
+  width: min(680px, 92vw);
+  border: 2px solid #ff9d3d;
+  background: rgb(3 6 7 / 0.94);
+  box-shadow:
+    8px 8px 0 0 #000,
+    0 0 90px rgb(255 157 61 / 0.14);
+  /* Matches `.px-box--notched`: the octagonal corner clip is what makes the
+     frame read as chunky hardware rather than as a plain rectangle. */
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+.pboot__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 2px solid #2b3a3f;
+  background: rgb(255 157 61 / 0.1);
+}
+
+.pboot__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.pboot__dots i {
+  width: 8px;
+  height: 8px;
+  background: #2b3a3f;
+}
+
+.pboot__dots i:first-child {
+  background: #ff9d3d;
+}
+
+.pboot__label {
+  color: #7f9d92;
+  font-family: 'Press Start 2P', Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.pboot__clock {
+  margin-left: auto;
+  color: #ff9d3d;
+}
+
+.pboot__lines {
+  height: 268px;
+  padding: 0.85rem 1rem;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  text-shadow: 0 0 6px rgb(110 240 138 / 0.35);
+}
+
+.pboot__lines p {
+  margin: 0 0 0.15rem;
+  white-space: pre-wrap;
+}
+
+.pboot__lines p::first-letter {
+  color: #ff9d3d;
+}
+
+.pboot__lines .is-error {
+  color: #ff4d3d;
+}
+
+/* The only moving part on this screen: a four-cell spinner. The real typing
+   belongs to the Vue sequence — animating text here too would give the reader
+   two competing timelines meeting at the seam. */
+.pboot__spin {
+  display: inline-block;
+  width: 3ch;
+  text-align: left;
+}
+
+.pboot__spin::after {
+  content: '';
+  animation: pboot-spin 2.4s steps(1, end) infinite;
+}
+
+@keyframes pboot-spin {
+  0% {
+    content: '-';
+  }
+  25% {
+    content: '\\';
+  }
+  50% {
+    content: '|';
+  }
+  75% {
+    content: '/';
+  }
+}
+
+.pboot__meter {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 1rem 0.8rem;
+  border-top: 2px solid #2b3a3f;
+}
+
+.pboot__track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 14px;
+  padding: 1px;
+  border: 2px solid #2b3a3f;
+  background: rgb(0 0 0 / 0.6);
+  overflow: hidden;
+}
+
+.pboot__fill {
+  display: block;
+  width: 4%;
+  height: 100%;
+  background: repeating-linear-gradient(90deg, #ff9d3d 0 6px, #c25f14 6px 8px);
+  animation: pboot-load 1.5s steps(9, end) infinite;
+}
+
+@keyframes pboot-load {
+  0% {
+    width: 4%;
+  }
+  100% {
+    width: 96%;
+  }
+}
+
+/* ---- actions ------------------------------------------------------------ */
+.pboot__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(680px, 92vw);
+}
+
+.pboot__hint {
+  /* The only string on this screen carrying Chinese; the pixel face has no CJK
+     glyphs, so it uses the sans stack at a size that reads. */
+  font-family: 'Avenir Next', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-size: 0.78rem;
+  color: #7f9d92;
+  letter-spacing: 0.08em;
+  animation: pboot-blink 1.4s steps(1, end) infinite;
+}
+
+@keyframes pboot-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+.pboot__retry {
+  color: #ff9d3d;
+  font-size: 13px;
+  text-underline-offset: 5px;
+}
+
+.pboot__retry[hidden] {
+  display: none;
+}
+
+/* ---- environment -------------------------------------------------------- */
+.pboot__scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgb(0 0 0 / 0.3) 0 1px, transparent 1px 3px);
+  opacity: 0.6;
+}
+
+.pboot.has-error .pboot__fill {
+  animation: none;
+  width: 100%;
+  background: #ff4d3d;
+}
+
+html[data-booting] {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .pboot__lines {
+    height: 44vh;
+    font-size: 0.95rem;
+  }
+  .pboot__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .garden-loading *, .garden-loading *::after { animation: none !important; }
-  #garden-boot { transition: none; }
+  .pboot,
+  .pboot *,
+  .pboot *::after {
+    animation: none !important;
+  }
 }
