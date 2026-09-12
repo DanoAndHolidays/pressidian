@@ -30,7 +30,14 @@ const marquee = computed(() => [
 </script>
 
 <template>
-  <footer class="relative mt-24 overflow-hidden border-t border-line bg-paper-2/60">
+  <!--
+    Opaque, not translucent. On the homepage this sits at the end of a scroll
+    through a fixed painting, and at 60% paper the night scene showed straight
+    through the link text. The footer is the last thing on the page and the
+    reader has already left the hero by the time they reach it, so there is
+    nothing to gain from letting the backdrop bleed through here.
+  -->
+  <footer class="relative mt-24 overflow-hidden border-t border-line bg-paper-2">
     <!-- Marquee: a quiet reminder that the garden is alive. -->
     <div class="flex overflow-hidden border-b border-line py-3 select-none">
       <div class="marquee-track flex shrink-0 items-center gap-8 pr-8">

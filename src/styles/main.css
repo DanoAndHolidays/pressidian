@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './prose.css';
+@import './pixel.css';
 
 /* Tailwind's automatic source detection walks the whole project. The synced
    Obsidian vault lives inside it and holds hundreds of megabytes of markdown
@@ -26,6 +27,13 @@
   --font-serif: Georgia, 'Iowan Old Style', 'Times New Roman', 'Songti SC', 'Noto Serif SC',
     'Source Han Serif SC', serif;
   --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  /* The pixel/glitch layer's two faces. Press Start 2P carries Latin display
+     and numerals; VT323 carries terminal output. Neither has CJK glyphs, so
+     both stacks end in the CJK-capable sans above. */
+  --font-pixel: 'Press Start 2P', 'SFMono-Regular', Menlo, Consolas, 'PingFang SC',
+    'Microsoft YaHei', monospace;
+  --font-term: 'VT323', 'SFMono-Regular', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei',
+    monospace;
 
   --color-canvas: var(--canvas);
   --color-paper: var(--paper);
@@ -46,9 +54,13 @@
   --color-jade: var(--jade);
   --color-amber: var(--amber);
 
-  /* Foreground tokens for content sitting on the Velaris hero backdrop. The
-     backdrop follows the theme, so these flip with it instead of being
-     hard-coded light-on-dark. */
+  /* Foreground tokens for content sitting on a Velaris shader backdrop — the
+     About and Lab headers. The shader follows the theme, so these flip with it
+     instead of being hard-coded light-on-dark.
+
+     The homepage no longer uses these: it paints a photographic scene and uses
+     the `--px-*` layer instead, which switches on the *scene* rather than on the
+     reader's theme. */
   --color-hero-fg: var(--hero-fg);
   --color-hero-muted: var(--hero-muted);
   --color-hero-line: var(--hero-line);
@@ -157,18 +169,10 @@
   body {
     margin: 0;
     min-height: 100svh;
-    background-color: var(--canvas);
-    background-image:
-      radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 1.4px),
-      radial-gradient(
-        120% 80% at 50% -20%,
-        color-mix(in oklab, var(--ember) 7%, transparent),
-        transparent 60%
-      );
-    background-size:
-      22px 22px,
-      100% 100%;
-    background-attachment: fixed;
+    /* No background here, deliberately. The canvas colour is owned by `html`
+       (see `pixel.css`): a `body` background paints into the root stacking
+       context, which would cover the fixed scene stage. The paper routes get
+       their warm field from `.px-app__canvas` instead. */
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: 15px;
