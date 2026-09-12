@@ -9,16 +9,10 @@
   font-family: 'Avenir Next', 'Segoe UI', 'Microsoft YaHei', sans-serif;
   text-align: center;
 }
-.garden-loading__eyebrow {
-  margin: 0;
-  color: var(--muted, #6f6f67);
-  font-family: Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-}
 .garden-loading__signature { display: block; width: min(360px, 78vw); height: auto; }
 .garden-loading__label { margin: 0; font-size: 13px; letter-spacing: 0.08em; }
+/* The boot screen keeps the label empty and hidden until it has news. */
+.garden-loading__label[hidden] { display: none; }
 .garden-loading__line {
   width: 120px;
   height: 2px;
@@ -47,7 +41,6 @@
   transition: opacity 0.28s ease, visibility 0.28s ease;
 }
 .dark #garden-boot { background-color: #121310; color: #f2eee2; }
-.dark #garden-boot .garden-loading__eyebrow { color: #9c9c92; }
 #garden-boot.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
 #garden-boot.has-error .garden-loading__line { display: none; }
 html[data-booting] { overflow: hidden; }

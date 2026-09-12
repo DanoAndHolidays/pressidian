@@ -30,15 +30,20 @@
         }
       })()
     </script>
-    <script type="module" crossorigin src="/pressidian/assets/index-D4eZ9aGh.js"></script>
+    <script type="module" crossorigin src="/pressidian/assets/index-Ce7BkoiK.js"></script>
     <link rel="stylesheet" crossorigin href="/pressidian/assets/index-wRb8ZPXp.css">
   </head>
   <body>
+    <!--
+      The boot screen carries no copy of its own: just the hand-written
+      signature and its progress line. The status paragraph sits empty and
+      hidden until a timeout or a load failure has something real to report, so
+      nothing is written below the progress bar on the normal path.
+    -->
     <div id="garden-boot" class="garden-loading" role="status" aria-live="polite" aria-label="正在打开数字花园">
-      <p class="garden-loading__eyebrow">Pressidian · A digital garden by</p>
       <img id="garden-boot-signature" class="garden-loading__signature" src="/pressidian/brand/dano-loading.svg" width="450" height="200" alt="Dano 手写签名与标志" fetchpriority="high" />
-      <p id="garden-boot-label" class="garden-loading__label">正在打开花园，准备一点灵感。</p>
       <div class="garden-loading__line" aria-hidden="true"></div>
+      <p id="garden-boot-label" class="garden-loading__label" hidden></p>
       <a id="garden-boot-retry" class="garden-loading__retry" href="" hidden>重新加载</a>
     </div>
     <div id="app" inert></div>
@@ -104,6 +109,7 @@
         } else signature.addEventListener('load', startSignature, { once: true })
         const showRecovery = () => {
           label.textContent = '加载时间有点久，可以试试重新打开。'
+          label.hidden = false
           retry.hidden = false
         }
         timeout = window.setTimeout(showRecovery, 12000)
@@ -114,6 +120,7 @@
           clearTimeout(signatureFallback)
           reducedMotion.removeEventListener('change', onMotionPreference)
           label.textContent = '花园暂时没能打开，请重新加载。'
+          label.hidden = false
           retry.hidden = false
           screen.classList.add('has-error')
         }
