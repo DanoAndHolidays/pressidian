@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/pressidian/favicon.svg" />
+    <link rel="preload" as="image" href="/pressidian/brand/dano-logo.png" />
+    <link rel="preload" as="image" href="/pressidian/brand/dano-loading.svg" />
+    <link rel="stylesheet" href="/pressidian/brand/loading.css" />
     <meta name="theme-color" content="#151612" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)" />
     <meta name="author" content="Dano" />
@@ -27,10 +30,108 @@
         }
       })()
     </script>
-    <script type="module" crossorigin src="/pressidian/assets/index-D-mTAeBM.js"></script>
-    <link rel="stylesheet" crossorigin href="/pressidian/assets/index-O1D9cJYr.css">
+    <script type="module" crossorigin src="/pressidian/assets/index-D4eZ9aGh.js"></script>
+    <link rel="stylesheet" crossorigin href="/pressidian/assets/index-wRb8ZPXp.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="garden-boot" class="garden-loading" role="status" aria-live="polite" aria-label="正在打开数字花园">
+      <p class="garden-loading__eyebrow">Pressidian · A digital garden by</p>
+      <img id="garden-boot-signature" class="garden-loading__signature" src="/pressidian/brand/dano-loading.svg" width="450" height="200" alt="Dano 手写签名与标志" fetchpriority="high" />
+      <p id="garden-boot-label" class="garden-loading__label">正在打开花园，准备一点灵感。</p>
+      <div class="garden-loading__line" aria-hidden="true"></div>
+      <a id="garden-boot-retry" class="garden-loading__retry" href="" hidden>重新加载</a>
+    </div>
+    <div id="app" inert></div>
+    <noscript>
+      <style>#garden-boot { display: none; }</style>
+      <p>🦊 请启用 JavaScript，打开 Dano 的数字花园。</p>
+    </noscript>
+    <script>
+      ;(() => {
+        const screen = document.getElementById('garden-boot')
+        const root = document.getElementById('app')
+        const label = document.getElementById('garden-boot-label')
+        const retry = document.getElementById('garden-boot-retry')
+        const signature = document.getElementById('garden-boot-signature')
+        const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
+        let signatureFinished = reducedMotion.matches
+        let appReady = false
+        let dismissed = false
+        let signatureTimer
+        let signatureFallback
+        let timeout
+        document.documentElement.setAttribute('data-booting', '')
+        retry.addEventListener('click', (event) => {
+          event.preventDefault()
+          window.location.reload()
+        })
+        let failed = false
+        const dismissWhenReady = () => {
+          if (failed || dismissed || !appReady || !signatureFinished) return
+          dismissed = true
+          clearTimeout(timeout)
+          clearTimeout(signatureTimer)
+          clearTimeout(signatureFallback)
+          reducedMotion.removeEventListener('change', onMotionPreference)
+          document.documentElement.removeAttribute('data-booting')
+          root.removeAttribute('inert')
+          screen.classList.add('is-ready')
+          setTimeout(() => screen.remove(), reducedMotion.matches ? 0 : 300)
+        }
+        const finishSignature = () => {
+          signatureFinished = true
+          dismissWhenReady()
+        }
+        const onMotionPreference = () => {
+          if (reducedMotion.matches) finishSignature()
+        }
+        reducedMotion.addEventListener('change', onMotionPreference)
+        const startSignature = () => {
+          clearTimeout(signatureFallback)
+          // 2680ms of ink / logo animation, then a brief hold on the final logo.
+          signatureTimer = setTimeout(finishSignature, reducedMotion.matches ? 0 : 2950)
+        }
+        const recoverSignature = () => {
+          signature.src = '/pressidian/brand/dano-logo.png'
+          finishSignature()
+        }
+        // A stalled image request must not indefinitely block a ready app.
+        signatureFallback = setTimeout(finishSignature, 4500)
+        signature.addEventListener('error', recoverSignature, { once: true })
+        if (signature.complete) {
+          if (signature.naturalWidth) startSignature()
+          else recoverSignature()
+        } else signature.addEventListener('load', startSignature, { once: true })
+        const showRecovery = () => {
+          label.textContent = '加载时间有点久，可以试试重新打开。'
+          retry.hidden = false
+        }
+        timeout = window.setTimeout(showRecovery, 12000)
+        const onError = () => {
+          failed = true
+          clearTimeout(timeout)
+          clearTimeout(signatureTimer)
+          clearTimeout(signatureFallback)
+          reducedMotion.removeEventListener('change', onMotionPreference)
+          label.textContent = '花园暂时没能打开，请重新加载。'
+          retry.hidden = false
+          screen.classList.add('has-error')
+        }
+        // Vite rewrites the entry script, so observe module failures here.
+        const onResourceError = (event) => {
+          if (event.target instanceof HTMLScriptElement && event.target.type === 'module') onError()
+        }
+        window.addEventListener('error', onResourceError, true)
+        window.addEventListener('pressidian:boot-error', onError, { once: true })
+        window.addEventListener('pressidian:ready', () => {
+          if (failed) return
+          clearTimeout(timeout)
+          window.removeEventListener('error', onResourceError, true)
+          window.removeEventListener('pressidian:boot-error', onError)
+          appReady = true
+          dismissWhenReady()
+        }, { once: true })
+      })()
+    </script>
   </body>
 </html>
