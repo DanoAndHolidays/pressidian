@@ -1,0 +1,65 @@
+/* Shared by the pre-JavaScript startup screen and in-app content loading. */
+.garden-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  color: var(--ink, #1d1e19);
+  font-family: 'Avenir Next', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  text-align: center;
+}
+.garden-loading__eyebrow {
+  margin: 0;
+  color: var(--muted, #6f6f67);
+  font-family: Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.garden-loading__signature { display: block; width: min(360px, 78vw); height: auto; }
+.garden-loading__label { margin: 0; font-size: 13px; letter-spacing: 0.08em; }
+.garden-loading__line {
+  width: 120px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(240 100 47 / 0.14);
+}
+.garden-loading__line::after {
+  content: '';
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff6500, #ffb000);
+  animation: garden-line 1.6s ease-in-out infinite;
+}
+#garden-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  min-height: 100svh;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #f4f1e8;
+  background-image: radial-gradient(ellipse at 50% 43%, rgb(255 157 57 / 0.1), transparent 55%);
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+.dark #garden-boot { background-color: #121310; color: #f2eee2; }
+.dark #garden-boot .garden-loading__eyebrow { color: #9c9c92; }
+#garden-boot.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
+#garden-boot.has-error .garden-loading__line { display: none; }
+html[data-booting] { overflow: hidden; }
+.garden-loading__retry { color: inherit; font-size: 13px; text-underline-offset: 5px; }
+.garden-loading__retry[hidden] { display: none; }
+.garden-loading--inline { min-height: 220px; padding-block: 2rem; gap: 1rem; }
+.garden-loading--inline .garden-loading__signature { width: min(240px, 70vw); }
+@keyframes garden-line {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(330%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .garden-loading *, .garden-loading *::after { animation: none !important; }
+  #garden-boot { transition: none; }
+}

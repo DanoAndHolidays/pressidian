@@ -1,4 +1,5 @@
 import type { NoteStatus } from '@/lib/notes/types'
+import type { InteractiveHoverLink } from '@/components/ui/interactive-hover-links/types'
 
 /**
  * Site-owned content: everything that is not generated from the Obsidian vault.
@@ -194,3 +195,19 @@ export const NAV_ITEMS = [
   { key: 'about', label: '关于 Dano', to: '/about', hint: '经历与技能' },
   { key: 'lab', label: '狐狸实验室', to: '/lab', hint: '还没命名的小实验' },
 ] as const
+
+/** Preview photography belongs to the navigation, not the reusable UI component. */
+const NAV_PREVIEW_IMAGES: Record<(typeof NAV_ITEMS)[number]['key'], string> = {
+  home: 'photo-1441974231531-c6227db76b6e',
+  notes: 'photo-1507842217343-583bb7270b66',
+  projects: 'photo-1498050108023-c5249f4df085',
+  about: 'photo-1470770841072-f978cf4d019e',
+  lab: 'photo-1464822759023-fed622ff2c3b',
+}
+
+export const NAV_HOVER_LINKS: InteractiveHoverLink[] = NAV_ITEMS.map((item) => ({
+  heading: item.label,
+  subheading: item.hint,
+  href: item.to,
+  imgSrc: `https://images.unsplash.com/${NAV_PREVIEW_IMAGES[item.key]}?auto=format&fit=crop&w=640&q=80`,
+}))

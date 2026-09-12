@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronLeft, Link2, ListTree, Share2 } from 'lucide-vue-n
 import { useRoute } from 'vue-router'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
 import KnowledgeTree from '@/components/notes/KnowledgeTree.vue'
+import ContentLoading from '@/components/shell/ContentLoading.vue'
 import { useNotesStore } from '@/stores/notes'
 import { useDocumentStore } from '@/stores/documents'
 import { prefetchNoteGroup } from '@/lib/notes/loader'
@@ -149,10 +150,7 @@ const share = () => copy(window.location.href)
         </header>
 
         <!-- body -->
-        <div v-if="loading" class="grid gap-3 py-12" aria-live="polite">
-          <span class="sr-only">正在渲染笔记…</span>
-          <div v-for="n in 6" :key="n" class="h-4 animate-pulse rounded-full bg-paper-3" :style="{ width: `${95 - n * 7}%` }" />
-        </div>
+        <ContentLoading v-if="loading" />
 
         <div
           v-else-if="failure"

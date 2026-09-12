@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { ArrowUpRight, Github, Mail, Rss } from 'lucide-vue-next'
 import FoxMark from './FoxMark.vue'
+import DanoLogo from './DanoLogo.vue'
 import { CONTACTS, NAV_ITEMS, PROFILE } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
 import { compactNumber } from '@/lib/format'
@@ -56,6 +57,10 @@ const marquee = computed(() => [
           在上海写代码，也照料想法。项目、经历与 Obsidian 笔记在同一个站点里持续生长，
           每天自动同步一次。
         </p>
+        <div class="mt-4 flex items-center gap-3">
+          <span class="font-mono text-[0.65rem] tracking-[0.12em] text-muted uppercase">Made by</span>
+          <DanoLogo class="w-28" />
+        </div>
         <div
           class="mt-5 inline-flex items-center gap-2.5 rounded-full border border-line bg-paper px-3 py-1.5"
         >

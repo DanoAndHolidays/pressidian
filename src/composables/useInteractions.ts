@@ -130,16 +130,23 @@ export function useHotkey(chord: string, handler: (event: KeyboardEvent) => void
   onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
-/** Locks body scroll while a modal or drawer is open. */
+let scrollLockCount = 0
+let previousBodyOverflow = ''
+
+/** Shared ownership keeps scroll locked when navigation hands off to search. */
 export function useScrollLock(isLocked: Ref<boolean>) {
-  let previous = ''
+  let ownsLock = false
 
   const apply = (locked: boolean) => {
+    if (locked === ownsLock) return
+    ownsLock = locked
     if (locked) {
-      previous = document.body.style.overflow
+      if (scrollLockCount === 0) previousBodyOverflow = document.body.style.overflow
+      scrollLockCount += 1
       document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = previous
+      scrollLockCount -= 1
+      if (scrollLockCount === 0) document.body.style.overflow = previousBodyOverflow
     }
   }
 

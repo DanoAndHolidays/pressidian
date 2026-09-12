@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { ArrowUpRight, Award, GraduationCap, Mail, Sparkles } from 'lucide-vue-next'
 import FoxMark from '@/components/shell/FoxMark.vue'
+import DanoLogo from '@/components/shell/DanoLogo.vue'
 import Velaris from '@/components/ui/velaris/Velaris.vue'
 import { AWARDS, CONTACTS, PROFILE, SKILL_GROUPS, TIMELINE } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
@@ -60,8 +61,11 @@ const facts = computed(() => [
           </p>
         </div>
 
-        <div class="flex items-center gap-6">
-          <FoxMark :size="120" variant="portrait" class="drop-shadow-[0_20px_50px_rgba(0,0,0,0.28)]" />
+        <div class="flex flex-col items-center gap-3">
+          <DanoLogo eager class="w-[240px] -rotate-6 sm:w-[290px]" />
+          <span class="flex items-center gap-2 text-[0.8rem] text-hero-muted">
+            <FoxMark :size="30" /> 保持好奇，持续生长。
+          </span>
         </div>
       </div>
     </Velaris>

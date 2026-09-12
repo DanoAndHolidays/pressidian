@@ -13,6 +13,7 @@ import {
 import Velaris from '@/components/ui/velaris/Velaris.vue'
 import DecryptText from '@/components/ui/decrypt-text/DecryptText.vue'
 import FoxMark from '@/components/shell/FoxMark.vue'
+import DanoLogo from '@/components/shell/DanoLogo.vue'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
 import { NAV_ITEMS, PROFILE, PROJECTS, STATUS_META } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
@@ -97,7 +98,7 @@ const mapNodes = [
             header's active nav item does. The second pill is `hidden` rather
             than removed on small screens so the first never shifts.
           -->
-          <div class="flex flex-1 flex-col gap-[26px] pt-[10%]">
+          <div class="flex flex-1 flex-col gap-[26px] pt-[4%]">
             <div class="flex flex-wrap items-center gap-3">
               <span
                 class="inline-flex items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-4 py-2 text-[0.85rem] text-hero-fg backdrop-blur"
@@ -121,39 +122,50 @@ const mapNodes = [
               </span>
             </div>
 
-            <div class="flex max-w-4xl flex-1 flex-col justify-center">
-              <DecryptText
-                as="h1"
-                :text="PROFILE.headline"
-                trigger="mount"
-                :stagger="46"
-                :start-delay="420"
-                :loop="false"
-                class="!text-hero-fg"
-              />
+            <div class="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.46fr)] lg:gap-12">
+              <div class="min-w-0">
+                <DecryptText
+                  as="h1"
+                  :text="PROFILE.headline"
+                  trigger="mount"
+                  :stagger="46"
+                  :start-delay="420"
+                  :loop="false"
+                  class="!text-hero-fg"
+                />
 
-              <p
-                class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-hero-muted"
-                style="--reveal-delay: 620ms"
-              >
-                {{ PROFILE.intro }}
-              </p>
+                <p
+                  class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-hero-muted"
+                  style="--reveal-delay: 620ms"
+                >
+                  {{ PROFILE.intro }}
+                </p>
 
-              <div class="animate-rise mt-9 flex flex-wrap items-center gap-4" style="--reveal-delay: 780ms">
-                <RouterLink
-                  to="/notes"
-                  class="group inline-flex items-center gap-2.5 rounded-full bg-ember px-5 py-3 text-[0.875rem] font-semibold text-[#1b1206] shadow-[var(--shadow-ember)] transition-all duration-500 hover:-translate-y-0.5 hover:bg-ember-soft"
-                >
-                  进入知识花园
-                  <ArrowRight :size="15" class="transition-transform duration-500 group-hover:translate-x-1" />
-                </RouterLink>
-                <RouterLink
-                  to="/about"
-                  class="group inline-flex items-center gap-1.5 border-b border-hero-line pb-1 text-[0.875rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
-                >
-                  从这里认识我
-                  <ArrowUpRight :size="14" class="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </RouterLink>
+                <div class="animate-rise mt-9 flex flex-wrap items-center gap-4" style="--reveal-delay: 780ms">
+                  <RouterLink
+                    to="/notes"
+                    class="group inline-flex items-center gap-2.5 rounded-full bg-ember px-5 py-3 text-[0.875rem] font-semibold text-[#1b1206] shadow-[var(--shadow-ember)] transition-all duration-500 hover:-translate-y-0.5 hover:bg-ember-soft"
+                  >
+                    进入知识花园
+                    <ArrowRight :size="15" class="transition-transform duration-500 group-hover:translate-x-1" />
+                  </RouterLink>
+                  <RouterLink
+                    to="/about"
+                    class="group inline-flex items-center gap-1.5 border-b border-hero-line pb-1 text-[0.875rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
+                  >
+                    从这里认识我
+                    <ArrowUpRight :size="14" class="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </RouterLink>
+                </div>
+              </div>
+
+              <div class="hero-signature order-first justify-self-start lg:order-last lg:justify-self-center">
+                <span class="font-mono text-[0.65rem] tracking-[0.22em] text-hero-muted uppercase">A digital garden by</span>
+                <DanoLogo eager class="my-3 w-[190px] sm:w-[240px] lg:w-[340px]" />
+                <span class="flex items-center gap-2 text-[0.75rem] text-hero-muted">
+                  <FoxMark :size="22" />
+                  写代码，也照料想法。
+                </span>
               </div>
             </div>
           </div>
@@ -483,6 +495,10 @@ const mapNodes = [
 </template>
 
 <style scoped>
+.hero-signature { transform: rotate(-5deg); }
+@media (max-width: 1023px) {
+  .hero-signature { transform: none; }
+}
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

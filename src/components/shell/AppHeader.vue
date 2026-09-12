@@ -3,10 +3,11 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Menu, Moon, Search, Sun, X } from 'lucide-vue-next'
 import FoxMark from './FoxMark.vue'
-import { NAV_ITEMS } from '@/data/site'
+import InteractiveHoverLinks from '@/components/ui/interactive-hover-links/InteractiveHoverLinks.vue'
+import { NAV_HOVER_LINKS } from '@/data/site'
 import { useUiStore } from '@/stores/ui'
 import { useNotesStore } from '@/stores/notes'
-import { useScrollProgress } from '@/composables/useInteractions'
+import { useScrollLock, useScrollProgress } from '@/composables/useInteractions'
 import { cn } from '@/lib/utils'
 
 const ui = useUiStore()
@@ -16,6 +17,31 @@ const route = useRoute()
 const progress = useScrollProgress()
 const scrolled = ref(false)
 const isMac = ref(false)
+const navigationDialog = ref<HTMLDialogElement | null>(null)
+useScrollLock(computed(() => ui.navOpen))
+
+const onNavigationKeydown = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return
+  const controls = navigationDialog.value?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]')
+  const first = controls?.[0]
+  const last = controls?.[controls.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last?.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first?.focus()
+  }
+}
+
+watch(
+  () => ui.navOpen,
+  (open) => {
+    if (open) navigationDialog.value?.showModal()
+    else navigationDialog.value?.close()
+  },
+  { flush: 'post' },
+)
 
 const onScroll = () => {
   scrolled.value = window.scrollY > 12
@@ -35,11 +61,6 @@ watch(
     ui.navOpen = false
   },
 )
-
-const isActive = (to: string) => {
-  if (to === '/') return route.path === '/'
-  return route.path === to || route.path.startsWith(`${to}/`)
-}
 
 const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 </script>
@@ -69,27 +90,6 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
           </span>
         </span>
       </RouterLink>
-
-      <nav class="ml-6 hidden items-center gap-1 lg:flex" aria-label="主导航">
-        <RouterLink
-          v-for="item in NAV_ITEMS"
-          :key="item.key"
-          :to="item.to"
-          :class="
-            cn(
-              'relative rounded-full px-3.5 py-2 text-[0.82rem] transition-colors duration-300',
-              isActive(item.to) ? 'text-ember' : 'text-ink-soft hover:text-ink',
-            )
-          "
-        >
-          {{ item.label }}
-          <span
-            v-if="isActive(item.to)"
-            class="absolute inset-x-3 -bottom-0.5 h-px bg-ember"
-            aria-hidden="true"
-          />
-        </RouterLink>
-      </nav>
 
       <div class="ml-auto flex items-center gap-2">
         <button
@@ -130,13 +130,15 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 
         <button
           type="button"
-          class="grid size-9 place-items-center rounded-full border border-line bg-paper/70 text-ink-soft transition-colors duration-300 hover:border-ember/50 hover:text-ember lg:hidden focus-ring"
+          class="flex h-9 items-center gap-2 rounded-full border border-line bg-paper/70 px-3 text-ink-soft transition-colors duration-300 hover:border-ember/50 hover:text-ember focus-ring"
           :aria-expanded="ui.navOpen"
-          aria-label="切换导航"
+          aria-controls="site-navigation"
+          aria-haspopup="dialog"
+          aria-label="打开导航"
           @click="ui.navOpen = !ui.navOpen"
         >
-          <Menu v-if="!ui.navOpen" :size="16" />
-          <X v-else :size="16" />
+          <span class="hidden text-[0.8rem] sm:inline">导航</span>
+          <Menu :size="16" />
         </button>
       </div>
     </div>
@@ -149,38 +151,65 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
       />
     </div>
 
-    <!-- Mobile navigation sheet -->
-    <Transition name="sheet">
-      <div
-        v-if="ui.navOpen"
-        class="border-b border-line bg-[var(--glass)] backdrop-blur-xl lg:hidden"
-      >
-        <nav class="shell-wide grid gap-1 py-4" aria-label="移动端导航">
-          <RouterLink
-            v-for="item in NAV_ITEMS"
-            :key="item.key"
-            :to="item.to"
-            :class="
-              cn(
-                'flex items-baseline justify-between rounded-xl px-3 py-3 transition-colors',
-                isActive(item.to)
-                  ? 'bg-ember/10 text-ember'
-                  : 'text-ink-soft hover:bg-paper-2 hover:text-ink',
-              )
-            "
+  </header>
+
+  <Teleport to="body">
+    <dialog
+      id="site-navigation"
+      ref="navigationDialog"
+      class="navigation-dialog"
+      aria-labelledby="navigation-title"
+      @keydown="onNavigationKeydown"
+      @cancel.prevent="ui.navOpen = false"
+      @close="ui.navOpen = false"
+    >
+      <div class="shell-wide flex min-h-[68px] items-center justify-between gap-4 border-b border-line">
+        <span class="flex items-center gap-2.5">
+          <FoxMark :size="30" />
+          <span class="font-serif text-[1.24rem] tracking-[-0.04em]">Pressidian</span>
+        </span>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="grid size-9 place-items-center rounded-full border border-line text-ink-soft hover:text-ember focus-ring"
+            :aria-label="ui.isDark ? '切换到亮色模式' : '切换到深色模式'"
+            @click="ui.toggleTheme()"
           >
-            <span class="font-serif text-lg">{{ item.label }}</span>
-            <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
-              {{ item.hint }}
-            </span>
-          </RouterLink>
-          <p class="mt-2 px-3 font-mono text-[0.7rem] tracking-[0.13em] text-faint uppercase">
+            <Sun v-if="ui.isDark" :size="15" />
+            <Moon v-else :size="15" />
+          </button>
+          <button
+            type="button"
+            class="flex h-9 items-center gap-2 rounded-full border border-line px-3 text-[0.8rem] text-ink-soft hover:border-ember/50 hover:text-ember focus-ring"
+            aria-label="关闭导航"
+            autofocus
+            @click="ui.navOpen = false"
+          >
+            <span>关闭</span>
+            <X :size="16" />
+          </button>
+        </div>
+      </div>
+      <div v-if="ui.navOpen" class="navigation-content">
+        <div class="mb-4 flex items-end justify-between gap-4 md:mb-6">
+          <div>
+            <p class="eyebrow mb-2">Explore the garden</p>
+            <h2 id="navigation-title" class="text-lg text-ink-soft">去花园里走走。</h2>
+          </div>
+          <span class="hidden font-mono text-[0.7rem] tracking-[0.12em] text-muted sm:block">
+            01 — {{ String(NAV_HOVER_LINKS.length).padStart(2, '0') }}
+          </span>
+        </div>
+        <InteractiveHoverLinks :links="NAV_HOVER_LINKS" @navigate="ui.navOpen = false" />
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-3 text-[0.7rem] text-muted">
+          <p class="font-mono tracking-[0.06em]">
             {{ notes.stats.total }} 篇笔记 · {{ notes.stats.links }} 条关联
           </p>
-        </nav>
+          <span class="hidden sm:inline">按 Esc 返回 · 保持好奇，慢慢探索</span>
+        </div>
       </div>
-    </Transition>
-  </header>
+    </dialog>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -199,15 +228,30 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
   transform: rotate(70deg) scale(0.6);
 }
 
-.sheet-enter-active,
-.sheet-leave-active {
-  transition:
-    opacity 0.3s ease,
-    transform 0.38s var(--ease-out-quint);
+.navigation-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
+.navigation-dialog::backdrop { background: var(--canvas); }
+.navigation-dialog[open] { animation: fade-in 0.25s ease both; }
+.navigation-content {
+  width: min(100% - 3rem, 64rem);
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vh, 3rem);
+}
+@media (max-width: 640px) {
+  .navigation-content { padding-block: 1.5rem; }
 }
 </style>
