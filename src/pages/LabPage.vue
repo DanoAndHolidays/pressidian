@@ -162,8 +162,8 @@ const experiments = computed(() => [
   {
     id: '02',
     title: 'WebGL 噪声场',
-    caption: '正在首页上呼吸的橙色星云',
-    detail: 'Simplex 噪声在 GPU 上叠加出缓慢流动的色块，首屏已经在跑。',
+    caption: '缓慢流动的深空光场',
+    detail: 'Simplex 噪声在 GPU 上叠加出缓慢流动的色块，营造安静的空间感。',
     icon: Waves,
     live: true,
   },
@@ -185,10 +185,10 @@ const experiments = computed(() => [
   },
 ])
 
-const LAB_BG: [string, string] = ['#f0e3d1', '#101109']
+const LAB_BG: [string, string] = ['#e0eaf0', '#0b141e']
 const LAB_COLORS: [string[], string[]] = [
-  ['#e79a63', '#cd7448', '#a95a35', '#f0e3d1'],
-  ['#f0642f', '#a8401f', '#33180c', '#101109'],
+  ['#a6c5d6', '#93b6c9', '#d2dde6', '#e0eaf0'],
+  ['#315f76', '#1e4259', '#112a3d', '#0b141e'],
 ]
 const LAB_GLOW: [number, number] = [0.12, 0.3]
 const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
@@ -286,8 +286,8 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
         :bg="LAB_BG"
         :glow="LAB_GLOW"
         :vignette="LAB_VIGNETTE"
-        :speed="1.6"
-        :grain="0.4"
+        :speed="0.5"
+        :grain="0.08"
         height="auto"
         class="min-h-[20rem] rounded-[1.75rem] border border-hero-line"
       >

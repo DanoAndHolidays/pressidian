@@ -1,411 +1,116 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { Menu, Moon, Search, Sun, X } from 'lucide-vue-next'
-import InteractiveHoverLinks from '@/components/ui/interactive-hover-links/InteractiveHoverLinks.vue'
-import { NAV_HOVER_LINKS } from '@/data/site'
+import { ArrowUpRight, Menu, Moon, Search, Sun, X } from 'lucide-vue-next'
+import { NAV_ITEMS } from '@/data/site'
 import { useUiStore } from '@/stores/ui'
 import { useNotesStore } from '@/stores/notes'
 import { useScrollLock, useScrollProgress } from '@/composables/useInteractions'
-import { cn } from '@/lib/utils'
 
-/**
- * Header.
- *
- * The homepage puts the reader on top of a dark painting, and the notes routes
- * put them on warm paper. One header has to be legible over both, so the two
- * states below are spelled out rather than blended:
- *
- * - over the scene and unscrolled  -> light type, no backdrop, the painting
- *   reads straight through it;
- * - over the scene and scrolled    -> the pixel panel drops in behind it;
- * - everywhere else                -> the original paper treatment, untouched.
- *
- * The pixel panel is used for the scrolled state on *every* route rather than
- * only the homepage. It is opaque enough to be a legible bar on paper too, and
- * keeping one scrolled treatment means the header does not visibly change
- * character as the reader moves from the hero into the rest of the page.
- */
 const ui = useUiStore()
 const notes = useNotesStore()
 const route = useRoute()
-
 const progress = useScrollProgress()
 const scrolled = ref(false)
 const isMac = ref(false)
 const navigationDialog = ref<HTMLDialogElement | null>(null)
+const menuButton = ref<HTMLButtonElement | null>(null)
 useScrollLock(computed(() => ui.navOpen))
-
-const overScene = computed(() => route.name === 'home')
-
-/** Light-on-dark only until the reader scrolls away from the hero. */
-const onArt = computed(() => overScene.value && !scrolled.value)
-
+const active = (key: string) => route.name === key || (key === 'notes' && route.name === 'note')
+const onScroll = () => { scrolled.value = window.scrollY > 12 }
 const onNavigationKeydown = (event: KeyboardEvent) => {
   if (event.key !== 'Tab') return
-  const controls = navigationDialog.value?.querySelectorAll<HTMLElement>(
-    'button:not(:disabled), a[href]',
-  )
+  const controls = navigationDialog.value?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]')
   const first = controls?.[0]
   const last = controls?.[controls.length - 1]
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault()
-    last?.focus()
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault()
-    first?.focus()
-  }
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
 }
-
-watch(
-  () => ui.navOpen,
-  (open) => {
-    if (open) navigationDialog.value?.showModal()
-    else navigationDialog.value?.close()
-  },
-  { flush: 'post' },
-)
-
-const onScroll = () => {
-  scrolled.value = window.scrollY > 12
-}
-
+watch(() => ui.navOpen, (open) => {
+  if (open) navigationDialog.value?.showModal()
+  else { navigationDialog.value?.close(); menuButton.value?.focus() }
+}, { flush: 'post' })
+watch(() => route.fullPath, () => { ui.navOpen = false })
 onMounted(() => {
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
   isMac.value = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
 })
-
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
-
-watch(
-  () => route.fullPath,
-  () => {
-    ui.navOpen = false
-  },
-)
-
-const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 </script>
 
 <template>
-  <header
-    :class="
-      cn(
-        'fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500',
-        scrolled
-          ? 'border-b-2 border-[var(--px-line)] bg-[color-mix(in_oklab,var(--px-panel-solid)_88%,transparent)] backdrop-blur-md'
-          : 'border-b-2 border-transparent bg-transparent',
-      )
-    "
-  >
-    <div class="shell-wide flex h-[68px] items-center gap-4">
-      <RouterLink
-        to="/"
-        :class="
-          cn(
-            'focus-ring group flex shrink-0 items-center gap-2.5 rounded-sm',
-            onArt ? 'text-[var(--px-fg)]' : 'text-ink',
-          )
-        "
-        aria-label="Pressidian 首页"
-      >
-        <span class="px-mark" aria-hidden="true">
-          <i /><i /><i /><i />
-        </span>
-        <span class="flex flex-col leading-none">
-          <span class="px-font">PRESSIDIAN</span>
-          <span
-            :class="
-              cn(
-                'mt-1 font-mono text-[0.66rem] tracking-[0.24em] uppercase',
-                onArt ? 'text-[var(--px-fg-dim)]' : 'text-faint',
-              )
-            "
-          >
-            digital garden
-          </span>
-        </span>
+  <header class="site-header" :class="{ 'is-scrolled': scrolled, 'over-scene': route.name === 'home' }">
+    <div class="site-header__inner">
+      <RouterLink to="/" class="wordmark" aria-label="Pressidian 首页">
+        <span class="garden-symbol" aria-hidden="true"><i /><i /></span>
+        <span>PRESSIDIAN<span class="wordmark__reg">/</span></span>
       </RouterLink>
-
-      <div class="ml-auto flex items-center gap-2">
-        <button
-          type="button"
-          :class="
-            cn(
-              'focus-ring group hidden h-9 items-center gap-2.5 border-2 pr-2 pl-3 text-[0.76rem] transition-colors duration-300 sm:flex',
-              onArt
-                ? 'border-[var(--px-line)] bg-[color-mix(in_oklab,var(--px-panel-solid)_72%,transparent)] text-[var(--px-fg-dim)] hover:border-[var(--px-accent)] hover:text-[var(--px-accent)]'
-                : 'border-line bg-paper/70 text-muted hover:border-ember/50 hover:text-ink',
-            )
-          "
-          @click="ui.openPalette()"
-        >
-          <Search :size="14" :class="onArt ? 'text-[var(--px-accent)]' : 'text-ember'" />
-          <span class="hidden md:inline">搜索笔记、项目…</span>
-          <span class="md:hidden">搜索</span>
-          <kbd
-            :class="
-              cn(
-                'ml-1 border px-1.5 py-0.5 font-mono text-[0.7rem]',
-                onArt
-                  ? 'border-[var(--px-line)] bg-black/40 text-[var(--px-fg-faint)]'
-                  : 'border-line bg-canvas text-faint',
-              )
-            "
-          >
-            {{ shortcutLabel }}
-          </kbd>
+      <nav class="desktop-nav" aria-label="主导航">
+        <RouterLink v-for="item in NAV_ITEMS" :key="item.key" :to="item.to" :class="{ 'is-active': active(item.key) }" :aria-current="active(item.key) ? 'page' : undefined">{{ item.label }}</RouterLink>
+      </nav>
+      <div class="header-actions">
+        <button type="button" class="header-search" aria-label="搜索笔记、项目" @click="ui.openPalette()">
+          <Search :size="16" /><span>搜索</span><kbd>{{ isMac ? '⌘ K' : 'Ctrl K' }}</kbd>
         </button>
-
-        <button
-          type="button"
-          :class="
-            cn(
-              'focus-ring grid size-9 place-items-center border-2 transition-colors duration-300 sm:hidden',
-              onArt
-                ? 'border-[var(--px-line)] bg-black/40 text-[var(--px-fg-dim)]'
-                : 'border-line bg-paper/70 text-ink-soft',
-            )
-          "
-          aria-label="搜索"
-          @click="ui.openPalette()"
-        >
-          <Search :size="15" />
+        <button type="button" class="icon-button" :aria-label="ui.isDark ? '切换到亮色模式' : '切换到深色模式'" @click="ui.toggleTheme()">
+          <Sun v-if="ui.isDark" :size="17" /><Moon v-else :size="17" />
         </button>
-
-        <button
-          type="button"
-          :class="
-            cn(
-              'focus-ring grid size-9 place-items-center border-2 transition-colors duration-300 hover:border-[var(--px-accent)] hover:text-[var(--px-accent)]',
-              onArt
-                ? 'border-[var(--px-line)] bg-black/40 text-[var(--px-fg-dim)]'
-                : 'border-line bg-paper/70 text-ink-soft hover:border-ember/50 hover:text-ember',
-            )
-          "
-          :aria-label="ui.isDark ? '切换到亮色模式' : '切换到深色模式'"
-          @click="ui.toggleTheme()"
-        >
-          <Transition name="swap" mode="out-in">
-            <Sun v-if="ui.isDark" :size="15" key="sun" />
-            <Moon v-else :size="15" key="moon" />
-          </Transition>
-        </button>
-
-        <button
-          type="button"
-          :class="
-            cn(
-              'focus-ring flex h-9 items-center gap-2 border-2 px-3 transition-colors duration-300',
-              onArt
-                ? 'border-[var(--px-line)] bg-black/40 text-[var(--px-fg-dim)] hover:border-[var(--px-accent)] hover:text-[var(--px-accent)]'
-                : 'border-line bg-paper/70 text-ink-soft hover:border-ember/50 hover:text-ember',
-            )
-          "
-          :aria-expanded="ui.navOpen"
-          aria-controls="site-navigation"
-          aria-haspopup="dialog"
-          aria-label="打开导航"
-          @click="ui.navOpen = !ui.navOpen"
-        >
-          <span class="hidden text-[0.8rem] sm:inline">导航</span>
-          <Menu :size="16" />
-        </button>
+        <button ref="menuButton" type="button" class="icon-button menu-toggle" aria-label="打开导航" aria-controls="site-navigation" :aria-expanded="ui.navOpen" @click="ui.navOpen = true"><Menu :size="20" /></button>
       </div>
     </div>
-
-    <!-- Reading progress. A 2px bar, not a hairline — on the pixel layer a 1px
-         rule reads as a rendering artefact. -->
-    <div class="relative h-[2px] w-full overflow-hidden">
-      <div
-        class="h-[2px] origin-left bg-gradient-to-r from-[var(--px-accent)] to-[var(--px-cyan)] transition-transform duration-150 ease-out"
-        :style="{ transform: `scaleX(${progress})` }"
-      />
-    </div>
+    <div class="reading-progress" aria-hidden="true"><i :style="{ transform: 'scaleX(' + progress + ')' }" /></div>
   </header>
 
   <Teleport to="body">
-    <dialog
-      id="site-navigation"
-      ref="navigationDialog"
-      class="navigation-dialog"
-      aria-labelledby="navigation-title"
-      @keydown="onNavigationKeydown"
-      @cancel.prevent="ui.navOpen = false"
-      @close="ui.navOpen = false"
-    >
-      <div
-        class="shell-wide flex min-h-[68px] items-center justify-between gap-4 border-b-2 border-[var(--px-line)]"
-      >
-        <span class="flex items-center gap-2.5 text-[var(--px-fg)]">
-          <span class="px-mark" aria-hidden="true"><i /><i /><i /><i /></span>
-          <span class="px-font">PRESSIDIAN</span>
-        </span>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="focus-ring grid size-9 place-items-center border-2 border-[var(--px-line)] text-[var(--px-fg-dim)] hover:border-[var(--px-accent)] hover:text-[var(--px-accent)]"
-            :aria-label="ui.isDark ? '切换到亮色模式' : '切换到深色模式'"
-            @click="ui.toggleTheme()"
-          >
-            <Sun v-if="ui.isDark" :size="15" />
-            <Moon v-else :size="15" />
-          </button>
-          <button
-            type="button"
-            class="focus-ring flex h-9 items-center gap-2 border-2 border-[var(--px-line)] px-3 text-[0.8rem] text-[var(--px-fg-dim)] hover:border-[var(--px-accent)] hover:text-[var(--px-accent)]"
-            aria-label="关闭导航"
-            autofocus
-            @click="ui.navOpen = false"
-          >
-            <span>关闭</span>
-            <X :size="16" />
-          </button>
-        </div>
-      </div>
-
-      <div v-if="ui.navOpen" class="navigation-content">
-        <div class="mb-4 flex items-end justify-between gap-4 md:mb-6">
-          <div>
-            <p class="px-label mb-2">Explore the garden</p>
-            <h2 id="navigation-title" class="px-font text-[var(--px-fg)]">
-              去花园里走走。
-            </h2>
-          </div>
-          <span class="hidden font-mono text-[0.7rem] tracking-[0.12em] text-[var(--px-fg-faint)] sm:block">
-            01 — {{ String(NAV_HOVER_LINKS.length).padStart(2, '0') }}
-          </span>
-        </div>
-        <InteractiveHoverLinks :links="NAV_HOVER_LINKS" @navigate="ui.navOpen = false" />
-        <div class="mt-6 flex flex-wrap items-center justify-between gap-3 text-[0.7rem] text-[var(--px-fg-faint)]">
-          <p class="font-mono tracking-[0.06em]">
-            {{ notes.stats.total }} 篇笔记 · {{ notes.stats.links }} 条关联
-          </p>
-          <span class="hidden sm:inline">按 Esc 返回 · 保持好奇，慢慢探索</span>
-        </div>
+    <dialog id="site-navigation" ref="navigationDialog" class="navigation-dialog" aria-labelledby="navigation-title" @keydown="onNavigationKeydown" @cancel.prevent="ui.navOpen = false" @close="ui.navOpen = false">
+      <div class="navigation-top"><span class="wordmark">Pressidian®</span><button class="icon-button" aria-label="关闭导航" autofocus @click="ui.navOpen = false"><X :size="22" /></button></div>
+      <div class="navigation-content">
+        <p class="eyebrow">Explore the garden</p><h2 id="navigation-title">去花园里走走。</h2>
+        <nav aria-label="全部页面">
+          <RouterLink v-for="(item, index) in NAV_ITEMS" :key="item.key" :to="item.to" :aria-current="active(item.key) ? 'page' : undefined" @click="ui.navOpen = false"><span class="navigation-index">0{{ index + 1 }}</span><span>{{ item.label }}<small>{{ item.hint }}</small></span><ArrowUpRight :size="24" /></RouterLink>
+        </nav>
+        <p class="navigation-footer">{{ notes.stats.total }} 篇笔记 · {{ notes.stats.links }} 条关联<span>保持好奇，慢慢探索</span></p>
       </div>
     </dialog>
   </Teleport>
 </template>
 
 <style scoped>
-.swap-enter-active,
-.swap-leave-active {
-  transition:
-    opacity 0.25s ease,
-    transform 0.35s var(--ease-spring);
-}
-.swap-enter-from {
-  opacity: 0;
-  transform: rotate(-70deg) scale(0.6);
-}
-.swap-leave-to {
-  opacity: 0;
-  transform: rotate(70deg) scale(0.6);
-}
-
-/* Four blocks that cycle — a loading cursor standing in for the old fox mark,
-   sized so it occupies the same 30px box the mark did. */
-.px-mark {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2px;
-  width: 26px;
-  height: 26px;
-  flex: 0 0 auto;
-}
-
-.px-mark i {
-  display: block;
-  background: var(--px-accent, #ff9d3d);
-}
-
-.px-mark i:nth-child(1) {
-  animation: px-mark-a 2.6s steps(1, end) infinite;
-}
-.px-mark i:nth-child(2) {
-  animation: px-mark-b 2.6s steps(1, end) infinite;
-}
-.px-mark i:nth-child(3) {
-  animation: px-mark-c 2.6s steps(1, end) infinite;
-}
-.px-mark i:nth-child(4) {
-  animation: px-mark-d 2.6s steps(1, end) infinite;
-}
-
-@keyframes px-mark-a {
-  0%,
-  74% {
-    opacity: 1;
-  }
-  75%,
-  100% {
-    opacity: 0.25;
-  }
-}
-@keyframes px-mark-b {
-  0%,
-  24% {
-    opacity: 1;
-  }
-  25%,
-  100% {
-    opacity: 0.25;
-  }
-}
-@keyframes px-mark-c {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0.25;
-  }
-}
-@keyframes px-mark-d {
-  0%,
-  99% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.25;
-  }
-}
-
-.navigation-dialog {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  max-width: none;
-  height: 100dvh;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  /* The overlay is part of the pixel layer now, so it is dark in both site
-     themes and rides the current scene's palette tokens. */
-  background: var(--px-bg, #07090a);
-  color: var(--px-fg, #d8f5e6);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.navigation-dialog::backdrop {
-  background: var(--px-bg, #07090a);
-}
-.navigation-dialog[open] {
-  animation: fade-in 0.25s steps(4, end) both;
-}
-.navigation-content {
-  width: min(100% - 3rem, 64rem);
-  margin-inline: auto;
-  padding-block: clamp(1.5rem, 4vh, 3rem);
-}
-@media (max-width: 640px) {
-  .navigation-content {
-    padding-block: 1.5rem;
-  }
-}
+.site-header { position: fixed; inset: 0 0 auto; z-index: 50; background: color-mix(in oklab, var(--canvas) 90%, transparent); backdrop-filter: blur(20px); transition: box-shadow .3s, background .3s; }
+.site-header.over-scene { --canvas: #080c10; --paper: #131e25; --paper-3: #1a2831; --ink: #e4ecee; --ink-soft: #b6c8d0; --muted: #8fa2af; --line: #a6c9d221; --garden: #cdfa81; background: #080c1099; }
+.site-header.is-scrolled { background: color-mix(in oklab, var(--canvas) 96%, transparent); box-shadow: 0 4px 24px rgb(20 40 30 / .035); }
+.site-header__inner { width: min(100% - 6rem, 82rem); margin: auto; height: 86px; display: flex; align-items: center; gap: 36px; }
+.wordmark { display: inline-flex; align-items: center; gap: 11px; font: 600 18px/1 var(--font-mono); letter-spacing: -.065em; color: var(--ink); text-decoration: none; flex-shrink: 0; }
+.wordmark__reg { font: 10px sans-serif; vertical-align: top; margin-left: 3px; }
+.garden-symbol { position: relative; width: 25px; height: 25px; }
+.garden-symbol i { position: absolute; width: 8px; height: 8px; left: 2px; top: 2px; background: var(--garden); box-shadow: 11px 11px 0 var(--garden); }
+.garden-symbol i + i { left: 13px; top: 2px; opacity: .35; box-shadow: -11px 11px 0 var(--garden); }
+.desktop-nav { display: flex; align-items: center; justify-content: center; gap: 28px; margin-left: auto; }
+.desktop-nav a { position: relative; padding: 12px 0; font-size: 12px; color: var(--muted); transition: color .2s; white-space: nowrap; }
+.desktop-nav a:hover, .desktop-nav a.is-active { color: var(--ink); }
+.desktop-nav a.is-active::after { content: ''; position: absolute; left: calc(50% - 2px); bottom: 3px; width: 4px; height: 4px; background: var(--ember); border-radius: 50%; }
+.header-actions { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+.header-search { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); background: var(--paper); font-size: 12px; cursor: pointer; }
+.header-search kbd { margin-left: 8px; font: 10px var(--font-mono); opacity: .7; }
+.icon-button { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid transparent; border-radius: 3px; color: var(--ink-soft); cursor: pointer; transition: background .2s; background: transparent; }
+.icon-button:hover { background: var(--paper-3); }
+.menu-toggle { display: none; }
+.reading-progress { height: 1px; background: var(--line); }
+.reading-progress i { display: block; height: 100%; background: var(--ember); transform-origin: left; transition: transform .15s; }
+.navigation-dialog { position: fixed; inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; background: var(--canvas); color: var(--ink); overflow: auto; overscroll-behavior: contain; }
+.navigation-dialog::backdrop { background: var(--canvas); }
+.navigation-dialog[open] { animation: fade-in .25s ease both; }
+.navigation-top { width: min(100% - 3rem, 82rem); min-height: 80px; margin: auto; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+.navigation-content { width: min(100% - 3rem, 56rem); margin: 40px auto; }
+.navigation-content h2 { margin: 14px 0 28px; font-size: clamp(28px, 5vw, 48px); }
+.navigation-content nav a { display: flex; align-items: center; gap: 22px; padding: 22px 0; border-bottom: 1px solid var(--line); font-size: clamp(21px, 3vw, 32px); transition: color .2s; }
+.navigation-content nav a:hover { color: var(--ember); }
+.navigation-content nav a > svg { margin-left: auto; }
+.navigation-index { font: 11px var(--font-mono); color: var(--muted); }
+.navigation-content small { display: block; font: 12px var(--font-sans); color: var(--muted); margin-top: 6px; }
+.navigation-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--muted); margin-top: 28px; }
+@media (max-width: 1100px) { .site-header__inner { width: calc(100% - 3rem); gap: 20px; } .desktop-nav { gap: 18px; } .header-search kbd { display: none; } }
+@media (max-width: 900px) { .desktop-nav { display: none; } .menu-toggle { display: grid; } }
+@media (max-width: 640px) { .site-header__inner { height: 70px; width: calc(100% - 2.5rem); } .wordmark { font-size: 17px; } .header-search { width: 36px; padding: 0; justify-content: center; border: 0; background: transparent; } .header-search span { display: none; } .header-actions { gap: 2px; } }
 </style>

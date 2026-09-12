@@ -6,13 +6,8 @@
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <!-- Applies on the first paint, before Vite's bundled CSS is even requested. -->
     <link rel="stylesheet" href="%BASE_URL%brand/loading.css" />
-    <!--
-      The pixel faces are *not* preloaded here. They live in `src/assets`, so
-      Vite content-hashes them and a hand-written href in this file would 404.
-      `font-display: swap` plus a monospace fallback that shares the same 1ch
-      grid keeps the boot terminal from reflowing when they land.
-    -->
-    <meta name="theme-color" content="#05070a" />
+
+    <meta name="theme-color" content="#080c10" />
     <meta name="author" content="Dano" />
     <meta
       name="description"
@@ -24,53 +19,27 @@
       ;(() => {
         try {
           const stored = localStorage.getItem('pressidian-theme')
-          const dark =
-            stored === 'dark' ||
-            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          const dark = stored !== 'light'
           document.documentElement.classList.toggle('dark', dark)
           document.documentElement.dataset.theme = dark ? 'dark' : 'light'
         } catch {
-          /* private mode — fall back to the light palette */
+          document.documentElement.classList.add('dark')
         }
       })()
     </script>
   </head>
   <body>
-    <!--
-      Pre-JavaScript boot screen.
-
-      It deliberately reproduces the first frame of `BootSequence.vue` — same
-      near-black field, same green terminal lines, same frame geometry — so the
-      handover from static HTML to the Vue sequence is invisible. It is not a
-      second animation: it types nothing and advances nothing, because two
-      competing timelines would fight at the seam.
-    -->
-    <div id="garden-boot" class="pboot" role="status" aria-live="polite" aria-label="正在启动 Pressidian">
-      <div class="pboot__console">
-        <div class="pboot__frame">
-          <div class="pboot__bar">
-            <span class="pboot__dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="pboot__label">pressidian — secure boot</span>
-            <span class="pboot__label pboot__clock">000%</span>
-          </div>
-          <div class="pboot__lines">
-            <p>&gt; PRESSIDIAN BIOS v2.0 — (c) DANO LABS</p>
-            <p>&gt; scene renderer ......................... OK</p>
-            <p id="garden-boot-label" class="pboot__pending">
-              &gt; vault index ............................ <span class="pboot__spin"></span>
-            </p>
-          </div>
-          <div class="pboot__meter">
-            <div class="pboot__track"><span class="pboot__fill"></span></div>
-            <span class="pboot__label">decrypting garden · 000%</span>
-          </div>
-        </div>
-        <div class="pboot__actions">
-          <span class="pboot__label pboot__hint">自动登录中 · 按任意键跳过</span>
-          <a id="garden-boot-retry" class="pboot__retry" href="" hidden>重新加载</a>
-        </div>
+    <!-- Shares its layout and CSS with the Vue entrance to avoid a first-paint flash. -->
+    <div id="garden-boot" class="pboot" role="status" aria-live="polite" aria-label="正在打开 Pressidian">
+      <div class="pboot__identity">
+        <div class="pboot__emblem" aria-hidden="true"><span></span><span></span><i></i></div>
+        <p class="pboot__wordmark">Pressidian<span>®</span></p>
+        <p class="pboot__subtitle">INITIALIZING PERSONAL SPACE</p>
+        <div class="pboot__track" aria-hidden="true"><span></span></div>
+        <p id="garden-boot-label" class="pboot__message">正在连接知识与灵感</p>
+        <a id="garden-boot-retry" class="pboot__retry" href="" hidden>重新加载</a>
       </div>
-      <div class="pboot__scan" aria-hidden="true"></div>
+      <span class="pboot__edition">DANO / DIGITAL UNIVERSE</span>
     </div>
     <div id="app" inert></div>
     <noscript>
@@ -110,7 +79,7 @@
         const onError = () => {
           failed = true
           clearTimeout(timeout)
-          label.textContent = '> 启动失败 — 花园暂时没能打开。'
+          label.textContent = '花园暂时没能打开，请重新加载。'
           label.classList.add('is-error')
           retry.hidden = false
           screen.classList.add('has-error')
@@ -136,7 +105,7 @@
 
         // A stalled bundle must not leave the reader on a dead screen forever.
         timeout = window.setTimeout(() => {
-          label.textContent = '> 加载时间有点久，可以重新打开试试。'
+          label.textContent = '加载时间有点久，可以重新打开试试。'
           label.classList.remove('pboot__pending')
           retry.hidden = false
         }, 12000)

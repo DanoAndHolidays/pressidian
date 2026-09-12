@@ -69,7 +69,10 @@ export function useBootSequence() {
 
   // Reduced motion skips the cinematic outright: an auto-playing sequence the
   // reader cannot pause is exactly what the preference is asking us to avoid.
-  if (reducedMotion && phase.value === 'boot') phase.value = 'done'
+  const mode = readIntroMode()
+  if (phase.value === 'boot' && (reducedMotion || mode === 'skip' || (mode === 'normal' && hasBooted()))) {
+    phase.value = 'done'
+  }
 
   const advance = (next: BootPhase) => {
     phase.value = next

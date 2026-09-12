@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import './prose.css';
-@import './pixel.css';
+
 
 /* Tailwind's automatic source detection walks the whole project. The synced
    Obsidian vault lives inside it and holds hundreds of megabytes of markdown
@@ -15,26 +15,12 @@
    first paint so the paper never flashes. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ==========================================================================
-   Pressidian design tokens
-   The palette is anchored on the original garden orange (#f0642f in light,
-   a lifted #ff7a45 in dark) so the identity survives the rebuild.
-   ========================================================================== */
-
+/* Shared palette and typography for the entire garden. */
 @theme inline {
   --font-sans: 'Avenir Next', Avenir, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --font-serif: Georgia, 'Iowan Old Style', 'Times New Roman', 'Songti SC', 'Noto Serif SC',
-    'Source Han Serif SC', serif;
+  --font-serif: 'Avenir Next', Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-  /* The pixel/glitch layer's two faces. Press Start 2P carries Latin display
-     and numerals; VT323 carries terminal output. Neither has CJK glyphs, so
-     both stacks end in the CJK-capable sans above. */
-  --font-pixel: 'Press Start 2P', 'SFMono-Regular', Menlo, Consolas, 'PingFang SC',
-    'Microsoft YaHei', monospace;
-  --font-term: 'VT323', 'SFMono-Regular', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei',
-    monospace;
-
   --color-canvas: var(--canvas);
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);
@@ -54,13 +40,7 @@
   --color-jade: var(--jade);
   --color-amber: var(--amber);
 
-  /* Foreground tokens for content sitting on a Velaris shader backdrop — the
-     About and Lab headers. The shader follows the theme, so these flip with it
-     instead of being hard-coded light-on-dark.
-
-     The homepage no longer uses these: it paints a photographic scene and uses
-     the `--px-*` layer instead, which switches on the *scene* rather than on the
-     reader's theme. */
+  /* Foreground tokens for the About and Lab backdrops. */
   --color-hero-fg: var(--hero-fg);
   --color-hero-muted: var(--hero-muted);
   --color-hero-line: var(--hero-line);
@@ -69,9 +49,9 @@
 
   --radius-xs: 6px;
   --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
 
   --shadow-xs: 0 1px 2px rgb(24 22 16 / 0.05);
   --shadow-sm: 0 2px 10px -3px rgb(24 22 16 / 0.1);
@@ -85,65 +65,71 @@
 }
 
 :root {
-  --canvas: #f4f1e8;
-  --paper: #fcfaf5;
-  --paper-2: #f8f5ec;
-  --paper-3: #efeade;
-  --ink: #1d1e19;
-  --ink-soft: #3c3f38;
-  --muted: #6f6f67;
-  --faint: #9d9c92;
-  --line: #ded8ca;
-  --line-strong: #c9c2b1;
-  --ember: #f0642f;
-  --ember-deep: #b84924;
-  --ember-soft: #ff9167;
-  --ember-tint: #f8dfd1;
-  --forest: #1b1d17;
-  --forest-soft: #3d4237;
-  --jade: #3f7d5f;
-  --amber: #c88a2e;
+  --garden: #354d5c;
+  --garden-on: #f4f8fa;
+  --fieldnote: #17242d;
+  --canvas: #edf1f3;
+  --paper: #f8fafb;
+  --paper-2: #e5ebee;
+  --paper-3: #dae2e7;
+  --ink: #192c38;
+  --ink-soft: #455a68;
+  --muted: #657783;
+  --faint: #768895;
+  --line: #ced9df;
+  --line-strong: #b5c4cd;
+  --ember: #427789;
+  --ember-deep: #2c5b6c;
+  --ember-soft: #72a6b6;
+  --ember-tint: #dceaf0;
+  --forest: #142733;
+  --forest-soft: #304a5d;
+  --jade: #517f64;
+  --amber: #9e794a;
   --grid-dot: color-mix(in oklab, var(--muted) 24%, transparent);
   --selection: color-mix(in oklab, var(--ember) 26%, transparent);
   --glass: color-mix(in oklab, var(--paper) 72%, transparent);
   --glass-line: color-mix(in oklab, var(--paper) 45%, var(--line));
   /* Hero foreground: the light backdrop is a warm haze, so text is ink. */
-  --hero-fg: #1d1a14;
-  --hero-muted: color-mix(in oklab, #1d1a14 72%, transparent);
-  --hero-line: color-mix(in oklab, #1d1a14 16%, transparent);
-  --hero-surface: color-mix(in oklab, #fffaf2 58%, transparent);
-  --hero-surface-strong: color-mix(in oklab, #fffaf2 84%, transparent);
+  --hero-fg: #172c39;
+  --hero-muted: color-mix(in oklab, #172c39 72%, transparent);
+  --hero-line: color-mix(in oklab, #172c39 16%, transparent);
+  --hero-surface: color-mix(in oklab, #eff7fa 58%, transparent);
+  --hero-surface-strong: color-mix(in oklab, #eff7fa 84%, transparent);
   color-scheme: light;
 }
 
 .dark {
-  --canvas: #121310;
-  --paper: #191b16;
-  --paper-2: #1f2119;
-  --paper-3: #262920;
-  --ink: #f2eee2;
-  --ink-soft: #d3cfc1;
-  --muted: #9c9c92;
-  --faint: #74746a;
-  --line: #2f3226;
-  --line-strong: #40442f;
-  --ember: #ff7a45;
-  --ember-deep: #ffab86;
-  --ember-soft: #ff9a6c;
-  --ember-tint: #3a2a1f;
-  --forest: #202219;
-  --forest-soft: #4b5140;
-  --jade: #62b189;
-  --amber: #e0aa52;
+  --garden: #cdfa81;
+  --garden-on: #17200e;
+  --fieldnote: #101c24;
+  --canvas: #080c10;
+  --paper: #10171d;
+  --paper-2: #0d141a;
+  --paper-3: #1a252d;
+  --ink: #e3e9ec;
+  --ink-soft: #b9c7ce;
+  --muted: #91a3af;
+  --faint: #7c8f9c;
+  --line: #24313b;
+  --line-strong: #3b4f5c;
+  --ember: #cdfa81;
+  --ember-deep: #e1ffb6;
+  --ember-soft: #a9de6a;
+  --ember-tint: #202f1b;
+  --forest: #11212b;
+  --forest-soft: #304957;
+  --jade: #92d5b0;
+  --amber: #d6ae76;
   --grid-dot: color-mix(in oklab, var(--muted) 22%, transparent);
   --selection: color-mix(in oklab, var(--ember) 32%, transparent);
   --glass: color-mix(in oklab, var(--paper) 66%, transparent);
   --glass-line: color-mix(in oklab, var(--line) 80%, transparent);
   /* Hero foreground: the dark backdrop is a deep ember nebula, so text is warm
      off-white. */
-  --hero-fg: #f8f4ea;
-  --hero-muted: color-mix(in oklab, #f8f4ea 68%, transparent);
-  --hero-line: color-mix(in oklab, #f8f4ea 16%, transparent);
+  --hero-fg: #e5eff3;
+  --hero-muted: color-mix(in oklab, #e5eff3 68%, transparent);
+  --hero-line: color-mix(in oklab, #e5eff3 16%, transparent);
   --hero-surface: color-mix(in oklab, #ffffff 8%, transparent);
   --hero-surface-strong: color-mix(in oklab, #ffffff 14%, transparent);
   color-scheme: dark;
@@ -161,6 +147,7 @@
   }
 
   html {
+    background: var(--canvas);
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
     scroll-padding-top: 6.5rem;
@@ -169,10 +156,6 @@
   body {
     margin: 0;
     min-height: 100svh;
-    /* No background here, deliberately. The canvas colour is owned by `html`
-       (see `pixel.css`): a `body` background paints into the root stacking
-       context, which would cover the fixed scene stage. The paper routes get
-       their warm field from `.px-app__canvas` instead. */
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: 15px;
@@ -230,7 +213,7 @@
     inset: 0;
     z-index: 60;
     pointer-events: none;
-    opacity: 0.32;
+    opacity: 0.065;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
   }
@@ -257,12 +240,12 @@
    ========================================================================== */
 
 @utility shell {
-  width: min(100% - 2.5rem, 82rem);
+  width: min(100% - 3rem, 76rem);
   margin-inline: auto;
 }
 
 @utility shell-wide {
-  width: min(100% - 2.5rem, 94rem);
+  width: min(100% - 3rem, 82rem);
   margin-inline: auto;
 }
 
@@ -275,7 +258,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ember);
+  color: var(--garden);
 }
 
 @utility panel {
@@ -297,7 +280,7 @@
     box-shadow 0.42s var(--ease-out-quint),
     border-color 0.3s ease;
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-md);
   }
 }
@@ -322,7 +305,7 @@
     transition: opacity 0.4s ease;
     background: radial-gradient(
       22rem circle at var(--mx, 50%) var(--my, 50%),
-      color-mix(in oklab, var(--ember) 20%, transparent),
+      color-mix(in oklab, var(--ember) 7%, transparent),
       transparent 65%
     );
     pointer-events: none;
