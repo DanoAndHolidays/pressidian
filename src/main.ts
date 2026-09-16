@@ -1,5 +1,6 @@
 import { createApp, nextTick } from 'vue'
 import { createPinia } from 'pinia'
+import { RouterLink, RouterView } from 'vue-router'
 import App from './App.vue'
 import router from './router'
 import { registerDirectives } from './directives/reveal'
@@ -10,7 +11,10 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// app.use(router) registers RouterLink and RouterView globally.
+// Registered globally so `<component :is="'RouterLink'">` — used by the
+// data-driven link grids — resolves the same component as the static tag.
+app.component('RouterLink', RouterLink)
+app.component('RouterView', RouterView)
 
 registerDirectives(app)
 // Keep the startup screen in place until the initial lazy route can render.

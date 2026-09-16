@@ -44,12 +44,3 @@ coverage
 
 # 设计方向稿只保留在本地
 /design-previews/
-
-# 场景插画的原始母版（每张 2–3 MB，不参与部署）。
-# 派生文件 public/scenes/ 是要提交的，构建机不需要这些母版。
-/design-source/
-
-# Playwright / 截图工具的本地产物
-/.playwright-cli/
-/.playwright-mcp/
-/output/

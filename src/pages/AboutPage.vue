@@ -10,10 +10,10 @@ import { compactNumber } from '@/lib/format'
 
 const notes = useNotesStore()
 
-const ABOUT_BG: [string, string] = ['#e0eaf0', '#0b141e']
+const ABOUT_BG: [string, string] = ['#f0e3d1', '#141510']
 const ABOUT_COLORS: [string[], string[]] = [
-  ['#a6c5d6', '#93b6c9', '#d2dde6', '#e0eaf0'],
-  ['#315f76', '#1e4259', '#112a3d', '#0b141e'],
+  ['#e79a63', '#cd7448', '#a95a35', '#f0e3d1'],
+  ['#f0642f', '#8c3a1c', '#4a2413', '#141510'],
 ]
 const ABOUT_GLOW: [number, number] = [0.12, 0.3]
 const ABOUT_VIGNETTE: [number, number] = [0.3, 0.8]
@@ -41,8 +41,8 @@ const facts = computed(() => [
       :bg="ABOUT_BG"
       :glow="ABOUT_GLOW"
       :vignette="ABOUT_VIGNETTE"
-      :speed="0.4"
-      :grain="0.08"
+      :speed="1"
+      :grain="0.3"
       height="auto"
       class="min-h-[24rem] rounded-[2rem] border border-hero-line"
     >
