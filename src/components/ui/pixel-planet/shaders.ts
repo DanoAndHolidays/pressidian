@@ -143,8 +143,10 @@ void main() {
   if (alpha < 0.01) discard;
 
   // Restrained orange ink on paper; warm luminous glyphs in the dark theme.
-  vec3 shadow = mix(vec3(0.53, 0.26, 0.11), vec3(0.65, 0.34, 0.17), uDark);
-  vec3 highlight = mix(vec3(0.82, 0.43, 0.18), vec3(1.0, 0.77, 0.52), uDark);
+  // The light stops are kept deep: on the warm paper a brighter highlight
+  // (#d16e2e) sat too close to the canvas tone and the glyphs washed out.
+  vec3 shadow = mix(vec3(0.42, 0.19, 0.07), vec3(0.65, 0.34, 0.17), uDark);
+  vec3 highlight = mix(vec3(0.66, 0.29, 0.10), vec3(1.0, 0.77, 0.52), uDark);
   color = mix(shadow, highlight, smoothstep(0.1, 0.95, luma));
   vec2 fromCenter = (vUv - 0.5) * 1.4;
   color *= 1.0 - uVignette * dot(fromCenter, fromCenter);

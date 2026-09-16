@@ -12,12 +12,40 @@ import {
 } from 'lucide-vue-next'
 import FoxMark from '@/components/shell/FoxMark.vue'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
+import DecryptText from '@/components/ui/decrypt-text/DecryptText.vue'
 import PixelPlanet from '@/components/ui/pixel-planet/PixelPlanet.vue'
 import { NAV_ITEMS, PROFILE, PROJECTS, STATUS_META } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
 import { formatDate, relativeTime } from '@/lib/format'
 
 const notes = useNotesStore()
+
+/**
+ * Hero headline, as two decrypting lines.
+ *
+ * The scramble/lock-in runs once on mount (`loop: false`) and is staggered per
+ * character, so the line resolves in a ragged left-to-right sweep. Splitting on
+ * the line break keeps the display line structure while each line animates
+ * independently; the trailing 。 is part of the second line so it settles with
+ * it instead of floating as a separate box.
+ */
+const HEADLINE_LINES = ['让作品与想法，', '一起生长。'] as const
+const HEADLINE_START_DELAY = 240
+const HEADLINE_STAGGER = 46
+
+/**
+ * `?headlineSlow=<ms>` parks the scramble for visual inspection.
+ *
+ * Dev-only: the scramble window is ~0.9s, which is too short to screenshot or
+ * to judge its contrast, so this holds the churn open. `import.meta.env.DEV` is
+ * statically replaced, so the branch and its URL read are dropped from the
+ * production bundle entirely.
+ */
+const headlineSlow = import.meta.env.DEV
+  ? Number(new URLSearchParams(window.location.search).get('headlineSlow') ?? 0) || 0
+  : 0
+const headlineStartDelay = HEADLINE_START_DELAY + headlineSlow
+const headlineStagger = headlineSlow > 0 ? 900 : HEADLINE_STAGGER
 
 const latest = computed(() => notes.notes[0])
 const recent = computed(() => notes.notes.slice(0, 5))
@@ -49,8 +77,23 @@ const mapNodes = [
 
       <div class="hero-copy">
         <h1 id="home-title">
-          <span>让作品与想法，</span>
-          <span class="hero-title-secondary">一起生长<span class="hero-period">。</span></span>
+          <DecryptText
+            as="span"
+            :text="HEADLINE_LINES[0]"
+            trigger="mount"
+            :stagger="headlineStagger"
+            :start-delay="headlineStartDelay"
+            :loop="false"
+          />
+          <DecryptText
+            as="span"
+            class="hero-title-secondary"
+            :text="HEADLINE_LINES[1]"
+            trigger="mount"
+            :stagger="headlineStagger"
+            :start-delay="headlineStartDelay + HEADLINE_LINES[0].length * headlineStagger"
+            :loop="false"
+          />
         </h1>
         <p class="hero-intro">我是 {{ PROFILE.name }}，一名前端开发者。<br class="sm:hidden" />在这里写代码，也照料想法。<br class="hidden sm:block" />我的项目、经历与持续更新的技术笔记，都在这座数字花园里。</p>
         <div class="hero-actions">
@@ -349,10 +392,24 @@ const mapNodes = [
 .hero-visual { grid-area: visual; align-self: center; width: 100%; max-width: 680px; }
 .home-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .78fr); grid-template-areas: "rail rail" "copy visual" "overview overview"; column-gap: clamp(32px, 5vw, 88px); }
 .hero-overview { grid-area: overview; }
-.hero-copy h1 { margin: 0; font-family: var(--font-sans); font-size: clamp(44px, 5.6vw, 80px); font-weight: 500; line-height: 1.22; letter-spacing: -.055em; }
+/*
+ * The headline is two `DecryptText` lines. `DecryptText` ships a serif
+ * display default and a per-character colour rule, so the hero re-asserts its
+ * own type here.
+ *
+ * These selectors carry the `#home-title` id on purpose. `DecryptText`'s own
+ * scoped rules (`.pd-decrypt[data-variant='display'][data-v-…] [data-char]`)
+ * have the same computed specificity as a plain `.hero-copy h1 :deep(...)`
+ * would, and a component's styles are injected *after* the page's — so on a tie
+ * the component wins and the hero's type and the orange 。 are silently
+ * overridden. The id lifts these above it.
+ */
+.hero-copy h1 { margin: 0; font-family: var(--font-sans); font-size: clamp(34px, 5.6vw, 80px); font-weight: 500; line-height: 1.22; letter-spacing: -.055em; }
 .hero-copy h1 > span { display: block; }
-.hero-title-secondary { color: var(--ink-soft); }
-.hero-period { color: var(--ember); }
+#home-title :deep(.pd-decrypt) { font: inherit; letter-spacing: inherit; line-height: inherit; }
+#home-title .hero-title-secondary { color: var(--ink-soft); }
+/* The terminating 。 stays orange, including while the line is still churning. */
+#home-title :deep([data-char='。']) { color: var(--ember); }
 .hero-intro { margin-top: 26px; max-width: 650px; color: var(--muted); font-size: 15px; line-height: 1.9; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
 .hero-button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 22px; padding: 11px 20px; border: 1px solid transparent; border-radius: 6px; font-size: 13px; font-weight: 500; transition: background .2s, border-color .2s; }
@@ -386,7 +443,7 @@ const mapNodes = [
   .hero-rail-note { display: none; }
   .hero-copy { padding-block: 56px 40px; }
   .hero-visual { width: 100%; margin-bottom: 32px; }
-  .hero-copy h1 { font-size: clamp(36px, 7.8vw, 56px); }
+  .hero-copy h1 { font-size: clamp(34px, 7.6vw, 56px); }
   .hero-intro { font-size: 14px; margin-top: 24px; }
   .hero-overview { grid-template-columns: 1fr; gap: 16px; }
   .latest-note, .hero-shortcut { padding: 20px; }

@@ -15,7 +15,7 @@ export const PLANET_PRESET = {
   vignette: 38, bloom: 25, animSpeed: 100, animIntensity: 60,
 } as const
 
-export function createPlanetScene(canvas: HTMLCanvasElement, dark = false) {
+export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale = 1) {
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' })
   renderer.setClearColor(0x000000, 0)
   renderer.toneMapping = NoToneMapping
@@ -25,6 +25,10 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false) {
   camera.lookAt(0, 0, 0)
   const group = new Group()
   group.rotation.set(0.43, 0, -0.38)
+  // Working scale, applied on top of the authored pose. The preset camera is
+  // wide enough that the default 1.0 leaves the planet occupying only ~61% of
+  // the canvas width, so the model is scaled up to fill it deliberately.
+  group.scale.setScalar(scale)
   scene.add(group)
   group.updateMatrixWorld(true)
   const light = new Vector3(-3, 5, 5).normalize()

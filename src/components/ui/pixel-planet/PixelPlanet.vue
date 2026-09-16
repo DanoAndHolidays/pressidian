@@ -5,6 +5,20 @@ import { useUiStore } from '@/stores/ui'
 import { createPlanetScene } from './scene'
 import { fallbackPlanet } from '@/components/ui/ascii-art/fallback-planet'
 
+const props = withDefaults(
+  defineProps<{
+    /**
+     * Model scale on top of the authored camera framing. `1` leaves the planet
+     * at roughly 61% of the canvas width, which floats in empty space; the hero
+     * uses a larger value so the planet fills its column deliberately. 1.18
+     * lands the ring at ~90% of the canvas width, leaving a clear margin so the
+     * outermost glyphs are never pressed against the edge.
+     */
+    scale?: number
+  }>(),
+  { scale: 1.18 },
+)
+
 const host = ref<HTMLDivElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 const failed = ref(false)
@@ -66,7 +80,7 @@ function restored() {
 function initialize() {
   if (!canvas.value || disposed) return
   try {
-    engine = createPlanetScene(canvas.value, ui.isDark)
+    engine = createPlanetScene(canvas.value, ui.isDark, props.scale)
     failed.value = false
     resize()
   } catch {

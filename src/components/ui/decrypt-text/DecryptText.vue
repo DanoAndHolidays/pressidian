@@ -368,14 +368,14 @@ const onPointerEnter = () => {
       <span aria-hidden="true" class="select-none">
         <template v-for="(word, w) in words" :key="w">
           <!--
-            `whitespace-pre` used to sit here, which turned each space-delimited
-            run into one unbreakable box. That is fine for Latin words but wrong
-            for CJK: a Chinese headline has no spaces, so the entire line became
-            a single atom and overflowed the viewport by 107px on a 390px screen.
-            Leaving the wrapper breakable lets CJK wrap per character while
-            Latin still wraps at the explicit spaces between runs.
+            The wrapper is deliberately breakable rather than `inline-block`.
+            An atomic wrapper is right for Latin (a word stays whole) but turns
+            a CJK headline into ONE unbreakable box, because Chinese has no
+            spaces to split on — that overflowed the viewport by 107px on a
+            390px screen. Each character span is its own inline-block, so CJK
+            wraps per character while Latin still wraps between runs.
           -->
-          <span class="inline-block">
+          <span>
             <span
               v-for="item in word"
               :key="item.i"
@@ -398,7 +398,7 @@ const onPointerEnter = () => {
     <span v-else class="block" aria-hidden="true">
       <span class="select-none">
         <template v-for="(word, w) in words" :key="w">
-          <span class="inline-block">
+          <span>
             <span
               v-for="item in word"
               :key="item.i"
@@ -460,8 +460,14 @@ const onPointerEnter = () => {
   color: inherit;
 }
 
+/*
+ * Scramble ink is mixed from theme tokens rather than a fixed white: on the
+ * light paper a white-leaning mix washed out to ~#f5b899 and all but vanished.
+ * Mixing towards `--ink` keeps the churn legible in both themes, and it stays
+ * inside the warm ramp so the resolved glyphs still read as the arrival point.
+ */
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble']) {
-  color: color-mix(in oklab, var(--ember) 55%, rgba(255, 255, 255, 0.55));
+  color: color-mix(in oklab, var(--ember) 58%, var(--ink));
 }
 
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='lock']) {
