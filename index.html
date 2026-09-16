@@ -36,19 +36,28 @@
         }
       })()
     </script>
-    <script type="module" crossorigin src="/pressidian/assets/index-B-gtufcj.js"></script>
-    <link rel="stylesheet" crossorigin href="/pressidian/assets/index-fmsiirAe.css">
+    <script type="module" crossorigin src="/pressidian/assets/index-C_9JD0RG.js"></script>
+    <link rel="stylesheet" crossorigin href="/pressidian/assets/index-3XYt-ZJe.css">
   </head>
   <body>
     <!--
       The boot screen carries no copy of its own: just the hand-written
-      signature and its progress line. The status paragraph sits empty and
+      signature and its conveyor loader. The status paragraph sits empty and
       hidden until a timeout or a load failure has something real to report, so
-      nothing is written below the progress bar on the normal path.
+      nothing is written below the loader on the normal path.
+
+      The loader is plain markup rather than the Vue `ConveyorLoop`, because this
+      screen has to draw before any component code has been parsed. Its CSS lives
+      in `src/styles/loading.css`; keep the two in step.
     -->
     <div id="garden-boot" class="garden-loading" role="status" aria-live="polite" aria-label="正在打开数字花园">
       <img id="garden-boot-signature" class="garden-loading__signature" src="/pressidian/assets/dano-loading-C-h41ROP.svg" width="330" height="172" alt="Dano 钢笔手写签名" fetchpriority="high" />
-      <div class="garden-loading__line" aria-hidden="true"></div>
+      <div class="garden-loading__line" aria-hidden="true">
+        <span class="garden-loading__track">░░░░░░░░░░</span>
+        <span class="garden-loading__block" style="--loader-index: 0">█</span>
+        <span class="garden-loading__block" style="--loader-index: 1">▓</span>
+        <span class="garden-loading__block" style="--loader-index: 2">▒</span>
+      </div>
       <p id="garden-boot-label" class="garden-loading__label" hidden></p>
       <a id="garden-boot-retry" class="garden-loading__retry" href="" hidden>重新加载</a>
     </div>
