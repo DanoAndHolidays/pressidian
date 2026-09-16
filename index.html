@@ -36,7 +36,7 @@
         }
       })()
     </script>
-    <script type="module" crossorigin src="/pressidian/assets/index-C_9JD0RG.js"></script>
+    <script type="module" crossorigin src="/pressidian/assets/index-BUKOlNUl.js"></script>
     <link rel="stylesheet" crossorigin href="/pressidian/assets/index-3XYt-ZJe.css">
   </head>
   <body>
@@ -145,6 +145,65 @@
         }
         window.addEventListener('error', onResourceError, true)
         window.addEventListener('pressidian:boot-error', onError, { once: true })
+
+        /*
+         * Self-healing upgrade.
+         *
+         * GitHub Pages serves everything through Fastly with a fixed
+         * `Cache-Control: max-age=600` on HTML (`index.html` here reports
+         * `Via: 1.1 varnish`), and Pages does not let a site override response
+         * headers. So a browser can keep serving a cached `index.html` that
+         * points at asset hashes from an older build. The app still boots — it
+         * is a complete, working bundle — so nothing looks broken; it just
+         * silently serves stale code, which is exactly how a deploy can appear
+         * not to have happened.
+         *
+         * The fix is to stop trusting that cached HTML. Once the app is up,
+         * fetch the live `index.html` with `no-store` (bypassing both the local
+         * cache and Fastly) and compare its entry-script hash against the one
+         * this page actually loaded. A mismatch means this tab is running an
+         * old build, so reload once to pick up the new one.
+         *
+         * `sessionStorage` guards against a reload loop: if the fresh copy still
+         * disagrees, or the network is unreachable, the tab settles on whatever
+         * it has rather than reloading forever. The flag is per-tab rather than
+         * per-tab-per-build so a long-lived tab cannot end up in a cycle.
+         */
+        const checkForNewBuild = () => {
+          try {
+            if (sessionStorage.getItem('pressidian-build-check')) return
+            sessionStorage.setItem('pressidian-build-check', '1')
+          } catch {
+            /* private mode — checking is still safe, we just cannot guard */
+          }
+          const running = document.querySelector('script[type="module"][src]')
+          if (!running) return
+          const runningUrl = new URL(running.src)
+          const currentBuild = runningUrl.pathname.split('/').pop()
+          /*
+           * Resolve `index.html` against the deployed base, not against the
+           * script's own folder: `new URL('index.html', running.src)` would give
+           * `/pressidian/assets/index.html`, and Pages would answer with the
+           * SPA fallback (this same document), so the check would compare a
+           * build against itself and never fire. Strip `/assets/` first.
+           */
+          const assetsAt = runningUrl.pathname.lastIndexOf('/assets/')
+          const base = assetsAt === -1
+            ? runningUrl.pathname.slice(0, runningUrl.pathname.lastIndexOf('/') + 1)
+            : runningUrl.pathname.slice(0, assetsAt + 1)
+          const indexUrl = runningUrl.origin + base + 'index.html'
+          fetch(indexUrl, { cache: 'no-store' })
+            .then((response) => (response.ok ? response.text() : ''))
+            .then((markup) => {
+              const match = markup.match(/<script[^>]+type="module"[^>]+src="([^"]+)"/)
+              if (!match) return
+              if (match[1].split('/').pop() !== currentBuild) window.location.reload()
+            })
+            .catch(() => {
+              /* offline or blocked — keep the bundle we already have */
+            })
+        }
+
         window.addEventListener('pressidian:ready', () => {
           if (failed) return
           clearTimeout(timeout)
@@ -152,6 +211,7 @@
           window.removeEventListener('pressidian:boot-error', onError)
           appReady = true
           dismissWhenReady()
+          checkForNewBuild()
         }, { once: true })
       })()
     </script>
