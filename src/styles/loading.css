@@ -8,28 +8,83 @@
   color: var(--ink, #1d1e19);
   font-family: 'Avenir Next', 'Segoe UI', 'Microsoft YaHei', sans-serif;
   text-align: center;
+  /*
+   * Surface the loader sits on. The conveyor's moving blocks paint this exact
+   * colour behind themselves to hide the track underneath, so it has to track
+   * whatever the loader is standing on rather than being a fixed value.
+   */
+  --loader-surface: var(--canvas, #f4f1ea);
 }
 .garden-loading__signature { display: block; width: min(330px, 72vw); height: auto; }
 .dark .garden-loading__signature { filter: brightness(1.4) saturate(.85); }
 .garden-loading__label { margin: 0; font-size: 13px; letter-spacing: 0.08em; }
 /* The boot screen keeps the label empty and hidden until it has news. */
 .garden-loading__label[hidden] { display: none; }
+
+/* ==========================================================================
+   Conveyor loader
+   Replaces the old sliding bar. Three blocks travel across a dotted track and
+   each one masks the track behind it, so a block reads as *filling* a track
+   cell rather than being drawn on top of it. Ink is the accent colour: `--ember`
+   already flips to a lifted orange in the dark theme, so one value serves both.
+   The travelling glyphs and their stagger are identical here and in the Vue
+   `ConveyorLoop` — this copy exists so the pre-JavaScript boot screen can render
+   the loader before any component code has loaded.
+   ========================================================================== */
 .garden-loading__line {
-  width: 88px;
-  height: 1px;
+  position: relative;
+  display: inline-flex;
+  width: var(--loader-width, 10ch);
+  height: 1em;
+  align-items: center;
   overflow: hidden;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--ember, #b65320) 18%, transparent);
+  color: var(--ember, #b65320);
+  font-family: var(--font-mono, ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 17px;
+  line-height: 1;
+  user-select: none;
+  --loader-columns: 10;
+  --loader-width: 10ch;
+  --loader-duration: 1.8s;
+  --loader-delay: .05s;
+  --loader-ink: var(--ember, #b65320);
 }
-.garden-loading__line::after {
-  content: '';
-  display: block;
-  width: 45%;
+.garden-loading__track {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  /*
+   * A quiet echo of the ink rather than a neutral grey, so the track still
+   * belongs to the accent ramp. It needs real presence: the shade glyphs are
+   * dithered, so at anything much below half opacity they read as background
+   * texture and the track appears to vanish.
+   */
+  color: color-mix(in srgb, var(--loader-ink) 55%, transparent);
+}
+.garden-loading__block {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 1ch;
   height: 100%;
-  border-radius: inherit;
-  background: var(--ember, #b65320);
-  animation: garden-line 1.6s ease-in-out infinite;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  background: var(--loader-surface);
+  animation: garden-conveyor var(--loader-duration) linear infinite;
+  /* Heaviest glyph on top: █ over ▓ over ▒. */
+  z-index: calc(30 - var(--loader-index, 0) * 10);
+  animation-delay: calc(var(--loader-delay) * var(--loader-index, 0));
 }
+@keyframes garden-conveyor {
+  0% { transform: translateX(-1ch); }
+  100% { transform: translateX(calc(var(--loader-columns) * 1ch + 1ch)); }
+}
+
 #garden-boot {
   position: fixed;
   inset: 0;
@@ -51,11 +106,13 @@ html[data-booting], html[data-booting] body { overflow: hidden; }
 .garden-loading__retry[hidden] { display: none; }
 .garden-loading--inline { min-height: 220px; padding-block: 2rem; gap: 1rem; }
 .garden-loading--inline .garden-loading__signature { width: min(240px, 70vw); }
-@keyframes garden-line {
-  0% { transform: translateX(-110%); }
-  100% { transform: translateX(330%); }
-}
+
 @media (prefers-reduced-motion: reduce) {
+  /*
+   * Without travel the blocks pile up on the first cell, so drop them and keep
+   * the static track, which still reads as a loader.
+   */
+  .garden-loading__block { display: none; }
   .garden-loading *, .garden-loading *::after { animation: none !important; }
   #garden-boot { transition: none; }
 }

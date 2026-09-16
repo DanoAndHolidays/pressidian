@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useReducedMotion } from '@/composables/useMediaQuery'
 import { useUiStore } from '@/stores/ui'
-import { createPlanetScene } from './scene'
+import { createPlanetScene, PLANET_GLITCH } from './scene'
 import { fallbackPlanet } from '@/components/ui/ascii-art/fallback-planet'
 
 const props = withDefaults(
@@ -34,12 +34,16 @@ let lastFrame = 0
 let lastPaint = -Infinity
 let visible = true
 let disposed = false
+/** Dev probe only: freeze the clock so a forced glitch state can be inspected. */
+let clockHeld = false
 
 function tick(now: number) {
   frame = 0
   if (disposed || failed.value || !engine || !visible || document.hidden || reducedMotion.value) return
-  elapsed += Math.min((now - lastFrame) / 1000, 0.1)
-  lastFrame = now
+  if (!clockHeld) {
+    elapsed += Math.min((now - lastFrame) / 1000, 0.1)
+    lastFrame = now
+  }
   if (now - lastPaint >= 1000 / 30) {
     engine.render(elapsed)
     lastPaint = now
@@ -111,6 +115,48 @@ watch(() => ui.isDark, (dark) => {
   engine?.setTheme(dark)
   restart()
 })
+
+/*
+ * Dev-only probe. The glitch tears a minority of frames by design, so a probe
+ * needs a way to hold the effect on and inspect it. Stripped from production
+ * because `import.meta.env.DEV` is statically replaced.
+ */
+if (import.meta.env.DEV) {
+  ;(window as unknown as { __planet?: unknown }).__planet = {
+    /**
+     * Pin the glitch to one state so it can be inspected.
+     *
+     * The clock is frozen rather than the loop: `tick` keeps running and keeps
+     * painting, so the state stays put but the frame is still produced inside
+     * requestAnimationFrame. Rendering directly from here instead leaves the
+     * canvas out of the compositor's frame and a screenshot shows a stale
+     * image.
+     */
+    force(glitch: number, time?: number) {
+      if (!engine) return false
+      clockHeld = true
+      engine.uniforms.glitch.value = glitch
+      if (time !== undefined) {
+        engine.uniforms.time.value = time
+        elapsed = time
+      }
+      lastPaint = -Infinity
+      return true
+    },
+    release() {
+      clockHeld = false
+      lastFrame = performance.now()
+      restart()
+    },
+    reset() {
+      clockHeld = false
+      if (!engine) return
+      engine.uniforms.glitch.value = PLANET_GLITCH
+      lastFrame = performance.now()
+      restart()
+    },
+  }
+}
 
 onBeforeUnmount(() => {
   disposed = true

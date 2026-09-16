@@ -117,21 +117,63 @@ uniform float uBrightness;
 uniform float uContrast;
 uniform float uVignette;
 uniform float uBloom;
+uniform float uTime;
+uniform float uGlitch;
+
+// Deterministic pseudo-random in [0,1). Drives which bands tear, so the glitch
+// stays reproducible frame to frame instead of shimmering arbitrarily.
+float glitchHash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+// Horizontal tear bands. Kept to the cell grid so the band edges land between
+// glyph rows rather than slicing a row in half.
+float glitchBand(float row, float seed) {
+  float gate = step(0.72, glitchHash(vec2(seed, 3.7)));
+  float band = glitchHash(vec2(seed, 11.3));
+  return gate * step(abs(row - band), 0.045);
+}
 
 // Same luminance-to-character mapping as the branch's Canvas2D renderer.
-// Sample the live scene, then use the glyph texture as an alpha mask.
-vec4 cellAt(vec2 uv) {
-  vec2 center = (floor(uv * uGrid) + 0.5) / uGrid;
+// The shift argument displaces the sampling centre in UV space; the glyph mask
+// itself is still read at the undisplaced position so characters never shear.
+vec4 cellAt(vec2 uv, vec2 shift) {
+  vec2 center = (floor(uv * uGrid) + 0.5) / uGrid + shift;
   vec2 d = 0.25 / uGrid;
   return (texture2D(uScene, center + vec2(-d.x,-d.y))
     + texture2D(uScene, center + vec2(d.x,-d.y))
     + texture2D(uScene, center + vec2(-d.x,d.y))
     + texture2D(uScene, center + vec2(d.x,d.y))) * 0.25;
 }
+
 void main() {
-  vec4 cell = cellAt(vUv);
+  /*
+   * Glitch. The clock is quantised into ~13 Hz slots and each slot gets a fresh
+   * seed, so the effect is a discrete flicker rather than a smooth wobble. Only
+   * a minority of slots tear (the hash gate), which is what keeps it reading as
+   * a fault instead of a permanent offset.
+   *
+   * uGlitch is the slot probability, so 0 disables the whole pass and 1 tears
+   * on every frame.
+   */
+  float slot = floor(uTime * 13.0);
+  float gate = step(1.0 - uGlitch, glitchHash(vec2(slot, 7.31)));
+  float row = floor(vUv.y * uGrid.y);
+  float band = glitchBand(row, slot) + glitchBand(row, slot + 53.0);
+  float offset = (glitchHash(vec2(slot, 19.7)) - 0.5) * 0.085 * gate * band;
+  vec2 shift = vec2(offset, 0.0);
+  /*
+   * Dispersion offset, scaled with the tear so a wider tear also fringes wider.
+   * It has to clear roughly one cell (cellWidth / canvasWidth, ~0.011 at 680px)
+   * to be visible at all: cellAt snaps its sample to a cell centre, so any
+   * offset smaller than a cell rounds away and the channels do not separate.
+   */
+  float split = 0.028 * gate * band;
+
+  vec4 cell = cellAt(vUv, shift);
   float silhouette = texture2D(uScene, vUv).a;
   if (cell.a < 0.015 || silhouette < 0.015) discard;
+
   vec3 color = cell.rgb / max(cell.a, 0.001);
   color = clamp((color + uBrightness - 0.5) * uContrast + 0.5, 0.0, 1.0);
   float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
@@ -152,6 +194,39 @@ void main() {
   color *= 1.0 - uVignette * dot(fromCenter, fromCenter);
   // Keep the bloom inside the glyphs so their counters and spacing stay crisp.
   color += highlight * uBloom * smoothstep(0.65, 1.0, luma) * 0.25;
+
+  /*
+   * Edge dispersion.
+   *
+   * A plain RGB split does nothing useful here: the glyph palette is warm
+   * (sand/cream ink, blue at roughly a third of red), so re-sampling the blue
+   * channel moves it by almost nothing and the fringes come out one-sided. The
+   * two laterally-offset samples are therefore split into opposing tints
+   * instead — disperseWarm and disperseCool pull opposite ways, so one edge of a
+   * torn band fringes red and the other cyan whatever the ink colour is.
+   *
+   * The offset is in UV, not pixels: 0.028 is ~19px at a 680px-wide canvas. It
+   * has to clear roughly one cell (cellWidth / canvasWidth, ~0.011 at 680px)
+   * before it does anything at all, because cellAt snaps its sample to a cell
+   * centre and a sub-cell offset rounds away.
+   */
+  vec3 disperseWarm = vec3(0.55, -0.30, -0.30);
+  vec3 disperseCool = vec3(-0.55, 0.30, 0.30);
+  if (split > 0.0) {
+    vec4 warm = cellAt(vUv, shift + vec2(split, 0.0));
+    vec4 cool = cellAt(vUv, shift - vec2(split, 0.0));
+    /*
+     * Weighted by each displaced cell's own coverage. Sampling off the
+     * silhouette returns alpha 0, so an unweighted blend would drag every edge
+     * pixel toward black and punch holes in the glyphs.
+     */
+    float warmCover = min(warm.a / max(cell.a, 0.001), 1.0);
+    float coolCover = min(cool.a / max(cell.a, 0.001), 1.0);
+    color += disperseWarm * (0.8 * warmCover * gate * band);
+    color += disperseCool * (0.8 * coolCover * gate * band);
+    color = clamp(color, 0.0, 1.0);
+  }
+
   gl_FragColor = vec4(clamp(color, 0.0, 1.0), alpha);
 }
 `

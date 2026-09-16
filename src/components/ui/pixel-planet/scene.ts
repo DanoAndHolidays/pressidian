@@ -6,6 +6,12 @@ import {
 import { planetFragment, postFragment, postVertex, ringFragment, surfaceVertex } from './shaders'
 import { ASCII_CHARACTERS, createGlyphAtlas } from '@/components/ui/ascii-art/glyph-atlas'
 
+/**
+ * Share of 13 Hz slots that tear, so the planet faults intermittently rather
+ * than sitting in a permanent offset. `0` disables the glitch pass outright.
+ */
+export const PLANET_GLITCH = 0.42
+
 // Vignette Bloom's brightness/contrast/wave settings, using the preserved
 // branch's character ramp instead of mosaic rectangles.
 export const PLANET_PRESET = {
@@ -13,6 +19,7 @@ export const PLANET_PRESET = {
   brightness: 12, contrast: 115, saturation: 100, grayscale: 0,
   coverage: 100, tintOpacity: 0, blurType: 'off',
   vignette: 38, bloom: 25, animSpeed: 100, animIntensity: 60,
+  glitch: PLANET_GLITCH,
 } as const
 
 export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale = 1) {
@@ -70,6 +77,8 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
       uContrast: { value: PLANET_PRESET.contrast / 100 },
       uVignette: { value: PLANET_PRESET.vignette / 100 },
       uBloom: { value: PLANET_PRESET.bloom / 100 },
+      uTime: { value: 0 },
+      uGlitch: { value: PLANET_PRESET.glitch },
     },
   })
   const quadGeometry = new PlaneGeometry(2, 2)
@@ -94,9 +103,21 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
     setTheme(dark: boolean) {
       postMaterial.uniforms.uDark.value = dark ? 1 : 0
     },
+    /**
+     * Dev-only handles for inspecting the planet. The glitch is intermittent by
+     * design (it only tears a minority of frames), which makes it impractical to
+     * eyeball in a screenshot; these let a probe hold or force a torn frame.
+     */
+    uniforms: {
+      glitch: postMaterial.uniforms.uGlitch,
+      time: postMaterial.uniforms.uTime,
+    },
     render(seconds: number) {
       planet.rotation.y = seconds * 0.07
       planetMaterial.uniforms.uTime.value = seconds * PLANET_PRESET.animSpeed / 100
+      // The glitch clock is not scaled by `animSpeed`: the tear rate should stay
+      // a deliberate ~13 Hz at any animation speed setting.
+      postMaterial.uniforms.uTime.value = seconds
       renderer.setRenderTarget(target)
       renderer.clear()
       renderer.render(scene, camera)
