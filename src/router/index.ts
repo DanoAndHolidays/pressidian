@@ -65,15 +65,67 @@ export const router = createRouter({
   routes,
   scrollBehavior(to, from, saved) {
     if (saved) return saved
-    if (to.hash) {
-      return { el: to.hash, top: 104, behavior: 'smooth' }
-    }
+    if (to.hash) return scrollToHash(to.hash, to.path !== from.path)
     // Moving between sibling notes should not scroll the reader back to the
     // top of the sidebar-driven layout.
     if (to.name === 'note' && from.name === 'note') return { top: 0 }
     return { top: 0 }
   },
 })
+
+/** Height of the fixed header, so a deep-linked heading is not hidden under it. */
+const HEADING_OFFSET = 104
+/** How long to wait for a heading that has not been rendered yet. */
+const HASH_LOOKUP_BUDGET = 1200
+
+/**
+ * Looks a fragment up by id, waiting for it if it is not on the page yet.
+ *
+ * A note's body arrives from a JSON chunk *after* the route changes, so on a
+ * cold deep link the heading does not exist yet when `scrollBehavior` runs and
+ * the scroll is dropped without a trace. Polling inside a short budget makes a
+ * shared `#heading` link land where it points; the moment the fragment is
+ * already on the page — the common case, since the outline only ever links to
+ * headings of the note being read — the first lookup succeeds on this tick and
+ * nothing is awaited at all.
+ *
+ * `getElementById` rather than `querySelector`: heading slugs are generated,
+ * but ids are allowed to contain anything, and only `getElementById` takes them
+ * all literally without escaping.
+ */
+async function findHashTarget(hash: string): Promise<Element | null> {
+  const raw = hash.startsWith('#') ? hash.slice(1) : hash
+  let id = raw
+  try {
+    // Vue Router hands over the already-decoded fragment; a note that ends in a
+    // stray `%` must not take the navigation down with it.
+    id = decodeURIComponent(raw)
+  } catch {
+    /* keep the raw value */
+  }
+
+  const deadline = performance.now() + HASH_LOOKUP_BUDGET
+  for (;;) {
+    const element = document.getElementById(id)
+    if (element) return element
+    if (performance.now() >= deadline) return null
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+  }
+}
+
+async function scrollToHash(
+  hash: string,
+  changedRoute: boolean,
+): Promise<{ el: Element; top: number; behavior: 'smooth' } | { top: number } | false> {
+  const element = await findHashTarget(hash)
+  if (!element) {
+    // A fragment that never turned up still has to settle somewhere: the top of
+    // the note when the link crossed into a new one, and nowhere at all when it
+    // pointed inside the page the reader is already on.
+    return changedRoute ? { top: 0 } : false
+  }
+  return { el: element, top: HEADING_OFFSET, behavior: 'smooth' }
+}
 
 router.afterEach((to) => {
   const title = (to.meta.title as string | undefined) ?? 'Pressidian'

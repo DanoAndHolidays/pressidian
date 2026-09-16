@@ -103,6 +103,26 @@ GitHub Pages 是纯静态托管，没有 rewrite 规则，所以 `/pressidian/no
 如果以后要换回 history 模式，前提是托管平台支持 rewrite
 （Netlify 的 `_redirects`、Vercel 的 `rewrites`、或自己的服务器）。
 
+### hash 模式下，正文里的链接必须是「路由片段」
+
+正文是构建期渲染成 HTML 的，所以链接形态由 [`vite/markdown.ts`](vite/markdown.ts)
+里的 `toRouterHrefs()` 统一改写。有两种 href 看起来完全正确，但在 hash 模式下会把人
+送出应用：
+
+- `/notes/xxx`：绝对路径，既没有站点 base 也没有 `#`，GitHub Pages 会返回真实的 404
+  （注意站点在 `/pressidian/` 下）。`[[双链]]`、`[x](note.md)` 都走这条路。
+- `#标题`：同文档锚点会**替换掉 URL 里的路由**，vue-router 于是把「标题」当成路径，
+  渲染 404 页。这类链接是笔记里手写的目录，仓库里有不少。
+
+两者都会被改写成 `#/notes/…`；第二种用 `selfRoute` 补上当前笔记的路由，否则一个
+裸露的 `#标题` 已经说不清属于哪一页。页内大纲
+（[`NotePage.vue`](src/pages/NotePage.vue)）同理：用 `RouterLink` 的 `custom` + `navigate`
+而不是裸 `<a href="#id">`，中键新标签才会落到正确的 URL 上。
+
+排查口诀：**正文里任何不以 `#/` 开头的 href 都是 bug**。构建后可以直接查：
+`dist/notes/*.json` 里搜 `href="/notes/` 和 `href="#`，应该都搜不到——代码块里的
+`<a href="#">` 已经是高亮后的文本（`&#x3C;a href=…`），不算。
+
 ### 发布出来的 JSON 文件名必须带内容哈希
 
 [`vite/documents.ts`](vite/documents.ts) 里的分块文件名形如

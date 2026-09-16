@@ -41,6 +41,7 @@
   --color-ember-deep: var(--ember-deep);
   --color-ember-soft: var(--ember-soft);
   --color-ember-tint: var(--ember-tint);
+  --color-vermilion: var(--vermilion);
   --color-forest: var(--forest);
   --color-forest-soft: var(--forest-soft);
   --color-jade: var(--jade);
@@ -87,6 +88,11 @@
   --ember-deep: #93401b;
   --ember-soft: #efa16d;
   --ember-tint: #f7e3d3;
+  /* Orange-red, the second ink in the decrypt churn. Kept as a real 橘红 rather
+     than another burnt brown: mixed towards `--ink` it collapsed into the
+     resolved text and stopped reading as a second colour at all. The hue sits
+     at ~11° — red-leaning orange, not the accent's ~20° amber. */
+  --vermilion: #dd3d18;
   --on-accent: #382419;
   --header-glass: color-mix(in srgb, var(--canvas) 92%, transparent);
   --forest: #242424;
@@ -121,6 +127,9 @@
   --ember-deep: #ffc599;
   --ember-soft: #efa16d;
   --ember-tint: #3b2b20;
+  /* On the dark canvas the accent is already pale, so the second ink has to sit
+     lower in value to read as orange-red instead of vanishing into `--ink`. */
+  --vermilion: #ea5230;
   --forest: #222222;
   --forest-soft: #484846;
   --jade: #62b189;

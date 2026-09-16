@@ -28,6 +28,8 @@ export interface RenderContext {
   resolveNoteByName: (name: string) => string | null
   /** Absolute vault-relative path of the note being rendered. */
   from: string
+  /** Site route of the note being rendered, e.g. `/notes/前端/Vue/响应式`. */
+  selfRoute: string
   /** Rewrites a vault-relative asset path into a public asset URL. */
   resolveAsset: (vaultRelativeAsset: string) => string | null
 }
@@ -214,6 +216,32 @@ export function rewriteObsidianSyntax(source: string, context: RenderContext): s
 
 const ensureMarkdown = (value: string) => (/\.md$/i.test(value) ? value : `${value}.md`)
 
+/**
+ * Rewrites the hrefs markdown produced into the shape the hash router expects.
+ *
+ * The route lives after the first `#` (`/pressidian/#/notes/…`), which makes two
+ * otherwise-correct hrefs throw the reader out of the app:
+ *
+ *  - `/notes/…` — an absolute path carrying neither the site base nor a `#`, so
+ *    GitHub Pages answers with a real 404 (the site is served from
+ *    `/pressidian/`).
+ *  - `#heading` — a same-document fragment, which *replaces* the route in the
+ *    URL, so the router reads `heading` as the path and renders the 404 page.
+ *
+ * Both become router fragments. The second needs the note's own route, because
+ * a bare `#heading` no longer says which page it belongs to.
+ *
+ * This runs over the rendered HTML rather than the markdown source so it also
+ * catches links written as raw HTML inside a note. Fenced code blocks are still
+ * placeholder tokens at this point, so code samples are never touched.
+ */
+function toRouterHrefs(html: string, selfRoute: string): string {
+  return html
+    .replace(/(href=")\/notes\//g, (_match, prefix: string) => `${prefix}#/notes/`)
+    // `(?!\/)` keeps the router fragments just written out of the second pass.
+    .replace(/(href=")#(?!\/)/g, (_match, prefix: string) => `${prefix}#${selfRoute}#`)
+}
+
 function safeDecode(value: string): string {
   try {
     return decodeURIComponent(value)
@@ -259,10 +287,13 @@ export async function renderNote(
     }),
   )
 
-  const html = rawHtml.replace(CODE_TOKEN_PATTERN, (match, tokenId: string) => {
-    const replacement = blocks.get(Number(tokenId))
-    return replacement ?? match
-  })
+  const html = toRouterHrefs(rawHtml, context.selfRoute).replace(
+    CODE_TOKEN_PATTERN,
+    (match, tokenId: string) => {
+      const replacement = blocks.get(Number(tokenId))
+      return replacement ?? match
+    },
+  )
 
   return { html, headings }
 }

@@ -496,6 +496,7 @@ export async function buildContentIndex(assetBase = '/vault/'): Promise<ContentI
       try {
         const rendered = await renderNote(escapeStrayMarkup(note.body), {
           from: note.relative,
+          selfRoute: note.route,
           resolveNote: (relativePath) => findNote(relativePath)?.route ?? null,
           resolveNoteByName: (name) => findNoteByName(name)?.route ?? null,
           resolveAsset: (vaultRelative) => {

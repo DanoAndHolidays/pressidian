@@ -53,6 +53,8 @@ const props = withDefaults(
     seed?: number
     /** Element tag for the rendered text. */
     as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span' | 'div'
+    /** Halo behind a character at the instant it locks in. */
+    glow?: boolean
     /** Force the static, resolved variant regardless of system preference. */
     reducedMotion?: boolean
     /** Prefix shown before the text in the `terminal` variant. */
@@ -71,6 +73,7 @@ const props = withDefaults(
     retriggerOnHover: true,
     seed: 1,
     as: 'p',
+    glow: true,
     reducedMotion: undefined,
     prompt: '$',
     class: undefined,
@@ -85,6 +88,21 @@ const POOL_TERMINAL = 'abcdef0123456789$#%&*+=/|_~'
 const HOVER_COOLDOWN = 1500
 /** Extra ms added to `speed` for the per-char cycle jitter ceiling. */
 const CYCLE_SPREAD = 35
+
+/**
+ * Ink bucket for a churning glyph, re-rolled on every glyph change.
+ *
+ * The scramble used to be one flat colour, which made the whole line look like
+ * a single sheet of static. It now mixes two warm inks — the theme accent and
+ * `--vermilion`, an orange-red — and the orange-red carries the plurality so
+ * the churn is visibly *two* colours rather than one slightly-shifting one.
+ */
+function pickTone(rng: () => number): number {
+  const roll = rng()
+  if (roll < 0.34) return 0
+  if (roll < 0.78) return 1
+  return 2
+}
 
 /** mulberry32 — no Math.random at render or module scope (SSR-stable). */
 function makeRng(seed: number) {
@@ -241,6 +259,7 @@ function play() {
     lockAt[index] = props.startDelay + index * props.stagger + (rng() * 2 - 1) * props.jitter
     nextAt[index] = 0
     el.dataset.state = 'scramble'
+    el.dataset.tone = String(pickTone(rng))
     el.textContent = glyphPool.charAt((rng() * glyphPool.length) | 0)
   })
 
@@ -277,6 +296,7 @@ function play() {
         remaining -= 1
       } else if (now >= (nextAt[index] ?? 0)) {
         el.textContent = glyphPool.charAt((rng() * glyphPool.length) | 0)
+        el.dataset.tone = String(pickTone(rng))
         nextAt[index] = now + props.speed + rng() * CYCLE_SPREAD
       }
     }
@@ -344,6 +364,7 @@ const onPointerEnter = () => {
     :data-dt="scope"
     :data-motion="resolved ? 'static' : 'animated'"
     :data-variant="variant"
+    :data-glow="glow ? 'on' : 'off'"
     :data-chars="total"
     :class="
       cn(
@@ -443,6 +464,24 @@ const onPointerEnter = () => {
   }
 }
 
+/*
+ * `glow: false` keeps the accent sweep but drops the halo. A 26px bloom is
+ * pleasant on Latin letterforms and mush on dense CJK strokes — the hero's
+ * glyphs just read as blurry for the 420ms it lasts.
+ */
+.pd-decrypt[data-glow='off'] :deep([data-char][data-state='lock']) {
+  animation-name: pd-dt-flash-flat;
+}
+
+@keyframes pd-dt-flash-flat {
+  0% {
+    color: var(--ember);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
 .pd-decrypt :deep([data-caret]) {
   animation: pd-dt-caret 1.1s steps(1) infinite;
 }
@@ -461,11 +500,26 @@ const onPointerEnter = () => {
 /*
  * Scramble ink is mixed from theme tokens rather than a fixed white: on the
  * light paper a white-leaning mix washed out to ~#f5b899 and all but vanished.
- * Mixing towards `--ink` keeps the churn legible in both themes, and it stays
- * inside the warm ramp so the resolved glyphs still read as the arrival point.
+ * The accent bucket mixes towards `--ink` to stay legible, and the palette
+ * stays on the warm ramp so the resolved glyphs still read as the arrival
+ * point.
+ *
+ * The orange-red bucket is deliberately *not* mixed with `--ink`: at any mix
+ * that tamed it, it stopped being orange-red and read as the same burnt brown
+ * as the accent, which is exactly the "second colour" the churn is supposed to
+ * show. The third bucket is the two accents blended, for the odd glyph that
+ * lands between them.
  */
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble']) {
   color: color-mix(in oklab, var(--ember) 58%, var(--ink));
+}
+
+.pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble'][data-tone='1']) {
+  color: var(--vermilion);
+}
+
+.pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble'][data-tone='2']) {
+  color: color-mix(in oklab, var(--vermilion) 68%, var(--ember));
 }
 
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='lock']) {

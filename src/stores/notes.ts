@@ -154,7 +154,10 @@ export const useNotesStore = defineStore('notes', () => {
     for (let depth = 0; depth < ancestors.length; depth += 1) {
       next.add(ancestors.slice(0, depth + 1).join('/'))
     }
-    openFolders.value = next
+    // Publishing a fresh Set on every navigation re-rendered the entire tree
+    // for nothing — worth avoiding now that the tree also scrolls itself, since
+    // a redundant render is a redundant chance to move the row under the reader.
+    if (next.size !== openFolders.value.size) openFolders.value = next
   }
 
   const recent = computed(() => notes.value.slice(0, 6))

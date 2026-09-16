@@ -103,16 +103,22 @@ const share = () => copy(window.location.href)
           <KnowledgeTree />
         </div>
         <div v-if="tocOpen && headings.length" class="mb-6 rounded-2xl border border-line bg-paper p-4 lg:hidden">
-          <a
+          <RouterLink
             v-for="heading in headings"
             :key="heading.id"
-            :href="`#${heading.id}`"
-            class="block py-1 text-[0.8rem] text-muted"
-            :style="{ paddingLeft: `${(heading.depth - 2) * 12}px` }"
-            @click="tocOpen = false"
+            :to="{ path: route.path, hash: `#${heading.id}` }"
+            custom
+            v-slot="{ href, navigate }"
           >
-            {{ heading.text }}
-          </a>
+            <a
+              :href="href"
+              class="block py-1 text-[0.8rem] text-muted"
+              :style="{ paddingLeft: `${(heading.depth - 2) * 12}px` }"
+              @click="navigate($event); tocOpen = false"
+            >
+              {{ heading.text }}
+            </a>
+          </RouterLink>
         </div>
 
         <!-- note header -->
@@ -250,23 +256,44 @@ const share = () => copy(window.location.href)
       <aside class="hidden xl:block">
         <div class="sticky top-[6.5rem] max-h-[calc(100svh-8.5rem)] overflow-y-auto">
           <p class="eyebrow">On this page</p>
+          <!--
+            `custom` + slot rather than a bare `<a href="#id">`.
+
+            Under hash history the route itself lives in the fragment, so a
+            plain fragment href *replaces* the route with the heading id —
+            clicking an outline entry used to land on the 404 page. The slot's
+            `href` is the router-resolved one (`#/notes/…/note#heading`), which
+            keeps open-in-new-tab honest, and `navigate` performs the route
+            change that `scrollBehavior` turns into a smooth scroll.
+
+            `custom` also keeps RouterLink from stamping every entry with
+            `router-link-active` / `aria-current="page"` — all of them share the
+            current path, so all of them would claim to be the current page.
+          -->
           <nav v-if="headings.length" class="mt-4 border-l border-line" aria-label="本页大纲">
-            <a
+            <RouterLink
               v-for="heading in headings"
               :key="heading.id"
-              :href="`#${heading.id}`"
-              :class="
-                cn(
-                  '-ml-px block border-l py-1.5 pr-2 text-[0.76rem] leading-snug transition-colors duration-300',
-                  activeHeading === heading.id
-                    ? 'border-ember text-ember'
-                    : 'border-transparent text-muted hover:border-line-strong hover:text-ink',
-                )
-              "
-              :style="{ paddingLeft: `${10 + (heading.depth - 2) * 11}px` }"
+              :to="{ path: route.path, hash: `#${heading.id}` }"
+              custom
+              v-slot="{ href, navigate }"
             >
-              {{ heading.text }}
-            </a>
+              <a
+                :href="href"
+                :class="
+                  cn(
+                    '-ml-px block border-l py-1.5 pr-2 text-[0.76rem] leading-snug transition-colors duration-300',
+                    activeHeading === heading.id
+                      ? 'border-ember text-ember'
+                      : 'border-transparent text-muted hover:border-line-strong hover:text-ink',
+                  )
+                "
+                :style="{ paddingLeft: `${10 + (heading.depth - 2) * 11}px` }"
+                @click="navigate"
+              >
+                {{ heading.text }}
+              </a>
+            </RouterLink>
           </nav>
           <p v-else class="mt-4 text-[0.76rem] text-faint">这篇笔记没有分级标题。</p>
 

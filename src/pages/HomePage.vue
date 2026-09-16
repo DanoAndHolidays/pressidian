@@ -23,11 +23,15 @@ const notes = useNotesStore()
 /**
  * Hero headline, as two decrypting lines.
  *
- * The scramble/lock-in runs once on mount (`loop: false`) and is staggered per
- * character, so the line resolves in a ragged left-to-right sweep. Splitting on
- * the line break keeps the display line structure while each line animates
- * independently; the trailing 。 is part of the second line so it settles with
- * it instead of floating as a separate box.
+ * The scramble/lock-in is staggered per character, so the line resolves in a
+ * ragged left-to-right sweep and then re-arms on its own timer (see
+ * `HEADLINE_LOOP_MS`). Splitting on the line break keeps the display line
+ * structure while each line animates independently; the trailing 。 is part of
+ * the second line so it settles with it instead of floating as a separate box.
+ *
+ * `glow: false` — the lock-in flash keeps its accent sweep but drops the halo,
+ * which only smeared these CJK strokes. The churn still mixes two warm inks
+ * (see `pickTone` in `DecryptText.vue`).
  */
 const HEADLINE_LINES = ['让作品与想法，', '一起生长。'] as const
 const HEADLINE_START_DELAY = 240
@@ -92,6 +96,7 @@ const mapNodes = [
             :stagger="headlineStagger"
             :start-delay="headlineStartDelay"
             :loop="headlineLoop"
+            :glow="false"
           />
           <DecryptText
             as="span"
@@ -101,6 +106,7 @@ const mapNodes = [
             :stagger="headlineStagger"
             :start-delay="headlineStartDelay + HEADLINE_LINES[0].length * headlineStagger"
             :loop="headlineLoop"
+            :glow="false"
           />
         </h1>
         <p class="hero-intro">我是 {{ PROFILE.name }}，一名前端开发者。<br class="sm:hidden" />在这里写代码，也照料想法。<br class="hidden sm:block" />我的项目、经历与持续更新的技术笔记，都在这座数字花园里。</p>
