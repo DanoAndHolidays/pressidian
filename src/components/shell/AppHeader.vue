@@ -2,13 +2,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Menu, Moon, Search, Sun, X } from 'lucide-vue-next'
-import FoxMark from './FoxMark.vue'
+import DanoWordmark from './DanoWordmark.vue'
 import InteractiveHoverLinks from '@/components/ui/interactive-hover-links/InteractiveHoverLinks.vue'
 import { NAV_HOVER_LINKS } from '@/data/site'
 import { useUiStore } from '@/stores/ui'
 import { useNotesStore } from '@/stores/notes'
 import { useScrollLock, useScrollProgress } from '@/composables/useInteractions'
-import { cn } from '@/lib/utils'
 
 const ui = useUiStore()
 const notes = useNotesStore()
@@ -67,41 +66,37 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 
 <template>
   <header
-    :class="
-      cn(
-        'fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500',
-        scrolled
-          ? 'border-b border-line/80 bg-[var(--glass)] backdrop-blur-xl'
-          : 'border-b border-transparent bg-transparent',
-      )
-    "
+    class="site-header fixed inset-x-0 top-0 z-50"
+    :class="{ 'is-scrolled': scrolled }"
   >
-    <div class="shell-wide flex h-[68px] items-center gap-4">
+    <div class="shell-wide flex h-[76px] items-center gap-4">
       <RouterLink
         to="/"
         class="group flex shrink-0 items-center gap-2.5 focus-ring rounded-sm"
         aria-label="Pressidian 首页"
       >
-        <FoxMark :size="30" class="transition-transform duration-500 group-hover:-rotate-6" />
-        <span class="flex flex-col leading-none">
-          <span class="font-serif text-[1.24rem] tracking-[-0.04em]">Pressidian</span>
-          <span class="font-mono text-[0.72rem] tracking-[0.24em] text-faint uppercase">
-            digital garden
-          </span>
+        <DanoWordmark class="w-[76px] text-ember" />
+        <span class="brand-divider" aria-hidden="true" />
+        <span class="brand-copy flex flex-col gap-1 leading-none">
+          <span class="text-[0.95rem] font-medium tracking-[-0.03em]">Pressidian</span>
+          <span class="font-mono text-[0.6rem] tracking-[0.13em] text-muted uppercase">Digital garden</span>
         </span>
       </RouterLink>
 
-      <div class="ml-auto flex items-center gap-2">
+      <nav class="ml-auto hidden items-center gap-7 lg:flex" aria-label="主导航">
+        <RouterLink v-for="item in [{ to: '/notes', label: '笔记' }, { to: '/projects', label: '项目' }, { to: '/about', label: '关于' }]" :key="item.to" :to="item.to" class="header-nav-link" active-class="is-active">{{ item.label }}</RouterLink>
+      </nav>
+      <div class="ml-auto flex items-center gap-2 lg:ml-6">
         <button
           type="button"
-          class="group hidden h-9 items-center gap-2.5 rounded-full border border-line bg-paper/70 pr-2 pl-3 text-[0.76rem] text-muted transition-colors duration-300 hover:border-ember/50 hover:text-ink sm:flex focus-ring"
+          class="group hidden h-9 items-center gap-2.5 rounded-md border border-transparent bg-transparent pr-2 pl-3 text-[0.76rem] text-muted transition-colors duration-300 hover:border-ember/50 hover:text-ink sm:flex focus-ring"
           @click="ui.openPalette()"
         >
-          <Search :size="14" class="text-ember" />
+          <Search :size="14" class="text-muted" />
           <span class="hidden md:inline">搜索笔记、项目…</span>
           <span class="md:hidden">搜索</span>
           <kbd
-            class="ml-1 rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-[0.7rem] text-faint"
+            class="ml-1 rounded border border-line bg-transparent px-1.5 py-0.5 font-mono text-[0.7rem] text-faint"
           >
             {{ shortcutLabel }}
           </kbd>
@@ -109,7 +104,7 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 
         <button
           type="button"
-          class="grid size-9 place-items-center rounded-full border border-line bg-paper/70 text-ink-soft transition-colors duration-300 hover:border-ember/50 hover:text-ember sm:hidden focus-ring"
+          class="grid size-9 place-items-center rounded-md border border-transparent bg-transparent text-ink-soft transition-colors duration-300 hover:border-ember/50 hover:text-ember sm:hidden focus-ring"
           aria-label="搜索"
           @click="ui.openPalette()"
         >
@@ -118,7 +113,7 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 
         <button
           type="button"
-          class="grid size-9 place-items-center rounded-full border border-line bg-paper/70 text-ink-soft transition-all duration-500 hover:border-ember/50 hover:text-ember focus-ring"
+          class="grid size-9 place-items-center rounded-md border border-transparent bg-transparent text-ink-soft transition-all duration-500 hover:border-ember/50 hover:text-ember focus-ring"
           :aria-label="ui.isDark ? '切换到亮色模式' : '切换到深色模式'"
           @click="ui.toggleTheme()"
         >
@@ -130,7 +125,7 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 
         <button
           type="button"
-          class="flex h-9 items-center gap-2 rounded-full border border-line bg-paper/70 px-3 text-ink-soft transition-colors duration-300 hover:border-ember/50 hover:text-ember focus-ring"
+          class="flex h-9 items-center gap-2 rounded-md border border-transparent bg-transparent px-3 text-ink-soft transition-colors duration-300 hover:border-ember/50 hover:text-ember focus-ring"
           :aria-expanded="ui.navOpen"
           aria-controls="site-navigation"
           aria-haspopup="dialog"
@@ -146,7 +141,7 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
     <!-- Reading progress for the whole document. -->
     <div class="relative h-px w-full overflow-hidden">
       <div
-        class="h-px origin-left bg-gradient-to-r from-ember to-amber transition-transform duration-150 ease-out"
+        class="h-px origin-left bg-ink/30 transition-transform duration-150 ease-out"
         :style="{ transform: `scaleX(${progress})` }"
       />
     </div>
@@ -163,9 +158,9 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
       @cancel.prevent="ui.navOpen = false"
       @close="ui.navOpen = false"
     >
-      <div class="shell-wide flex min-h-[68px] items-center justify-between gap-4 border-b border-line">
+      <div class="shell-wide flex min-h-[76px] items-center justify-between gap-4 border-b border-line">
         <span class="flex items-center gap-2.5">
-          <FoxMark :size="30" />
+          <DanoWordmark class="w-[66px]" />
           <span class="font-serif text-[1.24rem] tracking-[-0.04em]">Pressidian</span>
         </span>
         <div class="flex items-center gap-2">
@@ -213,6 +208,13 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
 </template>
 
 <style scoped>
+.site-header { color: var(--ink); background: var(--canvas); border-bottom: 1px solid transparent; transition: background .3s ease, border-color .3s ease; }
+.site-header.is-scrolled { background: var(--header-glass); border-color: var(--line); backdrop-filter: blur(18px); }
+.brand-divider { width: 1px; height: 26px; margin-inline: 7px; background: var(--line-strong); }
+.header-nav-link { font-size: 13px; color: var(--muted); transition: color .2s; }
+.header-nav-link:hover, .header-nav-link.is-active { color: var(--ember); }
+@media (max-width: 479px) { .brand-divider, .brand-copy { display: none; } }
+
 .swap-enter-active,
 .swap-leave-active {
   transition:

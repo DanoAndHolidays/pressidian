@@ -4,11 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
-    <link rel="preload" as="image" href="%BASE_URL%brand/dano-logo.png" />
-    <link rel="preload" as="image" href="%BASE_URL%brand/dano-loading.svg" />
-    <link rel="stylesheet" href="%BASE_URL%brand/loading.css" />
-    <meta name="theme-color" content="#151612" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="/src/styles/loading.css" />
+    <!-- The overlay must own the viewport even before external CSS arrives. -->
+    <style>
+      html { background: #f4f1ea; }
+      html.dark { background: #1d1b19; }
+      #garden-boot { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; width: 100%; height: 100%; box-sizing: border-box; margin: 0; padding: 24px; background: #f4f1ea; }
+      .dark #garden-boot { background: #1d1b19; }
+      #garden-boot-signature { display: block; width: min(330px, 72vw); height: auto; }
+      html[data-booting], html[data-booting] body { overflow: hidden; }
+    </style>
+    <meta name="theme-color" content="#1d1b19" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)" />
     <meta name="author" content="Dano" />
     <meta
       name="description"
@@ -39,7 +46,7 @@
       nothing is written below the progress bar on the normal path.
     -->
     <div id="garden-boot" class="garden-loading" role="status" aria-live="polite" aria-label="正在打开数字花园">
-      <img id="garden-boot-signature" class="garden-loading__signature" src="%BASE_URL%brand/dano-loading.svg" width="450" height="200" alt="Dano 手写签名与标志" fetchpriority="high" />
+      <img id="garden-boot-signature" class="garden-loading__signature" src="/src/assets/brand/dano-loading.svg" width="330" height="172" alt="Dano 钢笔手写签名" fetchpriority="high" />
       <div class="garden-loading__line" aria-hidden="true"></div>
       <p id="garden-boot-label" class="garden-loading__label" hidden></p>
       <a id="garden-boot-retry" class="garden-loading__retry" href="" hidden>重新加载</a>
@@ -79,7 +86,7 @@
           document.documentElement.removeAttribute('data-booting')
           root.removeAttribute('inert')
           screen.classList.add('is-ready')
-          setTimeout(() => screen.remove(), reducedMotion.matches ? 0 : 300)
+          setTimeout(() => screen.remove(), reducedMotion.matches ? 0 : 420)
         }
         const finishSignature = () => {
           signatureFinished = true
@@ -91,8 +98,8 @@
         reducedMotion.addEventListener('change', onMotionPreference)
         const startSignature = () => {
           clearTimeout(signatureFallback)
-          // 2680ms of ink / logo animation, then a brief hold on the final logo.
-          signatureTimer = setTimeout(finishSignature, reducedMotion.matches ? 0 : 2950)
+          // 2710ms of pen strokes, followed by a short hold on the finished ink.
+          signatureTimer = setTimeout(finishSignature, reducedMotion.matches ? 0 : 3120)
         }
         const recoverSignature = () => {
           signature.src = '%BASE_URL%brand/dano-logo.png'

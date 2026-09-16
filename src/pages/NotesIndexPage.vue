@@ -99,7 +99,7 @@ const clearFilters = () => {
     </header>
 
     <!-- ============ TOOLBAR ============ -->
-    <div class="sticky top-[68px] z-30 -mx-1 mt-9 border-y border-line bg-[var(--glass)] px-1 py-3 backdrop-blur-xl">
+    <div class="sticky top-[76px] z-30 -mx-1 mt-9 border-y border-line bg-[var(--glass)] px-1 py-3 backdrop-blur-xl">
       <div class="flex flex-wrap items-center gap-3">
         <label
           class="flex h-10 min-w-[15rem] flex-1 items-center gap-2.5 rounded-full border border-line bg-paper px-4 transition-colors focus-within:border-ember/60"
@@ -159,7 +159,7 @@ const clearFilters = () => {
         <div class="ml-auto flex items-center gap-1 rounded-full border border-line bg-paper p-1">
           <button
             type="button"
-            :class="cn('grid size-7 place-items-center rounded-full transition-colors', view === 'grid' ? 'bg-ember text-[#1b1206]' : 'text-muted hover:text-ink')"
+            :class="cn('grid size-7 place-items-center rounded-full transition-colors', view === 'grid' ? 'bg-ink text-canvas' : 'text-muted hover:text-ink')"
             aria-label="网格视图"
             @click="view = 'grid'"
           >
@@ -167,7 +167,7 @@ const clearFilters = () => {
           </button>
           <button
             type="button"
-            :class="cn('grid size-7 place-items-center rounded-full transition-colors', view === 'list' ? 'bg-ember text-[#1b1206]' : 'text-muted hover:text-ink')"
+            :class="cn('grid size-7 place-items-center rounded-full transition-colors', view === 'list' ? 'bg-ink text-canvas' : 'text-muted hover:text-ink')"
             aria-label="列表视图"
             @click="view = 'list'"
           >

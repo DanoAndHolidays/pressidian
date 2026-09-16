@@ -1,40 +1,79 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 
-// Keep the original logo pixels; embedding them makes the SVG image self-contained.
-const brandDirectory = new URL('../public/brand/', import.meta.url)
-const logo = await readFile(new URL('dano-logo.png', brandDirectory))
+// Cubic pen trajectories, in writing order. Both wordmarks share this geometry.
 const strokes = [
-  { delay: 100, duration: 340, path: 'M145 49 C130 73 111 111 97 144' },
-  { delay: 380, duration: 550, path: 'M80 75 C108 47 150 39 175 61 C205 90 151 151 103 148 C88 147 89 135 103 125' },
-  { delay: 880, duration: 370, path: 'M223 105 C214 90 194 98 183 114 C168 134 179 147 193 139 C207 131 218 108 222 100 C214 115 207 133 215 138 C222 143 233 130 240 120' },
-  { delay: 1200, duration: 330, path: 'M240 120 L249 100 C240 119 232 138 236 139 C247 119 258 99 270 101 C283 103 267 125 268 135 C270 146 286 132 297 120' },
-  { delay: 1490, duration: 350, path: 'M326 103 C316 94 299 103 292 118 C281 139 297 149 312 136 C325 125 333 107 326 103 C318 99 313 109 318 114 C327 122 342 119 353 106' },
+  { start: [145, 47], curves: [[133, 66, 112, 110, 97, 145]], delay: 80, duration: 350 },
+  { start: [81, 76], curves: [[106, 48, 149, 37, 174, 59], [206, 87, 155, 150, 107, 149], [89, 149, 87, 137, 103, 125]], delay: 450, duration: 640 },
+  { start: [222, 106], curves: [[211, 92, 192, 100, 181, 116], [168, 136, 181, 147, 195, 137], [208, 127, 218, 108, 223, 100], [215, 116, 207, 133, 216, 138], [223, 141, 233, 130, 240, 120]], delay: 1130, duration: 400 },
+  { start: [240, 120], curves: [[244, 112, 247, 104, 249, 100], [241, 118, 233, 136, 236, 139], [247, 119, 258, 99, 270, 101], [283, 103, 267, 125, 268, 135], [270, 146, 286, 132, 297, 120]], delay: 1530, duration: 360 },
+  { start: [297, 120], curves: [[304, 105, 317, 97, 326, 104], [336, 116, 315, 142, 302, 142], [287, 141, 288, 126, 297, 114], [304, 102, 318, 99, 324, 108], [331, 119, 350, 115, 365, 99]], delay: 1890, duration: 390 },
+  { start: [126, 170], curves: [[180, 151, 244, 157, 305, 154], [328, 153, 346, 151, 362, 145]], delay: 2380, duration: 330, flourish: true },
 ]
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 200" role="img" aria-labelledby="title">
-  <title id="title">手写 Dano，然后弹出 Dano 标志</title>
+const fmt = n => Number(n.toFixed(2))
+function trace(stroke) {
+  let from = stroke.start
+  const samples = [from]
+  for (const c of stroke.curves) {
+    const [x0, y0] = from
+    for (let step = 1; step <= 44; step++) {
+      const t = step / 44, u = 1 - t
+      samples.push([
+        u ** 3 * x0 + 3 * u * u * t * c[0] + 3 * u * t * t * c[2] + t ** 3 * c[4],
+        u ** 3 * y0 + 3 * u * u * t * c[1] + 3 * u * t * t * c[3] + t ** 3 * c[5],
+      ])
+    }
+    from = c.slice(4)
+  }
+  const distances = [0]
+  for (let i = 1; i < samples.length; i++) {
+    distances.push(distances[i - 1] + Math.hypot(samples[i][0] - samples[i - 1][0], samples[i][1] - samples[i - 1][1]))
+  }
+  const length = distances.at(-1)
+  const left = [], right = []
+  samples.forEach(([x, y], i) => {
+    const before = samples[Math.max(0, i - 1)], after = samples[Math.min(samples.length - 1, i + 1)]
+    const dx = after[0] - before[0], dy = after[1] - before[1]
+    const magnitude = Math.hypot(dx, dy) || 1
+    const nx = -dy / magnitude, ny = dx / magnitude
+    const t = distances[i] / length
+    // A tilted nib, eased pressure and lifted ends leave broad downstrokes,
+    // fine upstrokes and pointed terminals rather than round monoline caps.
+    const taper = Math.min(1, t / .045, (1 - t) / .075)
+    const pressure = (.82 + .18 * Math.sin(Math.PI * t)) * (.12 + .88 * Math.sin(Math.max(0, taper) * Math.PI / 2))
+    const nib = Math.abs(nx * .78 + ny * .63)
+    const width = (stroke.flourish ? .55 + nib * .8 : .6 + nib * 3.3) * pressure
+    left.push([fmt(x + nx * width), fmt(y + ny * width)])
+    right.push([fmt(x - nx * width), fmt(y - ny * width)])
+  })
+  return {
+    center: `M${stroke.start.join(' ')} ${stroke.curves.map(c => `C${c.join(' ')}`).join(' ')}`,
+    outline: `M${left.map(p => p.join(' ')).join(' L')} L${right.reverse().map(p => p.join(' ')).join(' L')} Z`,
+  }
+}
+
+const paths = strokes.map(trace)
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 22 330 172" role="img" aria-labelledby="title">
+  <title id="title">Dano 钢笔手写签名</title>
   <style>
-    .handwriting { animation: ink-away 240ms ease 1960ms both; transform-origin: 225px 100px; }
-    .stroke { fill: none; stroke: #f87821; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: write-in var(--duration) cubic-bezier(.4,0,.2,1) var(--delay) both; }
-    .logo { opacity: 0; transform-box: fill-box; transform-origin: center; animation: logo-pop 640ms cubic-bezier(.22,1,.36,1) 2040ms both; }
-    @keyframes write-in { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-    @keyframes ink-away { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.92); } }
-    @keyframes logo-pop {
-      0% { opacity: 0; transform: translateY(8px) scale(.7) rotate(-5deg); }
-      62% { opacity: 1; transform: translateY(-2px) scale(1.055) rotate(1.5deg); }
-      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .handwriting { display: none; }
-      .logo { animation: none; opacity: 1; transform: none; }
-    }
+    .ink { fill: #c2682f; }
+    .reveal { fill: none; stroke: white; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; animation: write-in var(--duration) linear var(--delay) both; }
+    @keyframes write-in { 0% { stroke-dashoffset: 1; opacity: 0; } 0.1% { opacity: 1; } 20% { stroke-dashoffset: .85; } 55% { stroke-dashoffset: .39; } 82% { stroke-dashoffset: .12; } 100% { stroke-dashoffset: 0; opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .reveal { animation: none; stroke-dashoffset: 0; opacity: 1; } }
   </style>
-  <g class="handwriting">
-${strokes.map(({ path, delay, duration }) => `    <path class="stroke" pathLength="1" d="${path}" style="--delay:${delay}ms;--duration:${duration}ms" />`).join('\n')}
-  </g>
-  <image class="logo" href="data:image/png;base64,${logo.toString('base64')}" x="0" y="0" width="450" height="200" />
+  <defs>
+${paths.map((p, i) => `    <mask id="ink-${i}" maskUnits="userSpaceOnUse" x="60" y="22" width="330" height="172"><path class="reveal" pathLength="1" d="${p.center}" style="--delay:${strokes[i].delay}ms;--duration:${strokes[i].duration}ms" /></mask>`).join('\n')}
+  </defs>
+${paths.map((p, i) => `  <path class="ink" d="${p.outline}" mask="url(#ink-${i})" />`).join('\n')}
 </svg>
 `
-
-await writeFile(new URL('dano-loading.svg', brandDirectory), svg)
-console.log('Generated public/brand/dano-loading.svg (animation completes at 2680ms).')
+await mkdir(new URL('../src/assets/brand/', import.meta.url), { recursive: true })
+await writeFile(new URL('../src/assets/brand/dano-loading.svg', import.meta.url), svg)
+await writeFile(new URL('../src/components/shell/DanoWordmark.vue', import.meta.url), `<template>
+  <!-- Generated by scripts/generate-loading-signature.mjs. -->
+  <svg viewBox="72 32 306 145" fill="currentColor" role="img" aria-label="Dano 手写标志">
+${paths.map(p => `    <path d="${p.outline}" />`).join('\n')}
+  </svg>
+</template>
+`)
+console.log('Generated pressure-shaped Dano signatures (writing finishes at 2710ms).')

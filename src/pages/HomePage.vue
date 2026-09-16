@@ -10,34 +10,14 @@ import {
   Github,
   Sparkles,
 } from 'lucide-vue-next'
-import Velaris from '@/components/ui/velaris/Velaris.vue'
-import DecryptText from '@/components/ui/decrypt-text/DecryptText.vue'
 import FoxMark from '@/components/shell/FoxMark.vue'
-import DanoLogo from '@/components/shell/DanoLogo.vue'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
+import PixelPlanet from '@/components/ui/pixel-planet/PixelPlanet.vue'
 import { NAV_ITEMS, PROFILE, PROJECTS, STATUS_META } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
-import { compactNumber, formatDate, relativeTime } from '@/lib/format'
-import { useSpotlight } from '@/composables/useInteractions'
+import { formatDate, relativeTime } from '@/lib/format'
 
 const notes = useNotesStore()
-const { onPointerMove } = useSpotlight()
-
-/**
- * Hero palette, per theme.
- *
- * The light stops are deliberate: a pale palette plus the shader's centre glow
- * (which the original hard-codes at 0.3) blows the middle out to near-white and
- * flattens the headline. These sit lower and warmer, and `glow`/`vignette` are
- * turned down so the amplitude stays controlled.
- */
-const HERO_BG: [string, string] = ['#f1e4d2', '#15170f']
-const HERO_COLORS: [string[], string[]] = [
-  ['#eda06a', '#d1774a', '#b05f38', '#f1e4d2'],
-  ['#f0642f', '#b84924', '#7a2f16', '#1b1d17'],
-]
-const HERO_GLOW: [number, number] = [0.1, 0.3]
-const HERO_VIGNETTE: [number, number] = [0.34, 0.8]
 
 const latest = computed(() => notes.notes[0])
 const recent = computed(() => notes.notes.slice(0, 5))
@@ -50,10 +30,7 @@ const statusList = computed(() =>
   })),
 )
 
-/**
- * Hero shortcuts. `cjk` is the display label; `latin` is only kept so the mono
- * stat under each one still reads as a technical figure rather than prose.
- */
+// Primary destinations share one evenly divided grid.
 const mapNodes = [
   { key: 'notes', cjk: '知识笔记', value: () => `${notes.stats.total}`, to: '/notes', icon: BookOpen },
   { key: 'projects', cjk: '项目路径', value: () => `${PROJECTS.length}`, to: '/projects', icon: Compass },
@@ -63,194 +40,70 @@ const mapNodes = [
 </script>
 
 <template>
-  <div class="relative">
-    <!-- ================= HERO ================= -->
-    <!--
-      Full-bleed: no radius, no border, no gutter. The section owns the whole
-      viewport under the fixed header so the backdrop reads as the page rather
-      than as a card floating on it.
-    -->
-    <section>
-      <Velaris
-        :colors="HERO_COLORS"
-        :bg="HERO_BG"
-        :glow="HERO_GLOW"
-        :vignette="HERO_VIGNETTE"
-        :speed="1.25"
-        :grain="0.34"
-        height="auto"
-        class="min-h-[calc(100svh-68px)]"
-      >
-        <div
-          class="relative mx-auto flex min-h-[calc(100svh-68px)] w-full max-w-[94rem] flex-col px-5 pt-8 pb-8 sm:px-8 lg:px-12"
-        >
-          <!--
-            The rail and the copy are one flex group with a fixed gap, so the
-            pills always sit 26px above the headline. Leaving them as separate
-            `justify-between` rows let the gap stretch to 164px on a tall
-            viewport, which made them read as two unrelated blocks.
+  <div class="home-page relative">
+    <section class="home-hero shell-wide" aria-labelledby="home-title">
+      <div class="hero-rail">
+        <span class="hero-kicker"><i aria-hidden="true" />DANO’S DIGITAL GARDEN</span>
+        <span class="hero-rail-note">记录、创造，保持好奇。</span>
+      </div>
 
-            Both pills use the hero's UI sans at 13.6px with no tracking and no
-            uppercase — the rail used to be 9.6px uppercase mono at 1.7px
-            tracking above an 83px serif headline at -3.7px, i.e. two type
-            languages in one screen. Mono is kept for the digits, where it
-            carries meaning, and `text-ember` marks emphasis the same way the
-            header's active nav item does. The second pill is `hidden` rather
-            than removed on small screens so the first never shifts.
-          -->
-          <div class="flex flex-1 flex-col gap-[26px] pt-[4%]">
-            <div class="flex flex-wrap items-center gap-3">
-              <span
-                class="inline-flex items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-4 py-2 text-[0.85rem] text-hero-fg backdrop-blur"
-              >
-                <i
-                  class="size-1.5 rounded-full bg-ember [animation:pulse-dot_2.4s_ease-out_infinite]"
-                  aria-hidden="true"
-                />
-                vault online
-                <span class="text-ember" aria-hidden="true">·</span>
-                <span class="font-mono text-[0.78rem] text-ember">{{ notes.stats.total }}</span>
-                notes indexed
-              </span>
-              <span
-                class="hidden items-center gap-2.5 rounded-full border border-hero-line bg-hero-surface px-4 py-2 text-[0.85rem] text-hero-muted backdrop-blur sm:inline-flex"
-              >
-                WebGL 着色器
-                <span class="text-ember" aria-hidden="true">·</span>
-                <span class="font-mono text-[0.78rem] text-ember">{{ notes.stats.links }}</span>
-                links mapped
-              </span>
-            </div>
-
-            <div class="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.46fr)] lg:gap-12">
-              <div class="min-w-0">
-                <DecryptText
-                  as="h1"
-                  :text="PROFILE.headline"
-                  trigger="mount"
-                  :stagger="46"
-                  :start-delay="420"
-                  :loop="false"
-                  class="!text-hero-fg"
-                />
-
-                <p
-                  class="animate-rise mt-7 max-w-2xl text-[0.95rem] leading-relaxed text-hero-muted"
-                  style="--reveal-delay: 620ms"
-                >
-                  {{ PROFILE.intro }}
-                </p>
-
-                <div class="animate-rise mt-9 flex flex-wrap items-center gap-4" style="--reveal-delay: 780ms">
-                  <RouterLink
-                    to="/notes"
-                    class="group inline-flex items-center gap-2.5 rounded-full bg-ember px-5 py-3 text-[0.875rem] font-semibold text-[#1b1206] shadow-[var(--shadow-ember)] transition-all duration-500 hover:-translate-y-0.5 hover:bg-ember-soft"
-                  >
-                    进入知识花园
-                    <ArrowRight :size="15" class="transition-transform duration-500 group-hover:translate-x-1" />
-                  </RouterLink>
-                  <RouterLink
-                    to="/about"
-                    class="group inline-flex items-center gap-1.5 border-b border-hero-line pb-1 text-[0.875rem] text-hero-fg transition-colors hover:border-ember hover:text-ember"
-                  >
-                    从这里认识我
-                    <ArrowUpRight :size="14" class="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </RouterLink>
-                </div>
-              </div>
-
-              <div class="hero-signature order-first justify-self-start lg:order-last lg:justify-self-center">
-                <span class="font-mono text-[0.65rem] tracking-[0.22em] text-hero-muted uppercase">A digital garden by</span>
-                <DanoLogo eager class="my-3 w-[190px] sm:w-[240px] lg:w-[340px]" />
-                <span class="flex items-center gap-2 text-[0.75rem] text-hero-muted">
-                  <FoxMark :size="22" />
-                  写代码，也照料想法。
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- hero footer: latest note + map -->
-          <div class="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:items-end">
-            <RouterLink
-              v-if="latest"
-              :to="latest.path"
-              class="group relative overflow-hidden rounded-2xl border border-hero-line bg-hero-surface p-5 backdrop-blur-md transition-colors duration-500 hover:border-ember/45 hover:bg-hero-surface-strong"
-            >
-              <div class="flex items-center justify-between gap-3">
-                <span class="font-mono text-[0.72rem] tracking-[0.14em] text-ember uppercase">
-                  latest planting
-                </span>
-                <span class="text-[0.76rem] text-hero-muted">
-                  {{ relativeTime(latest.date) }}
-                </span>
-              </div>
-              <h2 class="mt-3 font-serif text-xl leading-snug text-hero-fg">
-                {{ latest.title }}
-              </h2>
-              <p class="mt-1.5 line-clamp-2 text-[0.82rem] leading-relaxed text-hero-muted">
-                {{ latest.description }}
-              </p>
-              <div class="mt-3 flex items-center gap-3 text-[0.76rem] text-hero-muted">
-                <span>{{ formatDate(latest.date) }}</span>
-                <span class="size-1 rounded-full bg-hero-line" />
-                <span>{{ latest.readingTime }} 分钟</span>
-                <span class="size-1 rounded-full bg-hero-line" />
-                <span>{{ latest.tags.slice(0, 2).join(' / ') }}</span>
-              </div>
-              <span
-                class="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-hero-surface-strong to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:[animation:sheen_1.1s_ease-out]"
-                aria-hidden="true"
-              />
-            </RouterLink>
-
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-              <component
-                :is="node.to.startsWith('http') ? 'a' : RouterLink"
-                v-for="node in mapNodes"
-                :key="node.key"
-                :to="node.to.startsWith('http') ? undefined : node.to"
-                :href="node.to.startsWith('http') ? node.to : undefined"
-                :target="node.to.startsWith('http') ? '_blank' : undefined"
-                :rel="node.to.startsWith('http') ? 'noreferrer' : undefined"
-                class="group rounded-xl border border-hero-line bg-hero-surface p-3.5 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
-              >
-                <div class="flex items-baseline justify-between gap-2">
-                  <span class="text-[0.85rem] text-hero-fg">{{ node.cjk }}</span>
-                  <component :is="node.icon" :size="14" class="shrink-0 translate-y-0.5 text-ember" />
-                </div>
-                <p class="mt-2.5 font-serif text-xl leading-none text-hero-fg">{{ node.value() }}</p>
-              </component>
-            </div>
-          </div>
+      <div class="hero-copy">
+        <h1 id="home-title">
+          <span>让作品与想法，</span>
+          <span class="hero-title-secondary">一起生长<span class="hero-period">。</span></span>
+        </h1>
+        <p class="hero-intro">我是 {{ PROFILE.name }}，一名前端开发者。<br class="sm:hidden" />在这里写代码，也照料想法。<br class="hidden sm:block" />我的项目、经历与持续更新的技术笔记，都在这座数字花园里。</p>
+        <div class="hero-actions">
+          <RouterLink to="/notes" class="hero-button hero-button-primary group">
+            进入知识花园
+            <ArrowRight :size="16" class="transition-transform group-hover:translate-x-1" />
+          </RouterLink>
+          <RouterLink to="/about" class="hero-button hero-button-secondary group">
+            从这里认识我
+            <ArrowUpRight :size="16" class="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </RouterLink>
         </div>
-      </Velaris>
-    </section>
+      </div>
 
-    <!-- ================= TELEMETRY ================= -->
-    <section class="shell-wide">
-      <div
-        v-reveal
-        class="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <div
-          v-for="stat in [
-            { label: '公开笔记', value: `${notes.stats.total}`, hint: `${notes.stats.folders} 个路径` },
-            { label: '累计阅读', value: formatDate(notes.stats.latest), hint: '最近一次栽种' },
-            { label: '知识总量', value: `${compactNumber(notes.stats.weight)}`, hint: '字符与词' },
-            { label: '双向关联', value: `${notes.stats.links}`, hint: 'wiki 链接' },
-          ]"
-          :key="stat.label"
-          class="group bg-paper px-5 py-4 transition-colors duration-500 hover:bg-paper-2"
-        >
-          <p class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
-            {{ stat.label }}
-          </p>
-          <p class="mt-2 font-serif text-2xl tracking-[-0.03em] transition-colors group-hover:text-ember">
-            {{ stat.value }}
-          </p>
-          <p class="mt-0.5 text-[0.7rem] text-muted">{{ stat.hint }}</p>
-        </div>
+      <div class="hero-visual" aria-hidden="true">
+        <PixelPlanet />
+      </div>
+
+      <div class="hero-overview">
+        <RouterLink v-if="latest" :to="latest.path" class="latest-note group">
+          <div class="overview-label">
+            <span>最新笔记 <span class="overview-english">LATEST NOTE</span></span>
+            <ArrowUpRight :size="17" class="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </div>
+          <h2>{{ latest.title }}</h2>
+          <p class="latest-description line-clamp-2">{{ latest.description }}</p>
+          <div class="latest-meta">
+            <time :datetime="latest.date">{{ formatDate(latest.date) }}</time>
+            <span>{{ latest.readingTime }} 分钟阅读</span>
+            <span class="truncate">{{ latest.tags.slice(0, 2).join(' / ') }}</span>
+          </div>
+        </RouterLink>
+        <nav class="hero-shortcuts" aria-label="探索花园">
+          <component
+            :is="node.to.startsWith('http') ? 'a' : RouterLink"
+            v-for="node in mapNodes"
+            :key="node.key"
+            :to="node.to.startsWith('http') ? undefined : node.to"
+            :href="node.to.startsWith('http') ? node.to : undefined"
+            :target="node.to.startsWith('http') ? '_blank' : undefined"
+            :rel="node.to.startsWith('http') ? 'noreferrer' : undefined"
+            class="hero-shortcut group"
+          >
+            <div class="shortcut-heading">
+              <component :is="node.icon" :size="16" :stroke-width="1.5" />
+              <ArrowUpRight :size="14" class="shortcut-arrow transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </div>
+            <div class="shortcut-caption">
+              <span>{{ node.cjk }}</span>
+              <span class="shortcut-value">{{ node.value() }}</span>
+            </div>
+          </component>
+        </nav>
       </div>
     </section>
 
@@ -272,19 +125,15 @@ const mapNodes = [
         </RouterLink>
       </header>
 
-      <div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div class="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <RouterLink
           v-for="(note, index) in recent"
           :key="note.path"
           v-reveal="index * 70"
           :to="note.path"
-          class="spotlight group relative flex min-h-[15rem] flex-col overflow-hidden rounded-2xl border border-line bg-paper p-5 transition-[border-color,box-shadow] duration-500 hover:border-ember/45 hover:shadow-[var(--shadow-md)]"
-          @pointermove="onPointerMove"
+          class="group relative flex min-h-[15rem] flex-col overflow-hidden rounded-[8px] border border-line bg-paper p-6 transition-[border-color,box-shadow] duration-500 hover:border-ember/45 hover:shadow-[var(--shadow-md)]"
+
         >
-          <span
-            class="absolute inset-x-0 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-ember to-transparent transition-transform duration-700 group-hover:scale-x-100"
-            aria-hidden="true"
-          />
 
           <div class="flex items-center justify-between gap-3">
             <NoteStatusBadge :status="note.status" />
@@ -315,7 +164,7 @@ const mapNodes = [
         <RouterLink
           to="/notes"
           v-reveal="recent.length * 70"
-          class="group flex min-h-[15rem] flex-col items-start justify-between rounded-2xl border border-dashed border-line-strong/70 bg-transparent p-5 transition-colors duration-500 hover:border-ember/60"
+          class="group flex min-h-[15rem] flex-col items-start justify-between rounded-[8px] border border-dashed border-line-strong/70 bg-transparent p-6 transition-colors duration-500 hover:border-ember/60"
         >
           <FoxMark :size="34" class="opacity-80" />
           <div>
@@ -335,7 +184,7 @@ const mapNodes = [
     <section class="shell-wide pt-20">
       <div
         v-reveal
-        class="grid gap-8 rounded-[1.75rem] border border-line bg-paper-2/70 p-6 sm:p-9 lg:grid-cols-[1fr_1.25fr]"
+        class="grid gap-8 rounded-[8px] border border-line bg-paper-2/70 p-6 sm:p-9 lg:grid-cols-[1fr_1.25fr]"
       >
         <div>
           <p class="eyebrow">Growth stages</p>
@@ -358,7 +207,7 @@ const mapNodes = [
           <div
             v-for="stage in statusList"
             :key="stage.key"
-            class="flex flex-col justify-between rounded-xl border border-line bg-paper p-4"
+            class="flex flex-col justify-between rounded-[8px] border border-line bg-paper p-4"
           >
             <div>
               <span class="text-2xl" aria-hidden="true">{{ stage.icon }}</span>
@@ -391,7 +240,7 @@ const mapNodes = [
         </RouterLink>
       </header>
 
-      <div class="mt-8 grid gap-4 lg:grid-cols-3">
+      <div class="mt-8 grid gap-6 lg:grid-cols-3">
         <a
           v-for="(project, index) in PROJECTS"
           :key="project.id"
@@ -399,14 +248,9 @@ const mapNodes = [
           :href="project.demo"
           target="_blank"
           rel="noreferrer"
-          class="spotlight group relative flex min-h-[17rem] flex-col overflow-hidden rounded-2xl border border-line bg-paper p-5 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1.5 hover:border-ember/45 hover:shadow-[var(--shadow-md)]"
-          @pointermove="onPointerMove"
+          class="group relative flex min-h-[17rem] flex-col overflow-hidden rounded-[8px] border border-line bg-paper p-6 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1.5 hover:border-ember/45 hover:shadow-[var(--shadow-md)]"
+
         >
-          <div
-            class="absolute -top-16 -right-16 size-40 rounded-full opacity-[0.14] blur-2xl transition-opacity duration-700 group-hover:opacity-30"
-            :style="{ background: project.accent }"
-            aria-hidden="true"
-          />
 
           <div class="relative flex items-start justify-between gap-3">
             <span class="font-mono text-[0.7rem] tracking-[0.13em] text-ember">
@@ -441,7 +285,7 @@ const mapNodes = [
     <section class="shell-wide pt-20">
       <div
         v-reveal
-        class="grid divide-line overflow-hidden rounded-2xl border border-line bg-paper sm:grid-cols-2 lg:grid-cols-4 lg:divide-x"
+        class="grid divide-line overflow-hidden rounded-[8px] border border-line bg-paper sm:grid-cols-2 lg:grid-cols-4 lg:divide-x"
       >
         <div v-for="item in [
           { label: 'Currently', value: PROFILE.currently },
@@ -474,7 +318,7 @@ const mapNodes = [
           :key="item.key"
           v-reveal="index * 70"
           :to="item.to"
-          class="group flex items-center justify-between gap-4 rounded-xl border border-line bg-paper px-4 py-3.5 transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
+          class="group flex items-center justify-between gap-4 rounded-[8px] border border-line bg-paper px-4 py-3.5 transition-all duration-500 hover:-translate-y-1 hover:border-ember/45"
         >
           <span>
             <span class="block text-[0.9rem] transition-colors group-hover:text-ember">
@@ -495,9 +339,59 @@ const mapNodes = [
 </template>
 
 <style scoped>
-.hero-signature { transform: rotate(-5deg); }
-@media (max-width: 1023px) {
-  .hero-signature { transform: none; }
+.home-page h2, .home-page h3 { font-family: var(--font-sans); }
+.home-hero { padding-top: 38px; padding-bottom: 72px; border-bottom: 1px solid var(--line); }
+.hero-rail { grid-area: rail; display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--muted); font-size: 12px; }
+.hero-kicker { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; }
+.hero-kicker i { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); }
+.hero-rail-note { letter-spacing: .08em; }
+.hero-copy { grid-area: copy; padding-block: clamp(64px, 8vh, 100px) 64px; }
+.hero-visual { grid-area: visual; align-self: center; width: 100%; max-width: 680px; }
+.home-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .78fr); grid-template-areas: "rail rail" "copy visual" "overview overview"; column-gap: clamp(32px, 5vw, 88px); }
+.hero-overview { grid-area: overview; }
+.hero-copy h1 { margin: 0; font-family: var(--font-sans); font-size: clamp(44px, 5.6vw, 80px); font-weight: 500; line-height: 1.22; letter-spacing: -.055em; }
+.hero-copy h1 > span { display: block; }
+.hero-title-secondary { color: var(--ink-soft); }
+.hero-period { color: var(--ember); }
+.hero-intro { margin-top: 26px; max-width: 650px; color: var(--muted); font-size: 15px; line-height: 1.9; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.hero-button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 22px; padding: 11px 20px; border: 1px solid transparent; border-radius: 6px; font-size: 13px; font-weight: 500; transition: background .2s, border-color .2s; }
+.hero-button-primary { background: var(--ember-soft); color: var(--on-accent); box-shadow: 0 3px 12px rgb(182 83 32 / .1); }
+.hero-button-primary:hover { background: color-mix(in srgb, var(--ember-soft) 85%, #fff); }
+.hero-button-secondary { border-color: var(--line); color: var(--ink-soft); }
+.hero-button-secondary:hover { background: var(--paper-2); border-color: var(--line-strong); }
+.hero-overview { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; }
+.latest-note, .hero-shortcuts { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--paper); }
+.latest-note { display: flex; min-width: 0; flex-direction: column; padding: 24px; transition: border-color .2s, background .2s; }
+.latest-note:hover { border-color: var(--line-strong); background: var(--paper-2); }
+.overview-label { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 12px; }
+.overview-english { margin-left: 12px; color: var(--faint); font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; }
+.latest-note h2 { margin-top: 20px; font-family: var(--font-sans); font-size: 19px; font-weight: 500; letter-spacing: -.02em; }
+.latest-description { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.latest-meta { display: flex; align-items: center; gap: 16px; margin-top: auto; padding-top: 20px; color: var(--faint); font-size: 11px; }
+.latest-meta > :first-child, .latest-meta > :nth-child(2) { flex-shrink: 0; }
+.hero-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hero-shortcut { display: flex; min-width: 0; flex-direction: column; justify-content: space-between; gap: 20px; padding: 24px; transition: background .2s; }
+.hero-shortcut:hover { background: var(--paper-2); }
+.hero-shortcut:nth-child(odd) { border-right: 1px solid var(--line); }
+.hero-shortcut:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.shortcut-heading, .shortcut-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.shortcut-heading { color: var(--muted); }
+.shortcut-arrow { color: var(--faint); }
+.shortcut-caption { font-size: 13px; }
+.shortcut-value { font-family: var(--font-mono); color: var(--muted); font-size: 12px; }
+@media (min-width: 1600px) { .hero-copy { padding-block: 104px 80px; } }
+@media (max-width: 767px) {
+  .home-hero { padding-top: 28px; padding-bottom: 48px; grid-template-columns: 1fr; grid-template-areas: "rail" "copy" "visual" "overview"; column-gap: 0; }
+  .hero-rail-note { display: none; }
+  .hero-copy { padding-block: 56px 40px; }
+  .hero-visual { width: 100%; margin-bottom: 32px; }
+  .hero-copy h1 { font-size: clamp(36px, 7.8vw, 56px); }
+  .hero-intro { font-size: 14px; margin-top: 24px; }
+  .hero-overview { grid-template-columns: 1fr; gap: 16px; }
+  .latest-note, .hero-shortcut { padding: 20px; }
+  .hero-button { padding-inline: 16px; gap: 14px; }
+  .latest-meta { gap: 12px; }
 }
 .line-clamp-2 {
   display: -webkit-box;

@@ -10,8 +10,17 @@ repository, downloaded unchanged on 2026-09-12 at the owner's request.
 Keep this local asset so the website and startup screen do not depend on GitHub
 being reachable. The fox identity uses the native 🦊 emoji.
 
-`dano-loading.svg` draws a cursive Dano signature stroke by stroke, then reveals
-the original logo with a small spring-like pop. The PNG is embedded unchanged,
-so this works as a single self-contained image during app startup. Reduced
-motion shows the final logo immediately. Rebuild it after changing the logo
-or strokes with `node scripts/generate-loading-signature.mjs`.
+The animated signature now lives in `src/assets/brand/dano-loading.svg` so Vite
+fingerprints it on every change. It reveals filled nib-shaped outlines along
+six pen trajectories, with light upstrokes, broader downstrokes, lifted ends,
+brief pen lifts and a final flourish. The finished signature stays visible;
+reduced motion shows all the ink immediately.
+
+Run `node scripts/generate-loading-signature.mjs` to rebuild both this SVG and
+`src/components/shell/DanoWordmark.vue` from the same pressure-shaped geometry.
+Writing ends at 2710ms; `index.html` holds the completed signature until 3120ms.
+The original PNG remains available as an image-load fallback.
+
+Startup CSS lives in `src/styles/loading.css`, also bundled with a content hash.
+The small critical style in `index.html` keeps the startup overlay centered and
+fixed to the viewport before stylesheet delivery, including slow connections.

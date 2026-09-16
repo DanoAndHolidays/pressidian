@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './prose.css';
+@import './loading.css';
 
 /* Tailwind's automatic source detection walks the whole project. The synced
    Obsidian vault lives inside it and holds hundreds of megabytes of markdown
@@ -16,8 +17,7 @@
 
 /* ==========================================================================
    Pressidian design tokens
-   The palette is anchored on the original garden orange (#f0642f in light,
-   a lifted #ff7a45 in dark) so the identity survives the rebuild.
+   Warm paper and soft orange accents, shared by the header and hero.
    ========================================================================== */
 
 @theme inline {
@@ -73,22 +73,24 @@
 }
 
 :root {
-  --canvas: #f4f1e8;
-  --paper: #fcfaf5;
-  --paper-2: #f8f5ec;
-  --paper-3: #efeade;
-  --ink: #1d1e19;
-  --ink-soft: #3c3f38;
-  --muted: #6f6f67;
-  --faint: #9d9c92;
-  --line: #ded8ca;
-  --line-strong: #c9c2b1;
-  --ember: #f0642f;
-  --ember-deep: #b84924;
-  --ember-soft: #ff9167;
-  --ember-tint: #f8dfd1;
-  --forest: #1b1d17;
-  --forest-soft: #3d4237;
+  --canvas: #f4f1ea;
+  --paper: #faf8f3;
+  --paper-2: #eeeadf;
+  --paper-3: #e5e0d4;
+  --ink: #35312c;
+  --ink-soft: #61594f;
+  --muted: #787063;
+  --faint: #827768;
+  --line: #e0d9cf;
+  --line-strong: #cbbfae;
+  --ember: #b65320;
+  --ember-deep: #93401b;
+  --ember-soft: #efa16d;
+  --ember-tint: #f7e3d3;
+  --on-accent: #382419;
+  --header-glass: color-mix(in srgb, var(--canvas) 92%, transparent);
+  --forest: #242424;
+  --forest-soft: #454543;
   --jade: #3f7d5f;
   --amber: #c88a2e;
   --grid-dot: color-mix(in oklab, var(--muted) 24%, transparent);
@@ -105,22 +107,22 @@
 }
 
 .dark {
-  --canvas: #121310;
-  --paper: #191b16;
-  --paper-2: #1f2119;
-  --paper-3: #262920;
-  --ink: #f2eee2;
-  --ink-soft: #d3cfc1;
-  --muted: #9c9c92;
-  --faint: #74746a;
-  --line: #2f3226;
-  --line-strong: #40442f;
-  --ember: #ff7a45;
-  --ember-deep: #ffab86;
-  --ember-soft: #ff9a6c;
-  --ember-tint: #3a2a1f;
-  --forest: #202219;
-  --forest-soft: #4b5140;
+  --canvas: #1d1b19;
+  --paper: #25211e;
+  --paper-2: #2e2822;
+  --paper-3: #383027;
+  --ink: #eee9dd;
+  --ink-soft: #d3c8b9;
+  --muted: #b4a695;
+  --faint: #a39481;
+  --line: #3b322a;
+  --line-strong: #574735;
+  --ember: #f1ad79;
+  --ember-deep: #ffc599;
+  --ember-soft: #efa16d;
+  --ember-tint: #3b2b20;
+  --forest: #222222;
+  --forest-soft: #484846;
   --jade: #62b189;
   --amber: #e0aa52;
   --grid-dot: color-mix(in oklab, var(--muted) 22%, transparent);
@@ -158,17 +160,7 @@
     margin: 0;
     min-height: 100svh;
     background-color: var(--canvas);
-    background-image:
-      radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 1.4px),
-      radial-gradient(
-        120% 80% at 50% -20%,
-        color-mix(in oklab, var(--ember) 7%, transparent),
-        transparent 60%
-      );
-    background-size:
-      22px 22px,
-      100% 100%;
-    background-attachment: fixed;
+    background-image: none;
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: 15px;
@@ -219,18 +211,6 @@
     border-top: 1px solid var(--line);
   }
 
-  /* Film-grain overlay — a single fixed layer keeps it cheap. */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    pointer-events: none;
-    opacity: 0.32;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-  }
-
   ::-webkit-scrollbar {
     width: 11px;
     height: 11px;
@@ -258,7 +238,7 @@
 }
 
 @utility shell-wide {
-  width: min(100% - 2.5rem, 94rem);
+  width: min(100% - 3rem, 78rem);
   margin-inline: auto;
 }
 
@@ -318,7 +298,7 @@
     transition: opacity 0.4s ease;
     background: radial-gradient(
       22rem circle at var(--mx, 50%) var(--my, 50%),
-      color-mix(in oklab, var(--ember) 20%, transparent),
+      color-mix(in oklab, var(--ember) 5%, transparent),
       transparent 65%
     );
     pointer-events: none;
