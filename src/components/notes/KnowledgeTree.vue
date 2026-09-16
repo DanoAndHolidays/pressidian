@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { ChevronRight, FolderOpen, FolderClosed } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { useNotesStore, type TreeNode } from '@/stores/notes'
 import { cn } from '@/lib/utils'
 
 /**
- * The vault folder tree. Branches auto-open along the active note's path so
- * the reader always sees where they are without hunting for it.
+ * The vault folder tree. Branches auto-open along the active note's path so the
+ * reader always sees where they are without hunting for it.
+ *
+ * Expansion state is *not* local to this component. It used to be, which meant
+ * each recursive instance owned one flag that the active-path watcher drove from
+ * its parent's trail — so a folder whose label happened to appear in that trail
+ * opened the entire sibling group it rendered. The store now keys expansion by
+ * folder path, so a toggle affects exactly one folder.
  */
 const props = withDefaults(defineProps<{ node?: TreeNode; depth?: number }>(), {
   node: undefined,
@@ -21,45 +27,43 @@ const notes = useNotesStore()
 const route = useRoute()
 
 const current = computed(() => decodeURIComponent(route.path).replace(/\/$/, ''))
-const open = ref(props.depth < 1)
+const isOpen = (key: string) => notes.isFolderOpen(key)
 
-const activeTrail = computed(() => {
-  const segments = current.value
-    .replace(/^\/notes\//, '')
-    .split('/')
-    .filter(Boolean)
-  return segments.slice(0, -1)
-})
+const isActive = (path: string) => current.value === path
 
+/*
+ * Reveal the trail to the active note. Only ancestor folders are opened, and
+ * only the route drives this — a manual toggle is never undone by it, because
+ * nothing here ever closes a folder.
+ */
 watch(
-  activeTrail,
-  (trail) => {
-    if (props.node?.type !== 'folder' || props.depth === 0) return
-    if (trail.includes(props.node.label)) open.value = true
+  () => route.path,
+  (path) => {
+    if (props.depth === 0 || props.node?.type !== 'folder') return
+    if (path.startsWith('/notes/')) notes.revealPath(path)
   },
   { immediate: true },
 )
-
-const isActive = (path: string) => current.value === path
 </script>
 
 <template>
-  <ul v-if="node" :class="cn('grid', depth === 0 ? 'gap-0.5' : 'gap-0.5')" role="tree">
-    <li v-for="child in node.children" :key="child.key" role="treeitem" :aria-expanded="child.type === 'folder' ? open : undefined">
+  <ul v-if="node" class="grid gap-0.5" role="tree">
+    <li v-for="child in node.children" :key="child.key" role="treeitem">
       <!-- folder -->
       <template v-if="child.type === 'folder'">
         <button
           type="button"
           class="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-300 hover:bg-paper-2"
           :class="cn(depth > 0 && 'ml-2')"
-          @click="open = !open"
+          :aria-expanded="isOpen(child.key)"
+          @click="notes.toggleFolder(child.key)"
         >
           <ChevronRight
             :size="12"
             class="shrink-0 text-faint transition-transform duration-300"
-            :class="open && 'rotate-90'"
+            :class="isOpen(child.key) && 'rotate-90'"
           />
-          <FolderOpen v-if="open" :size="13" class="shrink-0 text-ember/80" />
+          <FolderOpen v-if="isOpen(child.key)" :size="13" class="shrink-0 text-ember/80" />
           <FolderClosed v-else :size="13" class="shrink-0 text-faint" />
           <span class="min-w-0 flex-1 truncate text-[0.8rem] text-ink-soft group-hover:text-ink">
             {{ child.label }}
@@ -73,7 +77,7 @@ const isActive = (path: string) => current.value === path
           enter-from-class="grid-rows-[0fr] opacity-0"
           leave-to-class="grid-rows-[0fr] opacity-0"
         >
-          <div v-if="open" class="grid grid-rows-[1fr]">
+          <div v-if="isOpen(child.key)" class="grid grid-rows-[1fr]">
             <div class="overflow-hidden">
               <KnowledgeTree :node="child" :depth="depth + 1" />
             </div>

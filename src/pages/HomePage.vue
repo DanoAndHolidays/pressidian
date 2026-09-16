@@ -33,6 +33,13 @@ const HEADLINE_LINES = ['让作品与想法，', '一起生长。'] as const
 const HEADLINE_START_DELAY = 240
 const HEADLINE_STAGGER = 46
 
+/*
+ * The headline re-scrambles on its own timer so the hero is never static; it is
+ * not hover-dependent. The interval is the pause *after* a run settles, so the
+ * visible gap between sweeps is this plus the ~0.5s the churn itself takes.
+ */
+const HEADLINE_LOOP_MS = 4800
+
 /**
  * `?headlineSlow=<ms>` parks the scramble for visual inspection.
  *
@@ -46,6 +53,7 @@ const headlineSlow = import.meta.env.DEV
   : 0
 const headlineStartDelay = HEADLINE_START_DELAY + headlineSlow
 const headlineStagger = headlineSlow > 0 ? 900 : HEADLINE_STAGGER
+const headlineLoop = headlineSlow > 0 ? false : HEADLINE_LOOP_MS
 
 const latest = computed(() => notes.notes[0])
 const recent = computed(() => notes.notes.slice(0, 5))
@@ -83,7 +91,7 @@ const mapNodes = [
             trigger="mount"
             :stagger="headlineStagger"
             :start-delay="headlineStartDelay"
-            :loop="false"
+            :loop="headlineLoop"
           />
           <DecryptText
             as="span"
@@ -92,7 +100,7 @@ const mapNodes = [
             trigger="mount"
             :stagger="headlineStagger"
             :start-delay="headlineStartDelay + HEADLINE_LINES[0].length * headlineStagger"
-            :loop="false"
+            :loop="headlineLoop"
           />
         </h1>
         <p class="hero-intro">我是 {{ PROFILE.name }}，一名前端开发者。<br class="sm:hidden" />在这里写代码，也照料想法。<br class="hidden sm:block" />我的项目、经历与持续更新的技术笔记，都在这座数字花园里。</p>

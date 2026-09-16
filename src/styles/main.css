@@ -154,6 +154,18 @@
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
     scroll-padding-top: 6.5rem;
+    /*
+     * Reserve the scrollbar track even on pages short enough not to need it.
+     * Without this the viewport width changes the moment a long note finishes
+     * rendering (or a short one is opened), and every centred/`shell-wide`
+     * element jumps sideways — the flash of movement the reader notices as the
+     * page "settling". `stable` keeps the gutter permanent instead of paying for
+     * it only on scrollable pages.
+     *
+     * No effect on overlay scrollbars (macOS default, mobile), where there is
+     * nothing to reserve and the layout never shifted anyway.
+     */
+    scrollbar-gutter: stable;
   }
 
   body {

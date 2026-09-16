@@ -316,17 +316,15 @@ watch(
       if (!played) resolveAll()
       return
     }
-    if (!played) {
-      play()
-      return
-    }
-    // Coming back on screen after a completed run: re-arm the loop, don't restart.
-    if (props.loop !== false && props.loop > 0 && rafId == null && timerId == null) {
-      timerId = setTimeout(() => {
-        timerId = null
-        play()
-      }, Math.min(props.loop, 3000))
-    }
+    if (!played) play()
+    /*
+     * No re-arm here. `play()` already schedules the next run when it settles,
+     * and this watcher re-fires on every visibility change and rAF tick — so
+     * arming a second timer alongside it produced two competing loops and a
+     * visibly erratic cadence (runs landing 748ms apart instead of `loop` ms),
+     * because each fired the next run on its own schedule. The loop has exactly
+     * one owner: the end of `play()`.
+     */
   },
   { immediate: true, flush: 'post' },
 )

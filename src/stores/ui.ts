@@ -6,9 +6,12 @@ const THEME_KEY = 'pressidian-theme'
 export type ThemeMode = 'light' | 'dark'
 
 /**
- * Resolves the theme from `localStorage` first, then the OS preference. The
- * same logic already ran inline in `index.html` before first paint, so this
- * store only has to adopt — never correct — what the document says.
+ * Theme. The document already carries the resolved class (see the inline script
+ * in `index.html`), so this store only adopts what is there.
+ *
+ * The default is dark and deliberately does NOT follow the OS preference: the
+ * site ships a dark identity, and only a visitor who has actually used the
+ * toggle gets light. `index.html` applies the same rule before first paint.
  */
 export const useUiStore = defineStore('ui', () => {
   const initial: ThemeMode =

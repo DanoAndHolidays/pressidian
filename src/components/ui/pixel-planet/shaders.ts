@@ -128,10 +128,15 @@ float glitchHash(vec2 p) {
 
 // Horizontal tear bands. Kept to the cell grid so the band edges land between
 // glyph rows rather than slicing a row in half.
+//
+// The band is deliberately wide (a fifth of the height) and one of the two is
+// force-opened. At the original 0.045 half-width with both bands behind the same
+// gate, a tear often landed on a band whose random centre fell outside the
+// planet and nothing visibly moved at all — which is indistinguishable from the
+// effect not working.
 float glitchBand(float row, float seed) {
-  float gate = step(0.72, glitchHash(vec2(seed, 3.7)));
   float band = glitchHash(vec2(seed, 11.3));
-  return gate * step(abs(row - band), 0.045);
+  return step(abs(row - band), 0.15);
 }
 
 // Same luminance-to-character mapping as the branch's Canvas2D renderer.
@@ -148,19 +153,38 @@ vec4 cellAt(vec2 uv, vec2 shift) {
 
 void main() {
   /*
-   * Glitch. The clock is quantised into ~13 Hz slots and each slot gets a fresh
-   * seed, so the effect is a discrete flicker rather than a smooth wobble. Only
-   * a minority of slots tear (the hash gate), which is what keeps it reading as
-   * a fault instead of a permanent offset.
+   * Glitch. The clock is quantised into slots and each slot gets a fresh seed,
+   * so the effect is a discrete flicker rather than a smooth wobble.
    *
-   * uGlitch is the slot probability, so 0 disables the whole pass and 1 tears
-   * on every frame.
+   * A slot either tears or it does not — uGlitch is that probability (0
+   * disables the pass, 1 tears every slot). There is deliberately no second
+   * gate inside the tearing slots: an inner gate multiplied the odds down until
+   * a tear often landed on a band whose random centre fell off the planet, and
+   * nothing visibly moved at all, which looks exactly like the effect being
+   * broken.
+   *
+   * 8Hz rather than a per-frame value: a tear has to persist across a few
+   * frames to be legible as a fault. At ~30fps a 13Hz slot lasted two frames
+   * and read as a barely-visible haze.
    */
-  float slot = floor(uTime * 13.0);
+  float slot = floor(uTime * 8.0);
   float gate = step(1.0 - uGlitch, glitchHash(vec2(slot, 7.31)));
   float row = floor(vUv.y * uGrid.y);
-  float band = glitchBand(row, slot) + glitchBand(row, slot + 53.0);
-  float offset = (glitchHash(vec2(slot, 19.7)) - 0.5) * 0.085 * gate * band;
+  float band = max(glitchBand(row, slot), glitchBand(row, slot + 53.0));
+
+  /*
+   * Per-cell selection, so a burst corrupts an arbitrary scatter of characters
+   * rather than the whole planet at once. Each glyph cell is hashed against the
+   * slot seed and keeps its own value for the whole slot, so the churn reads as
+   * a static (video-like) fault rather than noise crawling over the surface.
+   *
+   * Thresholded on luma (computed below) so the sparsity holds to ~35% of a
+   * band's cells instead of every cell.
+   */
+  vec2 cellId = floor(vUv * uGrid);
+  float cellPick = glitchHash(cellId + vec2(slot * 0.37, slot * 0.11));
+
+  float offset = (glitchHash(vec2(slot, 19.7)) - 0.5) * 0.1 * gate * band;
   vec2 shift = vec2(offset, 0.0);
   /*
    * Dispersion offset, scaled with the tear so a wider tear also fringes wider.
@@ -178,6 +202,13 @@ void main() {
   color = clamp((color + uBrightness - 0.5) * uContrast + 0.5, 0.0, 1.0);
   float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
   float value = clamp(luma + 0.08, 0.0, 1.0);
+
+  // Resolve the per-cell pick now that luma is known, and vary the amount of
+  // dispersion between cells so a burst is not a uniform tint.
+  float speckle = step(cellPick, 0.35);
+  float amount = 0.75 + glitchHash(cellId + vec2(9.13, slot * 0.23)) * 0.5;
+  float glitchStrength = gate * band * speckle;
+
   float glyph = min(uGlyphCount - 1.0, floor(value * uGlyphCount));
   vec2 withinCell = fract(vUv * uGrid);
   float ink = texture2D(uGlyphs, vec2((glyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
@@ -200,30 +231,32 @@ void main() {
    *
    * A plain RGB split does nothing useful here: the glyph palette is warm
    * (sand/cream ink, blue at roughly a third of red), so re-sampling the blue
-   * channel moves it by almost nothing and the fringes come out one-sided. The
-   * two laterally-offset samples are therefore split into opposing tints
-   * instead — disperseWarm and disperseCool pull opposite ways, so one edge of a
-   * torn band fringes red and the other cyan whatever the ink colour is.
+   * channel moves it by almost nothing and the fringes come out one-sided.
+   *
+   * Instead the glyph coverage is re-read at two laterally-offset positions and
+   * the *result* is tinted, red to one side and cyan to the other. Tinting the
+   * coverage rather than the colour is what makes it a true edge dispersion:
+   * the fringe lands where the character's edge has moved, so a stroke reads as
+   * a red fringe on one side and a cyan one on the other regardless of ink.
    *
    * The offset is in UV, not pixels: 0.028 is ~19px at a 680px-wide canvas. It
    * has to clear roughly one cell (cellWidth / canvasWidth, ~0.011 at 680px)
    * before it does anything at all, because cellAt snaps its sample to a cell
    * centre and a sub-cell offset rounds away.
    */
-  vec3 disperseWarm = vec3(0.55, -0.30, -0.30);
-  vec3 disperseCool = vec3(-0.55, 0.30, 0.30);
-  if (split > 0.0) {
-    vec4 warm = cellAt(vUv, shift + vec2(split, 0.0));
-    vec4 cool = cellAt(vUv, shift - vec2(split, 0.0));
-    /*
-     * Weighted by each displaced cell's own coverage. Sampling off the
-     * silhouette returns alpha 0, so an unweighted blend would drag every edge
-     * pixel toward black and punch holes in the glyphs.
-     */
-    float warmCover = min(warm.a / max(cell.a, 0.001), 1.0);
-    float coolCover = min(cool.a / max(cell.a, 0.001), 1.0);
-    color += disperseWarm * (0.8 * warmCover * gate * band);
-    color += disperseCool * (0.8 * coolCover * gate * band);
+  if (glitchStrength > 0.0) {
+    vec4 warmCell = cellAt(vUv, shift + vec2(split, 0.0));
+    vec4 coolCell = cellAt(vUv, shift - vec2(split, 0.0));
+    // The glyph index is taken from each offset sample, so the fringes are the
+    // neighbouring characters' shapes rather than a scaled copy of this one.
+    float warmGlyph = min(uGlyphCount - 1.0, floor(clamp(dot(warmCell.rgb / max(warmCell.a, 0.001), vec3(1.0)) + 0.08, 0.0, 1.0) * uGlyphCount));
+    float coolGlyph = min(uGlyphCount - 1.0, floor(clamp(dot(coolCell.rgb / max(coolCell.a, 0.001), vec3(1.0)) + 0.08, 0.0, 1.0) * uGlyphCount));
+    float warmInk = texture2D(uGlyphs, vec2((warmGlyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
+    float coolInk = texture2D(uGlyphs, vec2((coolGlyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
+
+    float strength = glitchStrength * amount;
+    color += vec3(1.0, -0.25, -0.25) * (warmInk * 0.85 * strength);
+    color += vec3(-0.25, 0.35, 1.0) * (coolInk * 0.85 * strength);
     color = clamp(color, 0.0, 1.0);
   }
 

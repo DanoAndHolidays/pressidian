@@ -120,6 +120,43 @@ export const useNotesStore = defineStore('notes', () => {
     return sort(root)
   })
 
+  /**
+   * Expanded folders, keyed by their tree key (the vault-relative folder path).
+   *
+   * This state lives here rather than inside `KnowledgeTree` on purpose. The
+   * tree is recursive, so every folder used to hold its own local `open` flag;
+   * the component also auto-opens folders along the active note's path, and
+   * because that watcher compared the *parent's* trail against *its own* label,
+   * any component whose label happened to appear in the trail flipped the
+   * disclosure for the whole sibling group it rendered. Addressing each folder
+   * by its unique key makes toggling a folder affect exactly that folder.
+   */
+  const openFolders = ref(new Set<string>())
+
+  const isFolderOpen = (key: string) => openFolders.value.has(key)
+
+  const toggleFolder = (key: string) => {
+    const next = new Set(openFolders.value)
+    if (!next.delete(key)) next.add(key)
+    openFolders.value = next
+  }
+
+  /** Reveals the folders leading to a note without disturbing its siblings. */
+  const revealPath = (routePath: string) => {
+    const segments = decodeURIComponent(routePath)
+      .replace(/^\/notes\//, '')
+      .split('/')
+      .filter(Boolean)
+    // Drop the note's own title: only its ancestor folders need opening.
+    const ancestors = segments.slice(0, -1)
+    if (ancestors.length === 0) return
+    const next = new Set(openFolders.value)
+    for (let depth = 0; depth < ancestors.length; depth += 1) {
+      next.add(ancestors.slice(0, depth + 1).join('/'))
+    }
+    openFolders.value = next
+  }
+
   const recent = computed(() => notes.value.slice(0, 6))
 
   /**
@@ -245,6 +282,10 @@ export const useNotesStore = defineStore('notes', () => {
     topTags,
     stats,
     tree,
+    openFolders,
+    isFolderOpen,
+    toggleFolder,
+    revealPath,
     recent,
     dateRange,
     activeTag,
