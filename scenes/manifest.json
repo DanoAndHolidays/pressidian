@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-09-12T03:55:33.693Z",
+  "scenes": [
+    {
+      "key": "day-glitch",
+      "master": "day-glitch.png",
+      "width": 1916,
+      "height": 821,
+      "files": [
+        "day-glitch-wide.avif",
+        "day-glitch-wide.webp",
+        "day-glitch-half.avif",
+        "day-glitch-half.webp"
+      ]
+    },
+    {
+      "key": "day",
+      "master": "day.png",
+      "width": 1916,
+      "height": 821,
+      "files": [
+        "day-wide.avif",
+        "day-wide.webp",
+        "day-half.avif",
+        "day-half.webp"
+      ]
+    },
+    {
+      "key": "night",
+      "master": "night.png",
+      "width": 1904,
+      "height": 826,
+      "files": [
+        "night-wide.avif",
+        "night-wide.webp",
+        "night-half.avif",
+        "night-half.webp"
+      ]
+    }
+  ]
+}

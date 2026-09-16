@@ -1,58 +1,32 @@
-/* Shared by the pre-JavaScript startup screen and in-app content loading. */
-.garden-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  color: var(--ink, #1d1e19);
-  font-family: 'Avenir Next', 'Segoe UI', 'Microsoft YaHei', sans-serif;
-  text-align: center;
-}
-.garden-loading__signature { display: block; width: min(360px, 78vw); height: auto; }
-.garden-loading__label { margin: 0; font-size: 13px; letter-spacing: 0.08em; }
-/* The boot screen keeps the label empty and hidden until it has news. */
-.garden-loading__label[hidden] { display: none; }
-.garden-loading__line {
-  width: 120px;
-  height: 2px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: rgb(240 100 47 / 0.14);
-}
-.garden-loading__line::after {
-  content: '';
-  display: block;
-  width: 45%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ff6500, #ffb000);
-  animation: garden-line 1.6s ease-in-out infinite;
-}
-#garden-boot {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  min-height: 100svh;
-  padding: 24px;
-  box-sizing: border-box;
-  background: #f4f1e8;
-  background-image: radial-gradient(ellipse at 50% 43%, rgb(255 157 57 / 0.1), transparent 55%);
-  transition: opacity 0.28s ease, visibility 0.28s ease;
-}
-.dark #garden-boot { background-color: #121310; color: #f2eee2; }
-#garden-boot.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
-#garden-boot.has-error .garden-loading__line { display: none; }
+/* Shared pre-JavaScript and Vue boot frame; uses only local assets. */
+html { background: #edf1f3; }
+html.dark { background: #080c10; }
 html[data-booting] { overflow: hidden; }
-.garden-loading__retry { color: inherit; font-size: 13px; text-underline-offset: 5px; }
-.garden-loading__retry[hidden] { display: none; }
-.garden-loading--inline { min-height: 220px; padding-block: 2rem; gap: 1rem; }
-.garden-loading--inline .garden-loading__signature { width: min(240px, 70vw); }
-@keyframes garden-line {
-  0% { transform: translateX(-110%); }
-  100% { transform: translateX(330%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .garden-loading *, .garden-loading *::after { animation: none !important; }
-  #garden-boot { transition: none; }
-}
+.pboot { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; overflow: hidden; background: #080c10; color: #dce8eb; font-family: 'SFMono-Regular', Consolas, 'PingFang SC', 'Microsoft YaHei', monospace; transition: opacity .55s ease, visibility .55s; }
+.pboot::before { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg,#080c10 0%,#080c1044 60%,#080c10 100%), url('../scenes/day-half.webp') center / cover; opacity: .13; filter: grayscale(1); pointer-events: none; }
+.pboot::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .1; background: repeating-linear-gradient(0deg,transparent 0 3px,#829da530 3px 4px); }
+.pboot.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
+.pboot__identity { position: relative; width: min(100%, 440px); text-align: center; }
+.pboot__emblem { position: relative; width: 52px; height: 52px; margin: 0 auto 34px; }
+.pboot__emblem span, .pboot__emblem i, .pboot__emblem::after { content: ''; position: absolute; width: 18px; height: 18px; left: 5px; top: 5px; background: #cdfa81; animation: boot-pixel calc(1.6s * var(--boot-pace, 1)) steps(4,end) infinite; }
+.pboot__emblem span:nth-child(2) { left: 29px; animation-delay: .2s; }
+.pboot__emblem i { top: 29px; animation-delay: .6s; }
+.pboot__emblem::after { left: 29px; top: 29px; animation-delay: .4s; }
+.pboot__wordmark { margin: 0; font: 500 34px/1.2 Consolas, monospace; letter-spacing: -.07em; text-transform: uppercase; }
+.pboot__wordmark span { display: inline-block; font: 12px/1 sans-serif; vertical-align: top; margin: 5px 0 0 5px; color: #cdfa81; }
+.pboot__subtitle { margin: 17px 0 34px; font-size: 9px; letter-spacing: .2em; color: #738b9b; }
+.pboot__track { width: 220px; height: 3px; margin: auto; background: #293a45; overflow: hidden; }
+.pboot__track span { display: block; height: 100%; width: 45%; background: #cdfa81; animation: boot-loading calc(1.5s * var(--boot-pace, 1)) steps(12,end) infinite; }
+.pboot__message { margin: 20px 0 0; font-size: 11px; letter-spacing: .1em; color: #9dafb9; }
+.pboot__edition { position: absolute; left: 40px; bottom: 32px; font-size: 9px; letter-spacing: .12em; color: #6e8795; }
+.pboot__skip, .pboot__retry { color: #b5c8d2; font: inherit; font-size: 11px; padding: 9px 12px; background: #18283166; border: 1px solid #738b9b40; cursor: pointer; }
+.pboot__skip { position: absolute; right: 40px; bottom: 24px; }
+.pboot__skip span { margin-left: 16px; color: #cdfa81; }
+.pboot__retry:not([hidden]) { display: inline-block; margin-top: 20px; }
+.pboot__retry[hidden] { display: none; }
+.pboot__skip:focus-visible, .pboot__retry:focus-visible { outline: 2px solid #cdfa81; outline-offset: 4px; }
+.has-error .pboot__track { display: none; }
+@keyframes boot-pixel { 0%, 80%, 100% { opacity: 1; } 30%, 60% { opacity: .2; } }
+@keyframes boot-loading { from { transform: translateX(-110%); } to { transform: translateX(330%); } }
+@media (max-width: 640px) { .pboot__edition { left: 24px; bottom: 30px; font-size: 8px; } .pboot__skip { right: 24px; } }
+@media (prefers-reduced-motion: reduce) { .pboot, .pboot * { animation: none !important; transition: none !important; } }

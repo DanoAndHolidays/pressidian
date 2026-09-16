@@ -1,0 +1,1 @@
+import{r,o as s,b as d,a2 as u}from"./index-CVKf14kF.js";function c(t){const o=r(!1);let e=null;const n=a=>{o.value=a.matches};return s(()=>{e=window.matchMedia(t),n(e),e.addEventListener("change",n)}),d(()=>e?.removeEventListener("change",n)),u(o)}const m=()=>c("(prefers-reduced-motion: reduce)");export{m as u};
