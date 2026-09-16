@@ -12,6 +12,8 @@ import {
 } from 'lucide-vue-next'
 import FoxMark from '@/components/shell/FoxMark.vue'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
+import BendCard from '@/components/ui/bend-card/BendCard.vue'
+import { BEND_CARD_ARTWORK } from '@/components/ui/bend-card/artwork'
 import DecryptText from '@/components/ui/decrypt-text/DecryptText.vue'
 import PixelPlanet from '@/components/ui/pixel-planet/PixelPlanet.vue'
 import { NAV_ITEMS, PROFILE, PROJECTS, STATUS_META } from '@/data/site'
@@ -62,10 +64,16 @@ const headlineLoop = headlineSlow > 0 ? false : HEADLINE_LOOP_MS
 const latest = computed(() => notes.notes[0])
 const recent = computed(() => notes.notes.slice(0, 5))
 
+/**
+ * The three maturity tiles are fold cards, so each one carries a colour plate as
+ * well as its counts: the artwork is the part that is hidden until the card
+ * opens, and it is what gives the row its shape at rest.
+ */
 const statusList = computed(() =>
   (Object.keys(STATUS_META) as Array<keyof typeof STATUS_META>).map((key) => ({
     key,
     ...STATUS_META[key],
+    image: BEND_CARD_ARTWORK[key],
     count: notes.stats.statusCount[key],
   })),
 )
@@ -239,11 +247,12 @@ const mapNodes = [
 
     <!-- ================= KNOWLEDGE SPREAD ================= -->
     <section class="shell-wide pt-20">
-      <div
-        v-reveal
-        class="grid gap-8 rounded-[8px] border border-line bg-paper-2/70 p-6 sm:p-9 lg:grid-cols-[1fr_1.25fr]"
-      >
-        <div>
+      <div v-reveal class="rounded-[8px] border border-line bg-paper-2/70 p-6 sm:p-9">
+        <!-- The fold cards are 1:1 tiles, so they need the full width of the
+             panel rather than a column beside the copy: three of them plus the
+             heading does not fit the shell at any breakpoint. The heading keeps
+             its own measure and the row sits under it. -->
+        <div class="max-w-xl">
           <p class="eyebrow">Growth stages</p>
           <h2 class="mt-3 font-serif text-[clamp(1.7rem,3.4vw,2.4rem)] leading-tight tracking-[-0.04em]">
             笔记不是归档，<br />而是正在生长的路径。
@@ -260,24 +269,29 @@ const mapNodes = [
           </RouterLink>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-3">
-          <div
-            v-for="stage in statusList"
+        <div class="mt-9 grid justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <BendCard
+            v-for="(stage, index) in statusList"
             :key="stage.key"
-            class="flex flex-col justify-between rounded-[8px] border border-line bg-paper p-4"
+            v-reveal="index * 90"
+            :to="`/notes?status=${stage.key}`"
+            :image="stage.image"
+            :title="stage.label"
+            :small="`${stage.count} 篇`"
+            :tone="stage.tone"
+            class="w-full"
           >
-            <div>
-              <span class="text-2xl" aria-hidden="true">{{ stage.icon }}</span>
-              <p class="mt-3 font-serif text-lg leading-none">{{ stage.label }}</p>
-              <p class="mt-1.5 text-[0.72rem] text-muted">{{ stage.hint }}</p>
-            </div>
-            <p
-              class="mt-6 font-mono text-[1.6rem] leading-none"
-              :style="{ color: `var(--${stage.tone})` }"
-            >
-              {{ stage.count }}
-            </p>
-          </div>
+            <span class="flex items-center gap-2">
+              <span class="text-lg" aria-hidden="true">{{ stage.icon }}</span>
+              <span class="font-mono text-[0.7rem] tracking-[0.12em] uppercase" :style="{ color: `var(--${stage.tone})` }">
+                {{ stage.hint }}
+              </span>
+            </span>
+            <span class="mt-2.5 block font-serif text-[1.05rem] leading-snug text-ink">
+              共 {{ stage.count }} 篇笔记
+            </span>
+            <span class="mt-1 block font-mono text-[0.7rem] text-faint">按成熟度打开笔记库 →</span>
+          </BendCard>
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ArrowUpRight, LayoutGrid, List, Search, SlidersHorizontal, X } from 'lucide-vue-next'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
 import KnowledgeTree from '@/components/notes/KnowledgeTree.vue'
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils'
 import type { NoteStatus } from '@/lib/notes/types'
 
 const notes = useNotesStore()
+const route = useRoute()
 const { onPointerMove } = useSpotlight()
 
 const query = ref('')
@@ -38,6 +40,23 @@ const STATUSES: Array<{ key: NoteStatus | 'all'; label: string }> = [
   { key: 'growing', label: STATUS_META.growing.label },
   { key: 'seedling', label: STATUS_META.seedling.label },
 ]
+
+const STATUS_KEYS = STATUSES.map((status) => status.key)
+
+/**
+ * `?status=evergreen` is how the homepage's maturity fold cards hand off to this
+ * page. Only a *known* value is applied: an absent or unrecognised query leaves
+ * the store's persisted filter alone, so returning here without a query keeps
+ * whatever the reader last chose.
+ */
+watch(
+  () => route.query.status,
+  (value) => {
+    const key = typeof value === 'string' ? (value as NoteStatus) : null
+    if (key && STATUS_KEYS.includes(key)) notes.statusFilter = key
+  },
+  { immediate: true },
+)
 
 const filtered = computed(() => {
   const keyword = query.value.trim()

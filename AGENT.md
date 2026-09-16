@@ -199,6 +199,16 @@ node scripts/serve-pages.mjs /tmp/pages 4182
 [`assetPublicName()`](vite/vault.ts) 同时被同步脚本和渲染管线使用。
 如果改了哈希算法或文件名清洗规则，两边会同时改到，否则 `![[图片.png]]` 会指向不存在的文件。
 
+### 首页的成熟度卡片用 `?status=` 深链到笔记库
+
+首页三张折页卡片分别指向 `/notes?status=evergreen|growing|seedling`，
+[`NotesIndexPage.vue`](src/pages/NotesIndexPage.vue) 会把这个查询参数写进 store 的
+`statusFilter`。只有**已知**的值会被应用：查询参数缺失或不认识时不动 store，
+否则读者从笔记库返回首页再回来时，会被悄悄重置掉自己上次选的筛选。
+
+这个筛选状态本身是持久化在 `localStorage` 里的（`pressidian:notes-prefs`），
+所以深链和手动点选走的是同一条路，没有第二套状态。
+
 ### Tailwind 需要显式排除内容目录
 
 `content/` 和 `public/vault/` 里有几百 MB 的 Markdown 和媒体文件。

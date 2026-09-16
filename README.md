@@ -67,7 +67,7 @@ hash 路由让所有地址都命中磁盘上唯一的 `index.html`，笔记链�
 content/notes/obsidian/   同步进来的笔记（.gitignore）
 public/notes/             构建期生成的笔记 JSON（.gitignore）
 public/vault/             构建期复制的附件（.gitignore）
-src/components/ui/        通用组件，含 decrypt-text / velaris
+src/components/ui/        通用组件，含 decrypt-text / velaris / bend-card
 src/components/notes/     笔记相关组件
 src/components/shell/     页头、页脚、命令面板
 src/pages/                路由页面
@@ -75,6 +75,15 @@ src/stores/               Pinia store
 src/styles/               设计令牌与正文排版
 vite/                     内容管线（扫描、渲染、发布）
 ```
+
+## 引进的第三方组件
+
+`src/components/ui/bend-card/` 来自 [dano-ui](https://github.com/DanoAndHolidays/dano-ui)
+的单组件包：一张方块在悬停时长高、照片由虚到实、折叠线下方的文案随之浮现。
+首页那三张笔记成熟度卡片用的就是它，狐狸实验室里有并排的展示。
+
+改造点（折页画法、主题适配、减弱动效）写在
+[`src/components/ui/bend-card/README.md`](src/components/ui/bend-card/README.md)。
 
 外部 Vault 与自动部署配置见 [AUTOMATION.md](./AUTOMATION.md)；
 架构决策与维护约定见 [AGENT.md](./AGENT.md)。

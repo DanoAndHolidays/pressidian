@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
-import { Github, MousePointer2, Move3d, Sparkles, Waves } from 'lucide-vue-next'
+import { Github, MousePointer2, Move3d, Sparkles, SquareMousePointer, Waves } from 'lucide-vue-next'
 import FoxMark from '@/components/shell/FoxMark.vue'
+import BendCardDemo from '@/components/ui/bend-card/BendCard.demo.vue'
 import Velaris from '@/components/ui/velaris/Velaris.vue'
 import { useReducedMotion } from '@/composables/useMediaQuery'
 
@@ -177,6 +178,14 @@ const experiments = computed(() => [
   },
   {
     id: '04',
+    title: '折页卡片',
+    caption: '从 dano-ui 引进的弯曲卡片',
+    detail: '一个 300 见方的方块，悬停展开成 420 高；照片由虚到实，下方文案随之浮现。',
+    icon: SquareMousePointer,
+    live: true,
+  },
+  {
+    id: '05',
     title: '下一项实验正在发芽',
     caption: '视差、声音可视化、着色器玩具…',
     detail: '保持好奇。有新想法就会先丢进这个页面。',
@@ -227,6 +236,34 @@ const LAB_VIGNETTE: [number, number] = [0.32, 0.8]
           </p>
         </div>
       </div>
+    </section>
+
+    <!-- ============ BEND CARD ============ -->
+    <section v-reveal class="pt-16">
+      <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="eyebrow">Vendored component · dano-ui</p>
+          <h2 class="mt-3 font-serif text-[clamp(1.8rem,3.8vw,2.6rem)] tracking-[-0.04em]">
+            折页卡片
+          </h2>
+        </div>
+        <a
+          href="https://github.com/DanoAndHolidays/dano-ui"
+          target="_blank"
+          rel="noreferrer"
+          class="group inline-flex items-center gap-2 text-[0.82rem] text-ember"
+        >
+          <Github :size="14" />
+          组件来源
+        </a>
+      </header>
+
+      <p class="mt-4 max-w-2xl text-[0.88rem] leading-relaxed text-muted">
+        从 <span class="font-mono text-[0.82rem]">dano-ui</span> 引进的单组件包：方块在悬停时长高，
+        照片从模糊里对焦，折叠线下方的文案再浮上来。首页那三张成熟度卡片现在就是它。
+      </p>
+
+      <BendCardDemo class="mt-8" />
     </section>
 
     <!-- ============ EXPERIMENT INDEX ============ -->
