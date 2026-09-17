@@ -33,7 +33,13 @@ export default defineConfig(({ command }) => ({
       // `public/vault` is populated from the Obsidian vault on startup; if the
       // watcher follows it, the copy itself registers as a change and the
       // server reloads in a loop until it dies.
-      ignored: ['**/public/vault/**', '**/content/**', '**/.playwright-mcp/**'],
+      //
+      // `output/` holds throwaway local artifacts, including static mirrors of
+      // `dist/` used to check a production build. Those mirrors copy hundreds of
+      // files at once, and before this entry each one registered as a change and
+      // triggered a full page reload — enough churn to exhaust the heap and kill
+      // the server outright.
+      ignored: ['**/public/vault/**', '**/content/**', '**/.playwright-mcp/**', '**/output/**'],
     },
   },
   resolve: {
