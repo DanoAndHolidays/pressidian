@@ -1,16 +1,32 @@
 import {
-  DoubleSide, Group, LinearFilter, Mesh, NoBlending, NoToneMapping,
+  DoubleSide, Group, LinearFilter, Mesh, NoBlending, NoColorSpace, NoToneMapping,
   OrthographicCamera, PlaneGeometry, RingGeometry, Scene, ShaderMaterial,
-  SphereGeometry, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget,
+  SphereGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget,
 } from 'three'
-import { planetFragment, postFragment, postVertex, ringFragment, surfaceVertex } from './shaders'
+import { glitchFragment, planetFragment, postFragment, postVertex, ringFragment, surfaceVertex } from './shaders'
 import { ASCII_CHARACTERS, createGlyphAtlas } from '@/components/ui/ascii-art/glyph-atlas'
 
 /**
- * Share of 13 Hz slots that tear, so the planet faults intermittently rather
+ * Share of 8 Hz slots that tear, so the planet faults intermittently rather
  * than sitting in a permanent offset. `0` disables the glitch pass outright.
  */
-export const PLANET_GLITCH = 0.42
+export const PLANET_GLITCH = 0.21
+
+/** Resolve the same CSS/OKLab colours as DecryptText into display-sRGB bytes. */
+function readScramblePalette() {
+  const styles = getComputedStyle(document.documentElement)
+  const swatch = document.createElement('canvas')
+  swatch.width = swatch.height = 1
+  const ctx = swatch.getContext('2d', { willReadFrequently: true })
+  if (!ctx) throw new Error('Scramble palette is unavailable')
+  return ['--scramble-accent', '--scramble-red', '--scramble-mix'].map((token) => {
+    ctx.clearRect(0, 0, 1, 1)
+    ctx.fillStyle = styles.getPropertyValue(token).trim()
+    ctx.fillRect(0, 0, 1, 1)
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+    return new Vector3(r / 255, g / 255, b / 255)
+  })
+}
 
 // Vignette Bloom's brightness/contrast/wave settings, using the preserved
 // branch's character ramp instead of mosaic rectangles.
@@ -23,9 +39,11 @@ export const PLANET_PRESET = {
 } as const
 
 export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale = 1) {
-  const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' })
+  const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'low-power' })
   renderer.setClearColor(0x000000, 0)
   renderer.toneMapping = NoToneMapping
+  renderer.outputColorSpace = SRGBColorSpace
+  renderer.autoClear = false
   const scene = new Scene()
   const camera = new OrthographicCamera(-2.35, 2.35, 1.8, -1.8, 0.1, 20)
   camera.position.set(0, 0, 7)
@@ -63,6 +81,13 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
   group.add(rings)
 
   const target = new WebGLRenderTarget(1024, 768, { minFilter: LinearFilter, magFilter: LinearFilter })
+  // This intermediate holds already-authored display colours, premultiplied
+  // before filtering. Do not tag it sRGB and accidentally decode/encode it twice.
+  const characters = new WebGLRenderTarget(1, 1, {
+    minFilter: LinearFilter, magFilter: LinearFilter, depthBuffer: false,
+  })
+  target.texture.colorSpace = NoColorSpace
+  characters.texture.colorSpace = NoColorSpace
   const postScene = new Scene()
   const postCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1)
   const glyphAtlas = createGlyphAtlas()
@@ -77,18 +102,41 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
       uContrast: { value: PLANET_PRESET.contrast / 100 },
       uVignette: { value: PLANET_PRESET.vignette / 100 },
       uBloom: { value: PLANET_PRESET.bloom / 100 },
-      uTime: { value: 0 },
-      uGlitch: { value: PLANET_PRESET.glitch },
+    },
+  })
+  const glitchScene = new Scene()
+  const palette = readScramblePalette()
+  const glitchMaterial = new ShaderMaterial({
+    vertexShader: postVertex, fragmentShader: glitchFragment,
+    depthTest: false, depthWrite: false, blending: NoBlending, toneMapped: false,
+    uniforms: {
+      uCharacters: { value: characters.texture },
+      uGrid: postMaterial.uniforms.uGrid,
+      uCssSize: { value: new Vector2(1, 1) },
+      uTime: { value: 0 }, uGlitch: { value: PLANET_GLITCH }, uMotion: { value: 1 },
+      uSeed: { value: crypto.getRandomValues(new Uint32Array(1))[0] % 65536 },
+      uAccent: { value: palette[0] }, uRed: { value: palette[1] }, uMixed: { value: palette[2] },
     },
   })
   const quadGeometry = new PlaneGeometry(2, 2)
   postScene.add(new Mesh(quadGeometry, postMaterial))
+  glitchScene.add(new Mesh(quadGeometry, glitchMaterial))
+  const drawingSize = new Vector2()
+  let lastWidth = 0, lastHeight = 0, lastDpr = 0
 
   return {
     resize(width: number, height: number) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      if (width === lastWidth && height === lastHeight && dpr === lastDpr) return
+      lastWidth = width
+      lastHeight = height
+      lastDpr = dpr
       const ratio = width / Math.max(1, height)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+      renderer.setPixelRatio(dpr)
       renderer.setSize(width, height, false)
+      renderer.getDrawingBufferSize(drawingSize)
+      characters.setSize(drawingSize.x, drawingSize.y)
+      glitchMaterial.uniforms.uCssSize.value.set(width, height)
       // Readable CSS-pixel glyphs on phones and desktop, independent of DPR.
       postMaterial.uniforms.uGrid.value.set(
         Math.max(1, Math.round(width / PLANET_PRESET.cellWidth)),
@@ -102,6 +150,10 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
     },
     setTheme(dark: boolean) {
       postMaterial.uniforms.uDark.value = dark ? 1 : 0
+      const palette = readScramblePalette()
+      glitchMaterial.uniforms.uAccent.value.copy(palette[0])
+      glitchMaterial.uniforms.uRed.value.copy(palette[1])
+      glitchMaterial.uniforms.uMixed.value.copy(palette[2])
     },
     /**
      * Dev-only handles for inspecting the planet. The glitch is intermittent by
@@ -109,21 +161,24 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
      * eyeball in a screenshot; these let a probe hold or force a torn frame.
      */
     uniforms: {
-      glitch: postMaterial.uniforms.uGlitch,
-      time: postMaterial.uniforms.uTime,
+      glitch: glitchMaterial.uniforms.uGlitch,
+      time: glitchMaterial.uniforms.uTime,
+      seed: glitchMaterial.uniforms.uSeed,
     },
-    render(seconds: number) {
+    render(seconds: number, motion = true) {
       planet.rotation.y = seconds * 0.07
       planetMaterial.uniforms.uTime.value = seconds * PLANET_PRESET.animSpeed / 100
-      // The glitch clock is not scaled by `animSpeed`: the tear rate should stay
-      // a deliberate ~13 Hz at any animation speed setting.
-      postMaterial.uniforms.uTime.value = seconds
+      glitchMaterial.uniforms.uTime.value = seconds
+      glitchMaterial.uniforms.uMotion.value = motion ? 1 : 0
       renderer.setRenderTarget(target)
       renderer.clear()
       renderer.render(scene, camera)
-      renderer.setRenderTarget(null)
+      renderer.setRenderTarget(characters)
       renderer.clear()
       renderer.render(postScene, postCamera)
+      renderer.setRenderTarget(null)
+      renderer.clear()
+      renderer.render(glitchScene, postCamera)
     },
     dispose() {
       sphereGeometry.dispose()
@@ -132,8 +187,10 @@ export function createPlanetScene(canvas: HTMLCanvasElement, dark = false, scale
       planetMaterial.dispose()
       ringMaterial.dispose()
       postMaterial.dispose()
+      glitchMaterial.dispose()
       glyphAtlas.dispose()
       target.dispose()
+      characters.dispose()
       renderer.dispose()
     },
   }

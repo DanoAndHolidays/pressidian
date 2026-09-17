@@ -106,6 +106,9 @@ void main() {
 }
 `
 
+// The ASCII palette is authored in display sRGB, as in the original artwork.
+// This pass writes premultiplied display values to an untagged intermediate;
+// the final pass copies them to the sRGB canvas without a second gamma encode.
 export const postFragment = /* glsl */ `
 varying vec2 vUv;
 uniform sampler2D uScene;
@@ -117,33 +120,9 @@ uniform float uBrightness;
 uniform float uContrast;
 uniform float uVignette;
 uniform float uBloom;
-uniform float uTime;
-uniform float uGlitch;
 
-// Deterministic pseudo-random in [0,1). Drives which bands tear, so the glitch
-// stays reproducible frame to frame instead of shimmering arbitrarily.
-float glitchHash(vec2 p) {
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
-
-// Horizontal tear bands. Kept to the cell grid so the band edges land between
-// glyph rows rather than slicing a row in half.
-//
-// The band is deliberately wide (a fifth of the height) and one of the two is
-// force-opened. At the original 0.045 half-width with both bands behind the same
-// gate, a tear often landed on a band whose random centre fell outside the
-// planet and nothing visibly moved at all — which is indistinguishable from the
-// effect not working.
-float glitchBand(float row, float seed) {
-  float band = glitchHash(vec2(seed, 11.3));
-  return step(abs(row - band), 0.15);
-}
-
-// Same luminance-to-character mapping as the branch's Canvas2D renderer.
-// The shift argument displaces the sampling centre in UV space; the glyph mask
-// itself is still read at the undisplaced position so characters never shear.
-vec4 cellAt(vec2 uv, vec2 shift) {
-  vec2 center = (floor(uv * uGrid) + 0.5) / uGrid + shift;
+vec4 cellAt(vec2 uv) {
+  vec2 center = (floor(uv * uGrid) + 0.5) / uGrid;
   vec2 d = 0.25 / uGrid;
   return (texture2D(uScene, center + vec2(-d.x,-d.y))
     + texture2D(uScene, center + vec2(d.x,-d.y))
@@ -152,114 +131,114 @@ vec4 cellAt(vec2 uv, vec2 shift) {
 }
 
 void main() {
-  /*
-   * Glitch. The clock is quantised into slots and each slot gets a fresh seed,
-   * so the effect is a discrete flicker rather than a smooth wobble.
-   *
-   * A slot either tears or it does not — uGlitch is that probability (0
-   * disables the pass, 1 tears every slot). There is deliberately no second
-   * gate inside the tearing slots: an inner gate multiplied the odds down until
-   * a tear often landed on a band whose random centre fell off the planet, and
-   * nothing visibly moved at all, which looks exactly like the effect being
-   * broken.
-   *
-   * 8Hz rather than a per-frame value: a tear has to persist across a few
-   * frames to be legible as a fault. At ~30fps a 13Hz slot lasted two frames
-   * and read as a barely-visible haze.
-   */
-  float slot = floor(uTime * 8.0);
-  float gate = step(1.0 - uGlitch, glitchHash(vec2(slot, 7.31)));
-  float row = floor(vUv.y * uGrid.y);
-  float band = max(glitchBand(row, slot), glitchBand(row, slot + 53.0));
-
-  /*
-   * Per-cell selection, so a burst corrupts an arbitrary scatter of characters
-   * rather than the whole planet at once. Each glyph cell is hashed against the
-   * slot seed and keeps its own value for the whole slot, so the churn reads as
-   * a static (video-like) fault rather than noise crawling over the surface.
-   *
-   * Thresholded on luma (computed below) so the sparsity holds to ~35% of a
-   * band's cells instead of every cell.
-   */
-  vec2 cellId = floor(vUv * uGrid);
-  float cellPick = glitchHash(cellId + vec2(slot * 0.37, slot * 0.11));
-
-  float offset = (glitchHash(vec2(slot, 19.7)) - 0.5) * 0.1 * gate * band;
-  vec2 shift = vec2(offset, 0.0);
-  /*
-   * Dispersion offset, scaled with the tear so a wider tear also fringes wider.
-   * It has to clear roughly one cell (cellWidth / canvasWidth, ~0.011 at 680px)
-   * to be visible at all: cellAt snaps its sample to a cell centre, so any
-   * offset smaller than a cell rounds away and the channels do not separate.
-   */
-  float split = 0.028 * gate * band;
-
-  vec4 cell = cellAt(vUv, shift);
+  vec4 cell = cellAt(vUv);
   float silhouette = texture2D(uScene, vUv).a;
   if (cell.a < 0.015 || silhouette < 0.015) discard;
 
+  // The transparent ring has already been blended over black in uScene.
   vec3 color = cell.rgb / max(cell.a, 0.001);
   color = clamp((color + uBrightness - 0.5) * uContrast + 0.5, 0.0, 1.0);
   float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
   float value = clamp(luma + 0.08, 0.0, 1.0);
-
-  // Resolve the per-cell pick now that luma is known, and vary the amount of
-  // dispersion between cells so a burst is not a uniform tint.
-  float speckle = step(cellPick, 0.35);
-  float amount = 0.75 + glitchHash(cellId + vec2(9.13, slot * 0.23)) * 0.5;
-  float glitchStrength = gate * band * speckle;
-
   float glyph = min(uGlyphCount - 1.0, floor(value * uGlyphCount));
   vec2 withinCell = fract(vUv * uGrid);
   float ink = texture2D(uGlyphs, vec2((glyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
   float alpha = ink * min(cell.a * 1.6, silhouette);
   if (alpha < 0.01) discard;
 
-  // Restrained orange ink on paper; warm luminous glyphs in the dark theme.
-  // The light stops are kept deep: on the warm paper a brighter highlight
-  // (#d16e2e) sat too close to the canvas tone and the glyphs washed out.
   vec3 shadow = mix(vec3(0.42, 0.19, 0.07), vec3(0.65, 0.34, 0.17), uDark);
   vec3 highlight = mix(vec3(0.66, 0.29, 0.10), vec3(1.0, 0.77, 0.52), uDark);
   color = mix(shadow, highlight, smoothstep(0.1, 0.95, luma));
   vec2 fromCenter = (vUv - 0.5) * 1.4;
   color *= 1.0 - uVignette * dot(fromCenter, fromCenter);
-  // Keep the bloom inside the glyphs so their counters and spacing stay crisp.
   color += highlight * uBloom * smoothstep(0.65, 1.0, luma) * 0.25;
+  gl_FragColor = vec4(clamp(color, 0.0, 1.0) * alpha, alpha);
+}
+`
 
-  /*
-   * Edge dispersion.
-   *
-   * A plain RGB split does nothing useful here: the glyph palette is warm
-   * (sand/cream ink, blue at roughly a third of red), so re-sampling the blue
-   * channel moves it by almost nothing and the fringes come out one-sided.
-   *
-   * Instead the glyph coverage is re-read at two laterally-offset positions and
-   * the *result* is tinted, red to one side and cyan to the other. Tinting the
-   * coverage rather than the colour is what makes it a true edge dispersion:
-   * the fringe lands where the character's edge has moved, so a stroke reads as
-   * a red fringe on one side and a cyan one on the other regardless of ink.
-   *
-   * The offset is in UV, not pixels: 0.028 is ~19px at a 680px-wide canvas. It
-   * has to clear roughly one cell (cellWidth / canvasWidth, ~0.011 at 680px)
-   * before it does anything at all, because cellAt snaps its sample to a cell
-   * centre and a sub-cell offset rounds away.
-   */
-  if (glitchStrength > 0.0) {
-    vec4 warmCell = cellAt(vUv, shift + vec2(split, 0.0));
-    vec4 coolCell = cellAt(vUv, shift - vec2(split, 0.0));
-    // The glyph index is taken from each offset sample, so the fringes are the
-    // neighbouring characters' shapes rather than a scaled copy of this one.
-    float warmGlyph = min(uGlyphCount - 1.0, floor(clamp(dot(warmCell.rgb / max(warmCell.a, 0.001), vec3(1.0)) + 0.08, 0.0, 1.0) * uGlyphCount));
-    float coolGlyph = min(uGlyphCount - 1.0, floor(clamp(dot(coolCell.rgb / max(coolCell.a, 0.001), vec3(1.0)) + 0.08, 0.0, 1.0) * uGlyphCount));
-    float warmInk = texture2D(uGlyphs, vec2((warmGlyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
-    float coolInk = texture2D(uGlyphs, vec2((coolGlyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
+export const glitchFragment = /* glsl */ `
+varying vec2 vUv;
+uniform sampler2D uCharacters;
+uniform vec2 uGrid;
+uniform vec2 uCssSize;
+uniform float uTime;
+uniform float uGlitch;
+uniform float uMotion;
+uniform float uSeed;
+uniform vec3 uAccent;
+uniform vec3 uRed;
+uniform vec3 uMixed;
 
-    float strength = glitchStrength * amount;
-    color += vec3(1.0, -0.25, -0.25) * (warmInk * 0.85 * strength);
-    color += vec3(-0.25, 0.35, 1.0) * (coolInk * 0.85 * strength);
-    color = clamp(color, 0.0, 1.0);
+// Integer hashing avoids GPU-dependent sin() rounding in the burst schedule.
+float glitchHash(float seed) {
+  uint x = uint(seed) + 1u;
+  x ^= x >> 16u;
+  x *= 2146121005u;
+  x ^= x >> 15u;
+  x *= 2221713035u;
+  x ^= x >> 16u;
+  return float(x & 16777215u) / 16777216.0;
+}
+
+vec4 charactersAt(vec2 uv) {
+  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return vec4(0.0);
+  return texture2D(uCharacters, uv);
+}
+
+// Vary both axes: a burst can cut a short group of characters or a longer
+// slice. All bounds use cell units so individual strokes stay intact.
+float tearOffset(vec2 cell, float seed, float primary) {
+  float center = floor(mix(0.14, 0.82, glitchHash(seed + 11.0)) * uGrid.y);
+  float rows = 1.0 + floor(glitchHash(seed + 23.0) * 3.0);
+  float inBand = step(center, cell.y) * (1.0 - step(center + rows, cell.y));
+  float span = floor(mix(0.18, 0.5, glitchHash(seed + 29.0)) * uGrid.x);
+  span = mix(span, floor(mix(0.45, 0.85, glitchHash(seed + 47.0)) * uGrid.x), primary);
+  float start = floor(glitchHash(seed + 31.0) * (uGrid.x - span));
+  inBand *= step(start, cell.x) * (1.0 - step(start + span, cell.x));
+  float direction = glitchHash(seed + 37.0) < 0.5 ? -1.0 : 1.0;
+  float cells = 1.0 + floor(glitchHash(seed + 41.0) * 3.0);
+  return inBand * direction * cells / uGrid.x;
+}
+
+void main() {
+  // Each burst holds for 125 ms. Reducing motion disables tearing as well as rotation.
+  float slot = mod(floor(uTime * 8.0), 65536.0);
+  float seed = slot * 97.0 + uSeed * 53.0;
+  float gate = step(1.0 - uGlitch, glitchHash(seed + 7.0)) * uMotion;
+  vec2 cell = floor(vUv * uGrid);
+  float count = 1.0 + floor(glitchHash(seed + 43.0) * 3.0);
+  float offset = tearOffset(cell, seed, 1.0);
+  if (offset == 0.0 && count > 1.0) offset = tearOffset(cell, seed + 503.0, 0.0);
+  if (offset == 0.0 && count > 2.0) offset = tearOffset(cell, seed + 997.0, 0.0);
+  offset *= gate;
+  vec2 uv = vUv - vec2(offset, 0.0);
+  vec4 base = charactersAt(uv);
+
+  if (offset == 0.0) {
+    gl_FragColor = base;
+    return;
   }
 
-  gl_FragColor = vec4(clamp(color, 0.0, 1.0), alpha);
+  // Shift the finished strokes, including their coverage. CSS-pixel offsets
+  // remain visible at any DPR and never snap back to a glyph's sample centre.
+  float split = (2.4 + glitchHash(seed + cell.y * 17.0 + 61.0) * 1.4) / uCssSize.x;
+  float red = charactersAt(uv - vec2(split, 0.0)).a;
+  float accent = charactersAt(uv + vec2(split, 0.0)).a;
+  // Reuse the headline's three ink buckets and distribution. Only torn glyphs
+  // change ink; the undisturbed planet keeps its original shading.
+  float pick = glitchHash(seed + floor(uv.x * uGrid.x) * 13.0 + cell.y * 71.0);
+  vec3 ink = pick < 0.34 ? uAccent : (pick < 0.78 ? uRed : uMixed);
+  base.rgb = mix(base.rgb, ink * base.a, 0.72);
+
+  // Strong, sharp offset copies behind the stroke, like the title's warm
+  // scramble inks. Preserve their full coverage instead of subtracting the
+  // anti-aliased base edge twice; the source-over step handles overlap.
+  vec2 fringe = min(vec2(red, accent) * 1.35, vec2(1.0));
+  float coverage = max(fringe.x, fringe.y);
+  vec3 tint = (uRed * fringe.x + uAccent * fringe.y) / max(fringe.x + fringe.y, 0.001);
+  float alpha = base.a + coverage * (1.0 - base.a);
+  vec3 rgb = base.rgb + tint * coverage * (1.0 - base.a);
+  // Premultiplied output matches the canvas context, including transparent rings.
+  gl_FragColor = vec4(rgb, alpha);
 }
 `

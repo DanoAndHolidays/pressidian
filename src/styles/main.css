@@ -93,6 +93,10 @@
      resolved text and stopped reading as a second colour at all. The hue sits
      at ~11° — red-leaning orange, not the accent's ~20° amber. */
   --vermilion: #dd3d18;
+  /* Shared by the decrypting headline and the planet's displaced strokes. */
+  --scramble-accent: color-mix(in oklab, var(--ember) 58%, var(--ink));
+  --scramble-red: var(--vermilion);
+  --scramble-mix: color-mix(in oklab, var(--vermilion) 68%, var(--ember));
   --on-accent: #382419;
   --header-glass: color-mix(in srgb, var(--canvas) 92%, transparent);
   --forest: #242424;

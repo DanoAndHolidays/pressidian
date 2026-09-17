@@ -34,42 +34,51 @@ let lastFrame = 0
 let lastPaint = -Infinity
 let visible = true
 let disposed = false
+let needsPaint = true
+let needsResize = true
 /** Dev probe only: freeze the clock so a forced glitch state can be inspected. */
 let clockHeld = false
 
 function tick(now: number) {
   frame = 0
-  if (disposed || failed.value || !engine || !visible || document.hidden || reducedMotion.value) return
-  if (!clockHeld) {
+  if (disposed || failed.value || !engine || !visible || document.hidden) return
+  if (needsResize && host.value) {
+    engine.resize(Math.max(1, host.value.clientWidth), Math.max(1, host.value.clientHeight))
+    needsResize = false
+  }
+  if (!clockHeld && !reducedMotion.value && lastFrame !== 0) {
     elapsed += Math.min((now - lastFrame) / 1000, 0.1)
-    lastFrame = now
   }
-  if (now - lastPaint >= 1000 / 30) {
-    engine.render(elapsed)
+  lastFrame = now
+  if (needsPaint || now - lastPaint >= 1000 / 30) {
+    engine.render(elapsed, !reducedMotion.value)
     lastPaint = now
+    needsPaint = false
   }
-  frame = requestAnimationFrame(tick)
+  if (!reducedMotion.value) frame = requestAnimationFrame(tick)
 }
 
 function restart() {
   cancelAnimationFrame(frame)
   frame = 0
-  if (disposed || failed.value || !engine) return
-  engine.render(elapsed)
-  lastFrame = performance.now()
-  lastPaint = -Infinity
-  if (visible && !document.hidden && !reducedMotion.value) frame = requestAnimationFrame(tick)
+  // Events only invalidate the frame. Resizing/clearing/drawing happens together
+  // inside rAF, never while hidden or between the compositor's frames.
+  needsPaint = true
+  lastFrame = 0
+  if (disposed || failed.value || !engine || !visible || document.hidden) return
+  // Reduced motion still needs one complete frame after resize/theme/resume.
+  frame = requestAnimationFrame(tick)
 }
 
 function resize() {
-  if (!host.value || !engine) return
-  engine.resize(Math.max(1, host.value.clientWidth), Math.max(1, host.value.clientHeight))
+  needsResize = true
   restart()
 }
 
 function lost(event: Event) {
   event.preventDefault()
   cancelAnimationFrame(frame)
+  frame = 0
   failed.value = true
   // Release the old renderer while its context is lost, before restoration
   // creates a new generation of GPU resources.
@@ -114,7 +123,7 @@ watch(reducedMotion, restart)
 watch(() => ui.isDark, (dark) => {
   engine?.setTheme(dark)
   restart()
-})
+}, { flush: 'post' })
 
 /*
  * Dev-only probe. The glitch tears a minority of frames by design, so a probe
@@ -132,27 +141,26 @@ if (import.meta.env.DEV) {
      * canvas out of the compositor's frame and a screenshot shows a stale
      * image.
      */
-    force(glitch: number, time?: number) {
+    force(glitch: number, time?: number, seed?: number) {
       if (!engine) return false
       clockHeld = true
       engine.uniforms.glitch.value = glitch
+      if (seed !== undefined) engine.uniforms.seed.value = Math.abs(Math.floor(seed)) % 65536
       if (time !== undefined) {
         engine.uniforms.time.value = time
         elapsed = time
       }
-      lastPaint = -Infinity
+      restart()
       return true
     },
     release() {
       clockHeld = false
-      lastFrame = performance.now()
       restart()
     },
     reset() {
       clockHeld = false
       if (!engine) return
       engine.uniforms.glitch.value = PLANET_GLITCH
-      lastFrame = performance.now()
       restart()
     },
   }

@@ -511,15 +511,15 @@ const onPointerEnter = () => {
  * lands between them.
  */
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble']) {
-  color: color-mix(in oklab, var(--ember) 58%, var(--ink));
+  color: var(--scramble-accent);
 }
 
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble'][data-tone='1']) {
-  color: var(--vermilion);
+  color: var(--scramble-red);
 }
 
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='scramble'][data-tone='2']) {
-  color: color-mix(in oklab, var(--vermilion) 68%, var(--ember));
+  color: var(--scramble-mix);
 }
 
 .pd-decrypt[data-variant='display'] :deep([data-char][data-state='lock']) {
