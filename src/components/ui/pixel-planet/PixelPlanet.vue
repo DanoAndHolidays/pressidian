@@ -8,20 +8,23 @@ import { fallbackPlanet } from '@/components/ui/ascii-art/fallback-planet'
 const props = withDefaults(
   defineProps<{
     /**
-     * Model scale on top of the authored camera framing. `1` leaves the planet
-     * at roughly 61% of the canvas width, which floats in empty space; the hero
-     * uses a larger value so the planet fills its column deliberately. 1.18
-     * lands the ring at ~90% of the canvas width, leaving a clear margin so the
-     * outermost glyphs are never pressed against the edge.
+     * Model scale on top of the authored camera framing. The camera locks the
+     * planet's size to the outermost orbit's — their ratio is 1 / (0.9287 r) and
+     * no scale changes it — so this is as large as the frame allows with both
+     * moons orbiting outside the rings (outermost 2.38). At the hero's 616 px
+     * column that renders the planet at the pixel size `main` had before the
+     * orbits existed.
      */
     scale?: number
   }>(),
-  { scale: 1.18 },
+  { scale: 0.99 },
 )
 
 const host = ref<HTMLDivElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 const failed = ref(false)
+const activeLabel = ref<string | null>(null)
+const dragging = ref(false)
 const reducedMotion = useReducedMotion()
 const ui = useUiStore()
 const fallback = fallbackPlanet()
@@ -90,6 +93,38 @@ function restored() {
   initialize()
 }
 
+function handlePointerDown(event: PointerEvent) {
+  if (!engine) return
+  const label = engine.pointerDown(event.clientX, event.clientY)
+  activeLabel.value = label
+  dragging.value = Boolean(label)
+  if (label) {
+    canvas.value?.setPointerCapture(event.pointerId)
+    restart()
+  }
+}
+
+function handlePointerMove(event: PointerEvent) {
+  if (!engine) return
+  activeLabel.value = engine.pointerMove(event.clientX, event.clientY)
+  if (dragging.value) restart()
+}
+
+function finishPointer(event: PointerEvent) {
+  if (!engine) return
+  engine.pointerUp()
+  dragging.value = false
+  if (canvas.value?.hasPointerCapture(event.pointerId)) canvas.value.releasePointerCapture(event.pointerId)
+  activeLabel.value = engine.pointerMove(event.clientX, event.clientY)
+  restart()
+}
+
+function handlePointerLeave() {
+  if (dragging.value) return
+  engine?.pointerLeave()
+  activeLabel.value = null
+}
+
 function initialize() {
   if (!canvas.value || disposed) return
   try {
@@ -140,6 +175,9 @@ if (import.meta.env.DEV) {
      * requestAnimationFrame. Rendering directly from here instead leaves the
      * canvas out of the compositor's frame and a screenshot shows a stale
      * image.
+     *
+     * A fixed `time` also pins the three orbits, which is how the outer path is
+     * checked against the canvas edge without waiting for a phase to come round.
      */
     force(glitch: number, time?: number, seed?: number) {
       if (!engine) return false
@@ -180,15 +218,28 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="host" class="pixel-planet">
-    <canvas ref="canvas" :class="{ unavailable: failed }" role="img" aria-label="由橙色 ASCII 字符组成、缓慢自转的行星与星环" />
-    <div v-if="failed" class="planet-fallback" role="img" aria-label="由橙色字符组成的静态行星与星环"><pre aria-hidden="true">{{ fallback }}</pre></div>
+  <div ref="host" class="pixel-planet" :class="{ 'is-dragging': dragging, 'has-target': activeLabel }">
+    <canvas
+      ref="canvas"
+      :class="{ unavailable: failed }"
+      role="application"
+      tabindex="0"
+      aria-label="可交互的 ASCII 木星系统。拖动木星可沿固定自转轴旋转；拖动轨道上的天体可沿各自轨道移动。"
+      @pointerdown="handlePointerDown"
+      @pointermove="handlePointerMove"
+      @pointerup="finishPointer"
+      @pointercancel="finishPointer"
+      @pointerleave="handlePointerLeave"
+    />
+    <div v-if="failed" class="planet-fallback" role="img" aria-label="由橙色字符组成的静态木星与星环"><pre aria-hidden="true">{{ fallback }}</pre></div>
   </div>
 </template>
 
 <style scoped>
 .pixel-planet { position: relative; width: 100%; aspect-ratio: 4 / 3; container-type: inline-size; }
-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: default; touch-action: none; }
+.has-target canvas { cursor: grab; }
+.is-dragging canvas { cursor: grabbing; }
 .unavailable { visibility: hidden; }
 .planet-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ember); }
 .planet-fallback pre { margin: 0; font: 2.5cqw/1.25 monospace; white-space: pre; }

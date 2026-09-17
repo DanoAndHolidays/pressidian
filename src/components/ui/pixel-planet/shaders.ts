@@ -75,6 +75,57 @@ void main() {
 }
 `
 
+/*
+ * The two moons share one shader and two authored identities, selected by
+ * `uFeature` (0 = pale, 1 = dark). `uAlbedo` and `uFissure` are the body's own
+ * palette and `uTint` is its cast, so a moon is characterised by three uniforms
+ * rather than by a branch on the shared luminance.
+ *
+ * Both sit in the planet's own orange-red, one step deeper: the moons are meant
+ * to read as this system's bodies, not as a second, unrelated palette. They are
+ * held apart from each other on value and on marking style rather than on hue —
+ * the pale moon is the light, smooth one, the dark moon the deep, battered one —
+ * because at a 20 px disc on a warm planet a hue difference is the first thing
+ * to disappear. `uFissure` is the same red-orange walked towards black, so the
+ * markings darken the body without turning it grey.
+ *
+ * Like `planetFragment`, and unlike `postFragment`'s ramp, this writes
+ * display-space values directly into the scene target. Keep the lit end of the
+ * range well above the 0.38 the brightness/contrast step subtracts, or the body
+ * renders as blank paper instead of ink.
+ */
+export const moonFragment = /* glsl */ `
+varying vec3 vPosition;
+varying vec3 vNormal;
+uniform vec3 uLight;
+uniform vec3 uAlbedo;
+uniform vec3 uFissure;
+uniform vec3 uTint;
+uniform float uFeature;
+${noise}
+void main() {
+  vec3 p = normalize(vPosition);
+  vec3 n = normalize(vNormal);
+  float grain = fbm(p * 18.0);
+  float cracks = 1.0 - smoothstep(0.02, 0.07, abs(sin(p.y * 19.0 + p.x * 12.0 + grain * 5.0)));
+  // Ringed impact scars rather than crack lines: a second population of noise,
+  // thinned to rims, so the dark moon reads as battered rock.
+  float scars = 1.0 - smoothstep(0.05, 0.14, abs(fbm(p * 7.0 + 3.7) - 0.48));
+  float cap = smoothstep(0.5, 0.95, abs(p.y)) * 0.35;
+  vec3 tone = uFeature < 0.5
+    ? mix(uAlbedo, uFissure, max(cracks, cap * grain))
+    : mix(uAlbedo, uFissure, max(scars, cap * 0.6));
+  // A nearly flat lighting response, and that is the point rather than a
+  // compromise. Each moon is only a few cells across and spends most of its
+  // orbit over the hero's dark backdrop, so its ink is thin and it cannot afford
+  // a black shadow side: a real terminator turns half of each orbit into a
+  // crescent nobody can find. Depth still comes from the grain, the markings and
+  // the planet's own ramp, not from this term.
+  tone *= 0.80 + 0.20 * max(dot(n, uLight), 0.0);
+  gl_FragColor = vec4(tone * uTint, 1.0);
+}
+`
+
 export const ringFragment = /* glsl */ `
 varying vec3 vPosition;
 varying vec3 vWorld;
@@ -109,10 +160,17 @@ void main() {
 // The ASCII palette is authored in display sRGB, as in the original artwork.
 // This pass writes premultiplied display values to an untagged intermediate;
 // the final pass copies them to the sRGB canvas without a second gamma encode.
+// The orange ramp below is `main`'s, and it covers the planet and its rings —
+// the moons get their colour from `uOrbiters` instead, which is why deepening
+// them needed no change here. `uOrbiters` holds a second render of the orbiting
+// bodies alone — no rings in it — and supplies a cell's colour wherever a body
+// covers that cell, so a body orbiting inside the band keeps its own ink
+// instead of the band's orange wash.
 export const postFragment = /* glsl */ `
 varying vec2 vUv;
 uniform sampler2D uScene;
 uniform sampler2D uGlyphs;
+uniform sampler2D uOrbiters;
 uniform float uGlyphCount;
 uniform float uDark;
 uniform vec2 uGrid;
@@ -121,37 +179,58 @@ uniform float uContrast;
 uniform float uVignette;
 uniform float uBloom;
 
-vec4 cellAt(vec2 uv) {
+vec4 cellAt(sampler2D source, vec2 uv) {
   vec2 center = (floor(uv * uGrid) + 0.5) / uGrid;
   vec2 d = 0.25 / uGrid;
-  return (texture2D(uScene, center + vec2(-d.x,-d.y))
-    + texture2D(uScene, center + vec2(d.x,-d.y))
-    + texture2D(uScene, center + vec2(-d.x,d.y))
-    + texture2D(uScene, center + vec2(d.x,d.y))) * 0.25;
+  return (texture2D(source, center + vec2(-d.x,-d.y))
+    + texture2D(source, center + vec2(d.x,-d.y))
+    + texture2D(source, center + vec2(-d.x,d.y))
+    + texture2D(source, center + vec2(d.x,d.y))) * 0.25;
 }
 
 void main() {
-  vec4 cell = cellAt(vUv);
+  vec4 cell = cellAt(uScene, vUv);
+  vec4 orbiter = cellAt(uOrbiters, vUv);
   float silhouette = texture2D(uScene, vUv).a;
   if (cell.a < 0.015 || silhouette < 0.015) discard;
 
-  // The transparent ring has already been blended over black in uScene.
-  vec3 color = cell.rgb / max(cell.a, 0.001);
+  /*
+   * Wherever a body covers this cell its own pass wins: same geometry, same
+   * light, but nothing blended over it. Everywhere else the cell is the scene,
+   * which the transparent ring has already been blended over black in.
+   */
+  float body = orbiter.a;
+  vec3 color = mix(cell.rgb / max(cell.a, 0.001), orbiter.rgb / max(orbiter.a, 0.001), body);
   color = clamp((color + uBrightness - 0.5) * uContrast + 0.5, 0.0, 1.0);
   float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
   float value = clamp(luma + 0.08, 0.0, 1.0);
   float glyph = min(uGlyphCount - 1.0, floor(value * uGlyphCount));
   vec2 withinCell = fract(vUv * uGrid);
   float ink = texture2D(uGlyphs, vec2((glyph + withinCell.x) / uGlyphCount, withinCell.y)).a;
-  float alpha = ink * min(cell.a * 1.6, silhouette);
+  // A body adds its own coverage on top, so a cell it only partly covers keeps
+  // the planet's strokes around it instead of being punched out.
+  float alpha = ink * max(min(cell.a * 1.6, silhouette), body);
   if (alpha < 0.01) discard;
 
+  // The planet and its rings take main's orange ramp, unchanged. A cell a body
+  // fills keeps the scene's own colour instead — that is what the extra pass is
+  // for — with the same light/dark ink adjustment the rest of the site uses for
+  // contrast against paper. The ramp's own light/dark variants ride uDark;
+  // the moons do not, because their palettes are already authored deep enough
+  // for either background. The ramp is 0.10–0.95 in luma, so switch across the
+  // middle rather than at the first cool pixel, or a body's edge cells flicker.
   vec3 shadow = mix(vec3(0.42, 0.19, 0.07), vec3(0.65, 0.34, 0.17), uDark);
   vec3 highlight = mix(vec3(0.66, 0.29, 0.10), vec3(1.0, 0.77, 0.52), uDark);
-  color = mix(shadow, highlight, smoothstep(0.1, 0.95, luma));
+  float onOrbiter = smoothstep(0.3, 0.7, body);
+  vec3 ramp = mix(shadow, highlight, smoothstep(0.1, 0.95, luma));
+  vec3 own = color * mix(0.62, 1.05, uDark);
+  color = mix(ramp, own, onOrbiter);
   vec2 fromCenter = (vUv - 0.5) * 1.4;
   color *= 1.0 - uVignette * dot(fromCenter, fromCenter);
-  color += highlight * uBloom * smoothstep(0.65, 1.0, luma) * 0.25;
+  // Bloom picks up whichever ink the cell ended up with, so a cyan beacon glows
+  // cyan instead of taking an orange halo off the planet's palette.
+  vec3 halo = mix(highlight, color, onOrbiter);
+  color += halo * uBloom * smoothstep(0.65, 1.0, luma) * 0.25;
   gl_FragColor = vec4(clamp(color, 0.0, 1.0) * alpha, alpha);
 }
 `

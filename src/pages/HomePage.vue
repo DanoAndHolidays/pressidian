@@ -417,8 +417,8 @@ const mapNodes = [
 .hero-kicker i { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); }
 .hero-rail-note { letter-spacing: .08em; }
 .hero-copy { grid-area: copy; padding-block: clamp(64px, 8vh, 100px) 64px; }
-.hero-visual { grid-area: visual; align-self: center; width: 100%; max-width: 680px; }
-.home-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .78fr); grid-template-areas: "rail rail" "copy visual" "overview overview"; column-gap: clamp(32px, 5vw, 88px); }
+.hero-visual { grid-area: visual; align-self: center; width: 100%; max-width: 780px; }
+.home-hero { display: grid; grid-template-columns: minmax(0, .91fr) minmax(320px, 1fr); grid-template-areas: "rail rail" "copy visual" "overview overview"; column-gap: clamp(32px, 5vw, 88px); }
 .hero-overview { grid-area: overview; }
 /*
  * The headline is two `DecryptText` lines. `DecryptText` ships a serif
