@@ -8,7 +8,7 @@ import ContentLoading from '@/components/shell/ContentLoading.vue'
 import { useNotesStore } from '@/stores/notes'
 import { useDocumentStore } from '@/stores/documents'
 import { prefetchNoteGroup } from '@/lib/notes/loader'
-import { useClipboard, useActiveHeading, useScrollProgress } from '@/composables/useInteractions'
+import { useClipboard, useActiveHeading } from '@/composables/useInteractions'
 import { compactNumber, formatDate, relativeTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,6 @@ const route = useRoute()
 const notes = useNotesStore()
 const documents = useDocumentStore()
 const { copied, copy } = useClipboard()
-const progress = useScrollProgress()
 
 const treeOpen = ref(false)
 const tocOpen = ref(false)
@@ -64,7 +63,7 @@ const share = () => copy(window.location.href)
     <div class="grid gap-10 lg:grid-cols-[16.5rem_minmax(0,1fr)] xl:grid-cols-[17.5rem_minmax(0,1fr)_14rem]">
       <!-- ============ LEFT: tree ============ -->
       <aside class="hidden lg:block">
-        <div class="sticky top-[6.5rem] max-h-[calc(100svh-8.5rem)] overflow-y-auto pr-1">
+        <div class="sticky top-[6.5rem] max-h-[calc(100svh-8.5rem)] overflow-x-hidden overflow-y-auto pr-1">
           <RouterLink
             to="/notes"
             class="mb-3 inline-flex items-center gap-1.5 font-mono text-[0.7rem] tracking-[0.12em] text-faint uppercase transition-colors hover:text-ember"
@@ -254,7 +253,7 @@ const share = () => copy(window.location.href)
 
       <!-- ============ RIGHT: outline ============ -->
       <aside class="hidden xl:block">
-        <div class="sticky top-[6.5rem] max-h-[calc(100svh-8.5rem)] overflow-y-auto">
+        <div class="sticky top-[6.5rem] max-h-[calc(100svh-8.5rem)] min-w-0 overflow-x-hidden overflow-y-auto">
           <p class="eyebrow">On this page</p>
           <!--
             `custom` + slot rather than a bare `<a href="#id">`.
@@ -280,9 +279,10 @@ const share = () => copy(window.location.href)
             >
               <a
                 :href="href"
+                v-tooltip="heading.text"
                 :class="
                   cn(
-                    '-ml-px block border-l py-1.5 pr-2 text-[0.76rem] leading-snug transition-colors duration-300',
+                    '-ml-px block truncate border-l py-1.5 pr-2 text-[0.76rem] leading-snug transition-colors duration-300',
                     activeHeading === heading.id
                       ? 'border-ember text-ember'
                       : 'border-transparent text-muted hover:border-line-strong hover:text-ink',
@@ -297,13 +297,83 @@ const share = () => copy(window.location.href)
           </nav>
           <p v-else class="mt-4 text-[0.76rem] text-faint">这篇笔记没有分级标题。</p>
 
-          <div class="mt-8 border-t border-line pt-5">
-            <p class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">Reading</p>
-            <div class="mt-2.5 h-1 overflow-hidden rounded-full bg-paper-3">
-              <div
-                class="h-full origin-left rounded-full bg-gradient-to-r from-ember to-amber"
-                :style="{ transform: `scaleX(${progress})` }"
-              />
+          <!--
+            The rail used to repeat the document's reading progress bar, which
+            the header already shows. It now surfaces what the note actually
+            declares, and drops any row the vault left empty.
+          -->
+          <div v-if="note" class="mt-8 border-t border-line pt-5">
+            <p class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">Note info</p>
+            <dl class="mt-3 grid min-w-0 gap-2.5">
+              <div class="flex min-w-0 items-baseline justify-between gap-3">
+                <dt class="shrink-0 font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">
+                  Status
+                </dt>
+                <dd class="min-w-0"><NoteStatusBadge :status="note.status" /></dd>
+              </div>
+
+              <div v-if="note.date" class="flex min-w-0 items-baseline justify-between gap-3">
+                <dt class="shrink-0 font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">
+                  Date
+                </dt>
+                <dd class="min-w-0 truncate text-right text-[0.76rem] text-ink-soft" v-tooltip="formatDate(note.date)">
+                  {{ formatDate(note.date) }}
+                  <span
+                    v-if="note.dateSource === 'inferred'"
+                    v-tooltip.always="'这个日期是从正文或文件名推测出来的'"
+                    class="ml-1 rounded border border-line px-1 font-mono text-[0.6rem] text-faint"
+                  >
+                    推测
+                  </span>
+                </dd>
+              </div>
+
+              <div v-if="note.readingTime" class="flex min-w-0 items-baseline justify-between gap-3">
+                <dt class="shrink-0 font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">
+                  Reading
+                </dt>
+                <dd class="min-w-0 text-right text-[0.76rem] text-ink-soft">{{ note.readingTime }} 分钟</dd>
+              </div>
+
+              <div v-if="note.weight" class="flex min-w-0 items-baseline justify-between gap-3">
+                <dt class="shrink-0 font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">
+                  Words
+                </dt>
+                <dd class="min-w-0 text-right text-[0.76rem] text-ink-soft">{{ compactNumber(note.weight) }}</dd>
+              </div>
+
+              <div v-if="note.degree" class="flex min-w-0 items-baseline justify-between gap-3">
+                <dt class="shrink-0 font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">
+                  Links
+                </dt>
+                <dd class="min-w-0 text-right text-[0.76rem] text-ink-soft">{{ note.degree }} 条</dd>
+              </div>
+
+              <div v-if="note.segments.length" class="flex min-w-0 items-baseline justify-between gap-3">
+                <dt class="shrink-0 font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">
+                  Path
+                </dt>
+                <dd
+                  class="min-w-0 truncate text-right text-[0.76rem] text-ink-soft"
+                  v-tooltip="note.segments.join(' / ')"
+                >
+                  {{ note.segments.join(' / ') }}
+                </dd>
+              </div>
+            </dl>
+
+            <div v-if="note.tags.length" class="mt-4">
+              <p class="font-mono text-[0.66rem] tracking-[0.1em] text-faint uppercase">Tags</p>
+              <ul class="mt-2 flex min-w-0 flex-wrap gap-1.5">
+                <li
+                  v-for="tag in note.tags"
+                  :key="tag"
+                  v-tooltip="tag"
+                  class="max-w-full truncate rounded-full border border-line px-2 py-0.5 font-mono text-[0.68rem] text-muted"
+                >
+                  {{ tag }}
+                </li>
+              </ul>
             </div>
           </div>
         </div>

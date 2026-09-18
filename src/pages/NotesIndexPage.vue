@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { ArrowUpRight, LayoutGrid, List, Search, SlidersHorizontal, X } from 'lucide-vue-next'
 import NoteStatusBadge from '@/components/notes/NoteStatusBadge.vue'
 import KnowledgeTree from '@/components/notes/KnowledgeTree.vue'
+import FilterSelect from '@/components/notes/FilterSelect.vue'
 import { useNotesStore, type SortKey } from '@/stores/notes'
 import { STATUS_META } from '@/data/site'
 import { compactNumber, relativeTime } from '@/lib/format'
@@ -42,6 +43,22 @@ const STATUSES: Array<{ key: NoteStatus | 'all'; label: string }> = [
 ]
 
 const STATUS_KEYS = STATUSES.map((status) => status.key)
+
+const tagOptions = computed(() => [
+  { value: '全部', label: '全部主题' },
+  ...notes.topTags.map((tag) => ({ value: tag.tag, label: tag.tag, hint: tag.count })),
+])
+
+const statusOptions = STATUSES.map((status) => ({ value: status.key, label: status.label }))
+const sortOptions = SORTS.map((sort) => ({ value: sort.key, label: sort.label }))
+
+const selectStatus = (value: string) => {
+  notes.statusFilter = value as NoteStatus | 'all'
+}
+
+const selectSort = (value: string) => {
+  notes.sortKey = value as SortKey
+}
 
 /**
  * `?status=evergreen` is how the homepage's maturity fold cards hand off to this
@@ -83,7 +100,7 @@ const clearFilters = () => {
 </script>
 
 <template>
-  <div class="shell-wide pt-14 pb-4">
+  <div class="shell-wide pt-8 pb-2">
     <!-- ============ HEADER ============ -->
     <header class="grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:items-end">
       <div>
@@ -118,10 +135,10 @@ const clearFilters = () => {
     </header>
 
     <!-- ============ TOOLBAR ============ -->
-    <div class="sticky top-[76px] z-30 -mx-1 mt-9 border-y border-line bg-[var(--glass)] px-1 py-3 backdrop-blur-xl">
-      <div class="flex flex-wrap items-center gap-3">
+    <div class="sticky top-[76px] z-30 -mx-1 mt-6 border-y border-line bg-[var(--glass)] px-1 py-2 backdrop-blur-xl">
+      <div class="flex flex-wrap items-center gap-2">
         <label
-          class="flex h-10 min-w-[15rem] flex-1 items-center gap-2.5 rounded-full border border-line bg-paper px-4 transition-colors focus-within:border-ember/60"
+          class="order-1 flex h-9 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-line bg-paper px-4 transition-colors focus-within:border-ember/60 sm:max-w-[24rem] sm:min-w-[8rem]"
         >
           <Search :size="15" class="shrink-0 text-ember" />
           <input
@@ -142,40 +159,56 @@ const clearFilters = () => {
           </button>
         </label>
 
-        <button
-          type="button"
-          :class="
-            cn(
-              'flex h-10 items-center gap-2 rounded-full border px-3.5 text-[0.78rem] transition-colors lg:hidden',
-              showTree ? 'border-ember/50 text-ember' : 'border-line text-ink-soft',
-            )
-          "
-          @click="showTree = !showTree"
-        >
-          <SlidersHorizontal :size="14" />
-          目录
-        </button>
-
-        <div class="hide-scrollbar flex items-center gap-1 overflow-x-auto">
+        <!--
+          Narrow screens get their own row for the filters. `sm:contents` drops
+          this wrapper on wider viewports so the same controls reflow back into
+          the single toolbar row without duplicating markup.
+        -->
+        <div class="order-4 flex w-full flex-wrap items-center gap-2 sm:contents">
           <button
-            v-for="sort in SORTS"
-            :key="sort.key"
             type="button"
+            aria-label="目录"
+            title="目录"
             :class="
               cn(
-                'shrink-0 rounded-full px-3 py-1.5 text-[0.74rem] transition-colors duration-300',
-                notes.sortKey === sort.key
-                  ? 'bg-ink text-canvas'
-                  : 'text-muted hover:text-ink',
+                'order-1 flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-[0.78rem] transition-colors sm:order-2 lg:hidden',
+                showTree ? 'border-ember/50 text-ember' : 'border-line text-ink-soft',
               )
             "
-            @click="notes.sortKey = sort.key"
+            @click="showTree = !showTree"
           >
-            {{ sort.label }}
+            <SlidersHorizontal :size="14" />
+            <span class="hidden sm:inline">目录</span>
           </button>
+
+          <FilterSelect
+            v-model="notes.activeTag"
+            class="order-2 sm:order-3"
+            :options="tagOptions"
+            label="筛选主题"
+            :active="notes.activeTag !== '全部'"
+          />
+
+          <FilterSelect
+            class="order-3 sm:order-4"
+            :model-value="notes.statusFilter"
+            :options="statusOptions"
+            label="筛选状态"
+            :active="notes.statusFilter !== 'all'"
+            @update:model-value="selectStatus"
+          />
+
+          <FilterSelect
+            class="order-4 sm:order-5"
+            :model-value="notes.sortKey"
+            :options="sortOptions"
+            label="排序方式"
+            align="right"
+            @update:model-value="selectSort"
+          />
         </div>
 
-        <div class="ml-auto flex items-center gap-1 rounded-full border border-line bg-paper p-1">
+        <div class="order-2 ml-auto flex shrink-0 items-center gap-1 rounded-full border border-line bg-paper p-1 sm:order-6">
           <button
             type="button"
             :class="cn('grid size-7 place-items-center rounded-full transition-colors', view === 'grid' ? 'bg-ink text-canvas' : 'text-muted hover:text-ink')"
@@ -193,67 +226,11 @@ const clearFilters = () => {
             <List :size="14" />
           </button>
         </div>
-      </div>
-
-      <!-- tag + status filters -->
-      <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div class="hide-scrollbar flex items-center gap-1.5 overflow-x-auto">
-          <button
-            type="button"
-            :class="
-              cn(
-                'shrink-0 rounded-full border px-2.5 py-1 font-mono text-[0.72rem] transition-colors duration-300',
-                notes.activeTag === '全部'
-                  ? 'border-ember bg-ember/12 text-ember'
-                  : 'border-line text-muted hover:border-ember/40 hover:text-ink',
-              )
-            "
-            @click="notes.activeTag = '全部'"
-          >
-            全部主题
-          </button>
-          <button
-            v-for="tag in notes.topTags"
-            :key="tag.tag"
-            type="button"
-            :class="
-              cn(
-                'shrink-0 rounded-full border px-2.5 py-1 font-mono text-[0.72rem] transition-colors duration-300',
-                notes.activeTag === tag.tag
-                  ? 'border-ember bg-ember/12 text-ember'
-                  : 'border-line text-muted hover:border-ember/40 hover:text-ink',
-              )
-            "
-            @click="notes.activeTag = tag.tag"
-          >
-            {{ tag.tag }}
-            <span class="ml-1 text-faint">{{ tag.count }}</span>
-          </button>
-        </div>
-
-        <div class="flex items-center gap-1.5">
-          <button
-            v-for="status in STATUSES"
-            :key="status.key"
-            type="button"
-            :class="
-              cn(
-                'rounded-full px-2.5 py-1 text-[0.7rem] transition-colors duration-300',
-                notes.statusFilter === status.key
-                  ? 'bg-paper-3 text-ink'
-                  : 'text-faint hover:text-ink',
-              )
-            "
-            @click="notes.statusFilter = status.key"
-          >
-            {{ status.label }}
-          </button>
-        </div>
 
         <button
           v-if="hasFilters"
           type="button"
-          class="ml-auto flex items-center gap-1.5 font-mono text-[0.72rem] text-ember transition-opacity hover:opacity-70"
+          class="order-3 flex shrink-0 items-center gap-1.5 font-mono text-[0.72rem] text-ember transition-opacity hover:opacity-70 sm:order-7"
           @click="clearFilters"
         >
           <X :size="12" />
@@ -263,9 +240,9 @@ const clearFilters = () => {
     </div>
 
     <!-- ============ BODY ============ -->
-    <div class="mt-8 grid gap-10 lg:grid-cols-[17rem_1fr] xl:grid-cols-[19rem_1fr]">
+    <div class="mt-6 grid gap-10 lg:grid-cols-[17rem_1fr] xl:grid-cols-[19rem_1fr]">
       <aside :class="cn('lg:block', showTree ? 'block' : 'hidden')">
-        <div class="sticky top-[13.5rem] max-h-[calc(100svh-15rem)] overflow-y-auto pr-1">
+        <div class="sticky top-[13.5rem] max-h-[calc(100svh-15rem)] overflow-x-hidden overflow-y-auto pr-1">
           <KnowledgeTree />
         </div>
       </aside>

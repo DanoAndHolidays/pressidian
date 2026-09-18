@@ -4,6 +4,7 @@ import { RouterLink, RouterView } from 'vue-router'
 import App from './App.vue'
 import router from './router'
 import { registerDirectives } from './directives/reveal'
+import { registerTooltip } from './directives/tooltip'
 import './styles/main.css'
 
 const app = createApp(App)
@@ -17,6 +18,7 @@ app.component('RouterLink', RouterLink)
 app.component('RouterView', RouterView)
 
 registerDirectives(app)
+registerTooltip(app)
 // Keep the startup screen in place until the initial lazy route can render.
 router.isReady().then(async () => {
   app.mount('#app')

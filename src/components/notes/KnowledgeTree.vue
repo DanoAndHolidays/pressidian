@@ -31,6 +31,16 @@ const isOpen = (key: string) => notes.isFolderOpen(key)
 
 const isActive = (path: string) => current.value === path
 
+/**
+ * Vault paths nest up to eight levels deep. Indenting every one of them inside
+ * a ~17rem rail leaves no room for labels, so past this cap each level only
+ * steps a fraction of the way and no longer draws a new guide line. Hierarchy
+ * stays monotonic, the rail stops growing, and the row tooltip reveals any
+ * label the narrower column still truncates.
+ */
+const MAX_INDENT_DEPTH = 4
+const TIGHT_INDENT = 'ml-[0.45rem]'
+
 const treeRef = useTemplateRef<HTMLElement>('treeRoot')
 
 /*
@@ -138,14 +148,28 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <ul v-if="node" class="grid gap-0.5" role="tree">
+  <!--
+    Indentation lives on the nested list, not on each row: one step per level
+    plus a continuous guide line. A per-row `padding-left` produced the same
+    offsets but the line had to be faked per row, leaving gaps between items.
+  -->
+  <ul
+    v-if="node"
+    :class="
+      cn(
+        'grid gap-0.5',
+        depth > 0 &&
+          (depth <= MAX_INDENT_DEPTH ? 'ml-[1.15rem] border-l border-line' : TIGHT_INDENT),
+      )
+    "
+    role="tree"
+  >
     <li v-for="child in node.children" :key="child.key" role="treeitem">
       <!-- folder -->
       <template v-if="child.type === 'folder'">
         <button
           type="button"
           class="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-300 hover:bg-paper-2"
-          :class="cn(depth > 0 && 'ml-2')"
           :aria-expanded="isOpen(child.key)"
           @click="notes.toggleFolder(child.key)"
         >
@@ -156,7 +180,10 @@ onBeforeUnmount(() => {
           />
           <FolderOpen v-if="isOpen(child.key)" :size="13" class="shrink-0 text-ember/80" />
           <FolderClosed v-else :size="13" class="shrink-0 text-faint" />
-          <span class="min-w-0 flex-1 truncate text-[0.8rem] text-ink-soft group-hover:text-ink">
+          <span
+            v-tooltip="child.label"
+            class="min-w-0 flex-1 truncate text-[0.8rem] text-ink-soft group-hover:text-ink"
+          >
             {{ child.label }}
           </span>
           <span class="shrink-0 font-mono text-[0.72rem] text-faint">{{ child.count }}</span>
@@ -183,8 +210,7 @@ onBeforeUnmount(() => {
         :data-active="isActive(child.key) ? 'true' : undefined"
         :class="
           cn(
-            'group flex items-center gap-2 rounded-lg py-1.5 pr-2 pl-6 text-[0.8rem] transition-colors duration-300',
-            depth > 0 && 'ml-2',
+            'group flex items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8rem] transition-colors duration-300',
             isActive(child.key)
               ? 'bg-ember/12 text-ember'
               : 'text-muted hover:bg-paper-2 hover:text-ink',
@@ -196,7 +222,7 @@ onBeforeUnmount(() => {
           :class="isActive(child.key) ? 'bg-ember' : 'bg-line-strong group-hover:bg-ember/60'"
           aria-hidden="true"
         />
-        <span class="min-w-0 flex-1 truncate">{{ child.label }}</span>
+        <span v-tooltip="child.label" class="min-w-0 flex-1 truncate">{{ child.label }}</span>
       </RouterLink>
     </li>
   </ul>
