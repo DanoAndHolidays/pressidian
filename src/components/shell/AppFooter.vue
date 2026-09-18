@@ -1,116 +1,107 @@
 <script setup lang="ts">
+/**
+ * The site footer: `FooterSection5` fed with this garden's own navigation.
+ *
+ * Every link here already exists elsewhere in the app — the columns are the
+ * header's routes, the three maturity deep links the homepage cards use, and the
+ * contact rows from `CONTACTS`. Nothing in the footer is a placeholder.
+ */
 import { computed } from 'vue'
-import { ArrowUpRight, Github, Mail, Rss } from 'lucide-vue-next'
+import { ArrowUp, Clapperboard, Github, Mail, Rss } from 'lucide-vue-next'
 import DanoWordmark from './DanoWordmark.vue'
-import { CONTACTS, NAV_ITEMS, PROFILE } from '@/data/site'
+import FooterSection5 from '@/components/ui/footer-section-5/FooterSection5.vue'
+import type { FooterColumn } from '@/components/ui/footer-section-5/types'
+import { CONTACTS, NAV_ITEMS, PROFILE, STATUS_META } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
 
 const notes = useNotesStore()
-const year = new Date().getFullYear()
 
-const syncLabel = computed(() => {
-  const value = notes.syncedAt
-  if (!value) return '等待同步'
-  const date = new Date(value)
-  return `${date.getFullYear()}.${`${date.getMonth() + 1}`.padStart(2, '0')}.${`${date.getDate()}`.padStart(2, '0')}`
-})
+const columns = computed<FooterColumn[]>(() => [
+  {
+    title: '探索',
+    links: NAV_ITEMS.map((item) => ({ name: item.label, to: item.to })),
+  },
+  {
+    /*
+     * The same `?status=` deep links the homepage cards use, with counts read
+     * from the store — so the footer doubles as a small index of the vault.
+     */
+    title: '笔记索引',
+    links: [
+      {
+        name: STATUS_META.evergreen.label,
+        to: '/notes?status=evergreen',
+        note: `${notes.stats.statusCount.evergreen}`,
+      },
+      {
+        name: STATUS_META.growing.label,
+        to: '/notes?status=growing',
+        note: `${notes.stats.statusCount.growing}`,
+      },
+      {
+        name: STATUS_META.seedling.label,
+        to: '/notes?status=seedling',
+        note: `${notes.stats.statusCount.seedling}`,
+      },
+      { name: '全部笔记', to: '/notes', note: `${notes.stats.total}` },
+    ],
+  },
+  {
+    title: '联络',
+    links: CONTACTS.map((contact) => ({
+      name: contact.label,
+      href: contact.href,
+      note: contact.value,
+    })),
+  },
+])
 
+/**
+ * `scroll-behavior` is already `smooth` on `html` and the global reduced-motion
+ * rule resets it to `auto`, so a plain scroll hands both behaviours to CSS.
+ */
+const toTop = () => window.scrollTo({ top: 0 })
 </script>
 
 <template>
-  <footer class="relative mt-24 overflow-hidden border-t border-line bg-canvas">
-    <div class="shell-wide grid gap-12 py-14 lg:grid-cols-[1.4fr_1fr_1fr]">
-      <div>
-        <div class="flex items-center gap-3">
-          <DanoWordmark class="w-[66px]" />
-          <span class="font-serif text-2xl tracking-[-0.04em]">Pressidian</span>
-        </div>
-        <p class="mt-4 max-w-md text-[0.86rem] leading-relaxed text-muted">
-          在上海写代码，也照料想法。项目、经历与 Obsidian 笔记在同一个站点里持续生长，
-          每天自动同步一次。
-        </p>
-        <div
-          class="mt-5 inline-flex items-center gap-2.5 rounded-full border border-line bg-paper px-3 py-1.5"
-        >
-          <i
-            class="size-1.5 rounded-full bg-ember [animation:pulse-dot_2.4s_ease-out_infinite]"
-            aria-hidden="true"
-          />
-          <span class="font-mono text-[0.7rem] tracking-[0.12em] text-muted uppercase">
-            vault synced · {{ syncLabel }}
-          </span>
-        </div>
-      </div>
-
-      <nav aria-label="页脚导航">
-        <p class="eyebrow">Explore</p>
-        <ul class="mt-4 grid gap-2.5">
-          <li v-for="item in NAV_ITEMS" :key="item.key">
-            <RouterLink
-              :to="item.to"
-              class="group inline-flex items-center gap-1.5 text-[0.86rem] text-ink-soft transition-colors hover:text-ember"
-            >
-              {{ item.label }}
-              <ArrowUpRight
-                :size="12"
-                class="opacity-0 transition-opacity group-hover:opacity-100"
-              />
-            </RouterLink>
-          </li>
-        </ul>
-      </nav>
-
-      <div>
-        <p class="eyebrow">Elsewhere</p>
-        <ul class="mt-4 grid gap-2.5">
-          <li v-for="contact in CONTACTS" :key="contact.label">
-            <a
-              :href="contact.href"
-              target="_blank"
-              rel="noreferrer"
-              class="group flex items-baseline justify-between gap-3 border-b border-line pb-2 text-[0.86rem] transition-colors hover:border-ember/50 hover:text-ember"
-            >
-              <span class="font-mono text-[0.7rem] tracking-[0.14em] text-faint uppercase">
-                {{ contact.label }}
-              </span>
-              <span class="text-ink-soft group-hover:text-ember">{{ contact.value }}</span>
-            </a>
-          </li>
-        </ul>
-
-        <div class="mt-6 flex gap-2">
-          <a
-            href="https://github.com/DanoAndHolidays"
-            target="_blank"
-            rel="noreferrer"
-            class="grid size-9 place-items-center rounded-full border border-line text-ink-soft transition-colors hover:border-ember/50 hover:text-ember"
-            aria-label="GitHub"
-          >
-            <Github :size="15" />
-          </a>
-          <a
-            href="mailto:Danoday@Foxmail.com"
-            class="grid size-9 place-items-center rounded-full border border-line text-ink-soft transition-colors hover:border-ember/50 hover:text-ember"
-            aria-label="Email"
-          >
-            <Mail :size="15" />
-          </a>
-          <RouterLink
-            to="/notes"
-            class="grid size-9 place-items-center rounded-full border border-line text-ink-soft transition-colors hover:border-ember/50 hover:text-ember"
-            aria-label="笔记索引"
-          >
-            <Rss :size="15" />
-          </RouterLink>
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="shell-wide flex flex-col gap-2 border-t border-line py-6 font-mono text-[0.7rem] text-faint sm:flex-row sm:items-center sm:justify-between"
+  <div class="mt-24">
+    <FooterSection5
+      brand="PRESSIDIAN"
+      :headline="PROFILE.headline"
+      caption="在上海写代码，也照料想法。项目、经历与 Obsidian 笔记在同一个站点里持续生长。"
+      :columns="columns"
     >
-      <span>© {{ year }} {{ PROFILE.name }} & Fox · 用 Vue 3 与 Tailwind 重建</span>
-      <span class="tracking-[0.12em] uppercase">{{ PROFILE.city }} · CN</span>
-    </div>
-  </footer>
+      <template #logo>
+        <DanoWordmark class="w-[104px] text-ember" />
+      </template>
+
+      <template #social>
+        <a
+          href="https://github.com/DanoAndHolidays"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GitHub"
+        >
+          <Github :size="15" />
+        </a>
+        <a href="mailto:Danoday@Foxmail.com" aria-label="邮件">
+          <Mail :size="15" />
+        </a>
+        <a
+          href="https://space.bilibili.com/111616585"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Bilibili 主页"
+        >
+          <Clapperboard :size="15" />
+        </a>
+        <RouterLink to="/notes" aria-label="笔记索引">
+          <Rss :size="15" />
+        </RouterLink>
+        <button type="button" aria-label="回到顶部" @click="toTop">
+          <ArrowUp :size="15" />
+        </button>
+      </template>
+    </FooterSection5>
+  </div>
 </template>
