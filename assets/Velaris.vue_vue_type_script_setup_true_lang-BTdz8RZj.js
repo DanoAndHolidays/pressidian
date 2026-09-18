@@ -1,4 +1,4 @@
-import{d as H,a9 as K,v as j,e as T,r as b,w as B,o as q,b as W,i as k,n as Y,K as M,l as X,m as J,h as Q,a8 as Z,q as z}from"./index-GacZx252.js";const ee=["data-velaris"],te={class:"relative z-10 h-full w-full"},ne=`
+import{d as H,a9 as K,v as j,e as T,r as b,w as B,o as q,b as W,i as k,n as Y,K as M,l as X,m as J,h as Q,a8 as Z,q as z}from"./index-DyxneZ9d.js";const ee=["data-velaris"],te={class:"relative z-10 h-full w-full"},ne=`
 attribute vec2 position;
 varying vec2 vUv;
 void main() {
