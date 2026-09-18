@@ -81,8 +81,9 @@ vite/                     内容管线（扫描、渲染、发布）
 `src/components/ui/bend-card/` 来自 [dano-ui](https://github.com/DanoAndHolidays/dano-ui)
 的单组件包：一张方块在悬停时长高、照片由虚到实、折叠线下方的文案随之浮现。
 首页那三张笔记成熟度卡片用的就是它，狐狸实验室里有并排的展示。
+组件的几何、模糊值与缓动都按组件库原样保留，站点只加了整卡跳转与主题令牌。
 
-改造点（折页画法、主题适配、减弱动效）写在
+站点适配（`to` / `img` 别名、主题令牌、触摸与减弱动效降级）写在
 [`src/components/ui/bend-card/README.md`](src/components/ui/bend-card/README.md)。
 
 外部 Vault 与自动部署配置见 [AUTOMATION.md](./AUTOMATION.md)；

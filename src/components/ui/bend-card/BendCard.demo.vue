@@ -25,7 +25,6 @@ const demo = (Object.keys(STATUS_META) as Array<keyof typeof STATUS_META>).map((
         :small="item.hint"
         :tone="item.tone"
         class="w-full"
-        :style="{ '--bc-w': '18.5rem', '--bc-h': '18.5rem', '--bc-h-open': '24rem' }"
       >
         <span class="block font-mono text-[0.7rem] tracking-[0.12em] uppercase" :style="{ color: `var(--${item.tone})` }">
           {{ item.key }}

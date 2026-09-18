@@ -1,14 +1,8 @@
 # Bend card
 
-A 1:1 tile that unfolds taller on hover. Only the card's **height** animates: the
-photo keeps its size and the text block keeps its offset, so the card *uncovers*
-its lower half instead of pushing it down. The photo is blurred at rest and
-resolves on hover, and the copy below the fold goes from `opacity: 0.1` and
-`blur(6px)` to fully resolved.
-
-Vendored from [dano-ui](https://github.com/DanoAndHolidays/dano-ui)
-(`src/components/BendCard.vue`, a single-component package by DanoAndHolidays).
-The unfold mechanic is the author's; the changes are below.
+折页卡片：一张 300×300 的方块，悬停时长到 420，把下半张「露」出来。
+只有卡片高度在动——照片保持 255px、纸面保持原来的偏移，所以展开是**露出**
+下半部分，而不是把内容往下推。
 
 ```vue
 <BendCard
@@ -24,49 +18,62 @@ The unfold mechanic is the author's; the changes are below.
 
 | Prop | Default | Notes |
 | --- | --- | --- |
-| `image` | `''` | Any CSS background value, including a gradient. Empty means the tone alone paints the tile. |
-| `title` | `Vue 卡片组件` | Card face. Ellipsised on one line. |
-| `small` | `5 hours ago` | Secondary line under the title. |
-| `tone` | `ember` | `ember` / `jade` / `amber`. Sets the fold line and the hover title colour. |
-| `to` | — | Renders the card as a `RouterLink`. Otherwise it is a `div`. |
+| `image` | `''` | 折页上方的图，接受任意 CSS `background-image` 值。空值时不画图，只留纸面。 |
+| `img` | `''` | 组件库自己的 prop 名，和 `image` 等价；照抄 dano-ui 的示例可以直接用。 |
+| `title` | `Vue 卡片组件` | 纸面上的主标题，单行省略。 |
+| `small` | `5 hours ago` | 主标题下面的小字。 |
+| `tone` | `ember` | `ember` / `jade` / `amber`，只用于键盘聚焦时的描边颜色。 |
+| `to` | — | 有值时整张卡渲染成 `RouterLink`，否则是 `div`。 |
 
-Size comes from custom properties, so a caller can resize the tile without a
-variant: `--bend-w`, `--bend-h`, `--bend-h-open`, `--bend-photo-h`, `--bend-radius`.
+## 和组件库的关系
 
-## What changed from the original
+这份实现直接对齐 [dano-ui](https://github.com/DanoAndHolidays/dano-ui)
+的单组件包（`VueComponent/dano-ui/src/components/BendCard.vue`），
+几何、模糊值、缓动都照搬，**不是**重新演绎：
 
-**The fold is one SVG path, not a shadow.** The original stacked a rounded square
-above the sheet and cast the sheet's colour down onto the photo with
-`filter: drop-shadow(70px 75px 0 <sheet>)`. With a 40px radius and a 75px rise
-that renders a ~75px dark disc over the photo — it reads as a hole punched in the
-image rather than as a page turning over, and the shadow's edge does not meet the
-sheet, so a seam shows. `bend-card__sheet` is now a single path holding the
-sheet, the rising corner and the arc between them; it cannot seam, and there is
-no filter to interact with the photo's own blur.
+**折角是纸面右上角的那块 `::after`。** 一个 80×80 的透明方块，靠
+`box-shadow: 70px 75px 0 40px <纸面色>` 把纸面色抬到右上：向下 75px、外扩 40px
+让阴影顶边比纸面高 45px，向右 70px 让它咬进卡片约 50px，
+再和纸面自己的 40px 圆角接在一起，形成右高左低的一条曲线。
+阴影就是纸面本身，所以两段圆弧之间不会出现接缝。
 
-**The photo runs past the fold.** The arc bites `--bend-rise` (12px) into the
-photo instead of into the sheet's own top edge. Without the overrun the arc eats
-into the sheet and leaves a strip of photo above the fold line.
+**照片和纸面在静止时是虚的。** 照片 `blur(20px)`、纸面 `blur(15px)`，卡片本身还有
+`blur(0.2px)`；悬停时三者一起归零，折角从一团白光收成一条清晰的边。
 
-**The plate is the artwork.** The original defaults to a pixabay photo. The
-homepage and the lab point at `artwork.ts`, which imports three local SVG plates
-so the most prominent section of the site does not depend on a third-party CDN.
-Each plate is tinted at render time — `multiply` over a warm haze in the light
-theme, `screen` in the dark — so one asset serves both themes instead of the
-original's hard-coded `#fff` sheet.
+**展开有舞台。** 组件库的 `.container`（固定 420px、内容垂直居中）也一并搬了过来，
+卡片从 300 长到 420 是在舞台内部发生的，悬停时页面不会被推开或抖动。
 
-**The theme supplies the ink.** `--bend-surface`, `--bend-ink`, `--bend-line`
-and the shadow come from the site tokens. The original hard-codes `#fff`, which
-in the dark theme painted a white sheet under white text.
+> 这一版之前把折角改写成了一条横贯整张卡的 SVG 弧线，形态和组件库对不上；
+> 现在回到 `::after` + `box-shadow` 的原始画法。
 
-**Reduced motion opens the card.** Height, blur and the delayed fade are all
-motion; with `prefers-reduced-motion: reduce` the card renders open and readable
-rather than staying collapsed and dim. Touch devices get the same treatment via
-`@media (hover: none)`.
+## 站点适配
 
-## Where it is used
+- `to`：站内需要整卡跳转，组件库原本没有这个能力。
+- `image` / `img`：`img` 是组件库的 prop 名，`image` 是站内调用用的别名。
+- 纸面与文字取自主题令牌（`--paper` / `--ink` / `--faint` / `--muted`）。
+  组件库硬编码 `#fff`，在深色主题下会变成白纸白字。
+- 深色主题单独调了投影（0.1 → 0.45），否则 10% 的黑影在深色面板上看不见。
+- `@media (hover: none)` 与 `prefers-reduced-motion: reduce` 下直接呈现展开态，
+  触摸设备不会因为没有 `:hover` 而永远停在合上的样子。
 
-- `HomePage.vue` — the three note-maturity tiles, one per `STATUS_META` entry.
-  Each links to `/notes?status=<key>`, which `NotesIndexPage.vue` reads as a
-  filter.
-- `BendCard.demo.vue` — the "折页卡片" showcase on the lab page.
+## 尺寸
+
+默认值就是组件库的数值，需要改尺寸时覆盖这几个自定义属性即可，
+折角的画法不用动：
+
+| 变量 | 默认 |
+| --- | --- |
+| `--bc-w` | `300px` |
+| `--bc-h` | `300px` |
+| `--bc-h-open` | `420px` |
+| `--bc-photo-h` | `255px` |
+| `--bc-radius` | `40px` |
+
+纸面 `top` 由 `--bc-photo-h` 推出（照片底边再往上 36px），标题、小字、正文
+分别再接 +6 / +49 / +81px。所以改照片高度时，折页整体会跟着走。
+
+## 用在哪
+
+- `HomePage.vue` —— 三张笔记成熟度卡片，各自深链到 `/notes?status=<key>`，
+  `NotesIndexPage.vue` 会把这个查询参数写进 store 的 `statusFilter`。
+- `BendCard.demo.vue` —— 狐狸实验室里的「折页卡片」展示。
