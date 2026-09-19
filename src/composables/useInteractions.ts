@@ -28,38 +28,6 @@ export function useSpotlight<T extends HTMLElement>(): {
   return { target, onPointerMove }
 }
 
-/** Page scroll progress in `0…1`, throttled to one write per frame. */
-export function useScrollProgress(): Ref<number> {
-  const progress = ref(0)
-  let ticking = false
-
-  const measure = () => {
-    ticking = false
-    const doc = document.documentElement
-    const max = doc.scrollHeight - doc.clientHeight
-    progress.value = max > 0 ? Math.min(1, Math.max(0, doc.scrollTop / max)) : 0
-  }
-
-  const onScroll = () => {
-    if (ticking) return
-    ticking = true
-    requestAnimationFrame(measure)
-  }
-
-  onMounted(() => {
-    measure()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
-  })
-
-  onBeforeUnmount(() => {
-    window.removeEventListener('scroll', onScroll)
-    window.removeEventListener('resize', onScroll)
-  })
-
-  return progress
-}
-
 /**
  * Tracks which heading is currently in the reading position. `rootMargin`
  * fakes a reading line near the top of the viewport rather than the very top,

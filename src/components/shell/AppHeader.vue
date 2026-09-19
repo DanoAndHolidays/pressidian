@@ -7,13 +7,12 @@ import InteractiveHoverLinks from '@/components/ui/interactive-hover-links/Inter
 import { NAV_HOVER_LINKS } from '@/data/site'
 import { useUiStore } from '@/stores/ui'
 import { useNotesStore } from '@/stores/notes'
-import { useScrollLock, useScrollProgress } from '@/composables/useInteractions'
+import { useScrollLock } from '@/composables/useInteractions'
 
 const ui = useUiStore()
 const notes = useNotesStore()
 const route = useRoute()
 
-const progress = useScrollProgress()
 const scrolled = ref(false)
 const isMac = ref(false)
 const navigationDialog = ref<HTMLDialogElement | null>(null)
@@ -136,14 +135,6 @@ const shortcutLabel = computed(() => (isMac.value ? '⌘K' : 'Ctrl K'))
           <Menu :size="16" />
         </button>
       </div>
-    </div>
-
-    <!-- Reading progress for the whole document. -->
-    <div class="relative h-px w-full overflow-hidden">
-      <div
-        class="h-px origin-left bg-ink/30 transition-transform duration-150 ease-out"
-        :style="{ transform: `scaleX(${progress})` }"
-      />
     </div>
 
   </header>
