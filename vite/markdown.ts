@@ -130,7 +130,29 @@ export function slugify(value: string): string {
  * Obsidian wiki links, attachment embeds and vault-relative markdown links.
  * Working on the source keeps every path decision in one place instead of
  * spreading it across renderer rules.
+ *
+ * All three shapes are matched in a **single pass**. Three chained `replace`
+ * calls would make each pass read what the previous one wrote, and the embed
+ * pass emits real Markdown images (`![名字](/pressidian/vault/<hash>-名字.png)`);
+ * the vault-link pass then reads that site URL as a vault-relative path, fails
+ * to resolve it and rewrites the entire image into a code span. That is how
+ * every `![[图片.png]]` in the vault ended up as `<code>Pasted image …</code>`.
+ * `String.replace` never rescans its own replacement, so one alternation keeps
+ * the three rules independent — and, unlike three passes, the later rules can
+ * no longer match across a snippet the earlier ones already rewrote.
  */
+const SYNTAX_PATTERN = new RegExp(
+  [
+    // ![[image.png]] and ![[image.png|300]]
+    String.raw`!\[\[(?<embedTarget>[^\]|]+)(?:\|[^\]]*)?\]\]`,
+    // [[note]], [[note|alias]], [[note#heading]]
+    String.raw`\[\[(?<noteTarget>[^\]|#]+)(?:#(?<noteHeading>[^\]|]+))?(?:\|(?<noteAlias>[^\]]+))?\]\]`,
+    // Standard markdown links and images that point at vault files.
+    String.raw`(?<bang>!?)\[(?<linkLabel>[^\]]*)\]\((?<href>[^)\s]+)(?:\s+"[^"]*")?\)`,
+  ].join('|'),
+  'g',
+)
+
 export function rewriteObsidianSyntax(source: string, context: RenderContext): string {
   const { from, resolveNote, resolveNoteByName, resolveAsset } = context
   const noteDirectory = from.includes('/') ? from.slice(0, from.lastIndexOf('/')) : ''
@@ -144,13 +166,13 @@ export function rewriteObsidianSyntax(source: string, context: RenderContext): s
     return normalizeVaultPath(joined)
   }
 
-  let output = source
+  return source.replace(SYNTAX_PATTERN, (match, ...rest) => {
+    // Named groups are always the last argument of a replacer function.
+    const groups = rest.at(-1) as Record<string, string | undefined>
 
-  // ![[image.png]] and ![[image.png|300]]
-  output = output.replace(
-    /!\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g,
-    (_match, rawTarget: string) => {
-      const target = rawTarget.trim()
+    // ![[image.png]] and ![[image.png|300]]
+    if (groups.embedTarget !== undefined) {
+      const target = groups.embedTarget.trim()
       const resolved = resolveRelative(target)
       const asset = resolveAsset(resolved)
       if (asset) {
@@ -160,19 +182,15 @@ export function rewriteObsidianSyntax(source: string, context: RenderContext): s
       const route = resolveNote(ensureMarkdown(resolved))
       if (route) return `[${target}](${route})`
       return `\`${target}\``
-    },
-  )
+    }
 
-  // [[note]], [[note|alias]], [[note#heading]]
-  output = output.replace(
-    /\[\[([^\]|#]+)(?:#([^\]|]+))?(?:\|([^\]]+))?\]\]/g,
-    (_match, rawTarget: string, heading: string | undefined, alias: string | undefined) => {
-      const target = rawTarget.trim()
-      const label = (alias ?? target).trim()
+    // [[note]], [[note|alias]], [[note#heading]]
+    if (groups.noteTarget !== undefined) {
+      const target = groups.noteTarget.trim()
+      const label = (groups.noteAlias ?? target).trim()
       const resolved = resolveRelative(target)
-
-      const withHeading = (route: string) =>
-        heading ? `${route}#${slugify(heading)}` : route
+      const heading = groups.noteHeading
+      const withHeading = (route: string) => (heading ? `${route}#${slugify(heading)}` : route)
 
       const direct = resolveNote(ensureMarkdown(resolved))
       if (direct) return `[${label}](${withHeading(direct)})`
@@ -181,37 +199,32 @@ export function rewriteObsidianSyntax(source: string, context: RenderContext): s
       if (byName) return `[${label}](${withHeading(byName)})`
 
       return label
-    },
-  )
+    }
 
-  // Standard markdown links that point at vault files.
-  output = output.replace(
-    /(!?)\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g,
-    (match, bang: string, label: string, rawHref: string) => {
-      if (/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(rawHref)) return match
+    // Standard markdown links and images that point at vault files.
+    const rawHref = groups.href ?? ''
+    if (!rawHref || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(rawHref)) return match
 
-      const [pathPart, hashPart] = rawHref.split('#')
-      const resolved = resolveRelative(pathPart ?? '')
+    const label = groups.linkLabel ?? ''
+    const [pathPart, hashPart] = rawHref.split('#')
+    const resolved = resolveRelative(pathPart ?? '')
 
-      if (bang === '!') {
-        const asset = resolveAsset(resolved)
-        return asset ? `![${label}](${asset})` : `\`${label || resolved}\``
-      }
-
-      if (/\.md$/i.test(resolved)) {
-        const route = resolveNote(resolved)
-        if (route) return `[${label}](${hashPart ? `${route}#${hashPart}` : route})`
-        return label || resolved
-      }
-
+    if (groups.bang === '!') {
       const asset = resolveAsset(resolved)
-      if (asset) return `[${label}](${asset})`
+      return asset ? `![${label}](${asset})` : `\`${label || resolved}\``
+    }
 
-      return match
-    },
-  )
+    if (/\.md$/i.test(resolved)) {
+      const route = resolveNote(resolved)
+      if (route) return `[${label}](${hashPart ? `${route}#${hashPart}` : route})`
+      return label || resolved
+    }
 
-  return output
+    const asset = resolveAsset(resolved)
+    if (asset) return `[${label}](${asset})`
+
+    return match
+  })
 }
 
 const ensureMarkdown = (value: string) => (/\.md$/i.test(value) ? value : `${value}.md`)

@@ -481,8 +481,19 @@ export async function buildContentIndex(assetBase = '/vault/'): Promise<ContentI
     const published = assetAlias.get(vaultRelative.toLowerCase())
     if (published) return published
     const byName = assetByName.get(path.basename(vaultRelative).toLowerCase())
-    if (byName?.length === 1) return assetAlias.get(byName[0].relative.toLowerCase()) ?? null
-    return null
+    if (!byName?.length) return null
+    if (byName.length === 1) return assetAlias.get(byName[0].relative.toLowerCase()) ?? null
+
+    // The vault holds a handful of names twice (a copy in `attachments/` and
+    // another next to the note that imported it). Giving up here is what
+    // Obsidian does not do: it picks the shortest path, so the shallow copy
+    // wins. Falling back to a deterministic pick keeps those images visible
+    // instead of collapsing the embed into a code span.
+    const [shortest] = [...byName].sort((a, b) => {
+      const depth = a.relative.split('/').length - b.relative.split('/').length
+      return depth !== 0 ? depth : a.relative.localeCompare(b.relative)
+    })
+    return shortest ? assetAlias.get(shortest.relative.toLowerCase()) ?? null : null
   }
 
   const renderers: Record<string, () => Promise<NoteDocument>> = {}

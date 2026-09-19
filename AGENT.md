@@ -240,6 +240,16 @@ node scripts/serve-pages.mjs /tmp/pages 4182
 
 **图片不显示** → 检查 `public/vault/` 里有没有对应哈希文件，
 再确认 `![[...]]` 解析出的路径是否带上了 `BASE_PATH`。
+如果 JSON 里搜不到 `/vault/`，而是出现了 `<code>Pasted image …</code>`
+这类**代码片段**，那就是 [`rewriteObsidianSyntax()`](vite/markdown.ts)
+的锅：它必须**一次遍历**匹配三种语法，不能把三次 `replace` 串起来跑。
+（串起来跑时，第一趟生成的 `![名字](/pressidian/vault/…)` 会被第三趟当成
+「指向仓库文件的 Markdown 图片」，解析失败后整张图被替换成代码片段——
+2026-09 之前，仓库里 1107 张 `![[图片]]` 只有 1 张能显示，其余都是这么没的。）
+
+**图片只有同名文件重复时才不显示** → [`resolveAsset()`](vite/notes-plugin.ts)
+在文件名撞车时按「路径最短优先」挑一份，和 Obsidian 的取舍一致；
+以前是直接返回 `null`，那 4 张图（`TypeScript Types.png` 等）会变成代码片段。
 
 **代码块没有颜色** → Shiki 在构建期跑。检查 JSON 里有没有 `class="shiki"`；
 配色由 [`prose.css`](src/styles/prose.css) 里的 `--shiki-light` / `--shiki-dark` 规则控制。
