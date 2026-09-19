@@ -128,7 +128,12 @@ const year = computed(() => props.year ?? new Date().getFullYear())
   --footer-link: var(--ink-soft);
   --footer-note: var(--faint);
   --footer-line: var(--line);
-  --footer-word: color-mix(in oklab, var(--ink) 36%, transparent);
+  /*
+   * Solid, but mixed well down towards the surface: at full strength a word
+   * this size would out-shout everything above it, and the footer's job is to
+   * carry links, not to be the page's headline.
+   */
+  --footer-word: color-mix(in oklab, var(--ink) 20%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -144,34 +149,33 @@ const year = computed(() => props.year ?? new Date().getFullYear())
 
 .footer-section-5__word {
   display: block;
-  margin-bottom: -0.12em;
-  font-family: var(--font-serif);
-  font-weight: 500;
+  /*
+   * The cut is a fraction of the word's own size so it holds at every width.
+   * Sans caps sit higher in the line box than the serif's did, so this is a
+   * smaller fraction than the reference used — at -0.12em the panel swallowed
+   * a fifth of each letter.
+   */
+  margin-bottom: -0.09em;
+  /*
+   * Sans, not the site's serif heading stack: at this size the serif's thick/
+   * thin contrast fights the 1px outline, and the strokes that carry the
+   * letterform read as hairlines once only their edges are drawn.
+   */
+  font-family: var(--font-sans);
+  font-weight: 600;
   /*
    * The word has to look deliberate at both ends: large enough to fill most of
    * a phone's width, and not so large on a desktop that it runs into the edges.
    * One `clamp()` cannot hold both, so the middle term is set for ~88% width and
    * the rem ceiling caps it on very wide screens.
    */
-  font-size: clamp(3.25rem, 12.4vw, 11.5rem);
+  font-size: clamp(3.5rem, 16.5vw, 18rem);
   line-height: 0.76;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.025em;
   text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--footer-word);
-}
-
-/*
- * Stroke-only text needs `-webkit-text-stroke`, which every current browser
- * supports. Where it is missing the word must not disappear, so it falls back
- * to a filled, faint ink instead.
- */
-@supports not (-webkit-text-stroke: 1px red) {
-  .footer-section-5__word {
-    color: var(--footer-word);
-  }
+  color: var(--footer-word);
 }
 
 /* --------------------------------------------------------------------------

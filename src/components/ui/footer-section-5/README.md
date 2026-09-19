@@ -24,9 +24,15 @@ The action row is styled through `:deep()`: a call site supplies icons and `aria
 
 ## The wordmark
 
-`font-size: clamp(3.25rem, 12.4vw, 11.5rem)` and `margin-bottom: -0.12em`. The middle term holds about 88% of the viewport width — large enough to fill most of a phone's width, not so large that it runs into the edges on a desktop — and the negative margin is what pulls the panel up over the glyph bottoms. The word is `aria-hidden`: it is a shape, and the brand is already named by the logo slot and the copyright line.
+Filled, not outlined, and set in `--font-sans` rather than the site's serif heading stack. At this size the serif's thick/thin contrast turns the word into a calligraphic flourish, which is the voice the site reserves for its headings; an even-stroke sans at 600 reads as a mark instead — the same choice the React original made with `font-semibold`.
 
-It is drawn with `-webkit-text-stroke` over `color: transparent`, with an `@supports` fallback to a faint filled ink for the case where the stroke is unsupported.
+The fill is `color-mix(in oklab, var(--ink) 20%, transparent)` — solid letterforms mixed well down towards the surface. At full ink strength a word this size would out-shout everything above it, and the footer's job is to carry links, not to be the page's headline. Raise the percentage in `--footer-word` to make it louder; the composition does not depend on the value.
+
+`font-size: clamp(3.5rem, 16.5vw, 18rem)`. The middle term holds about 88% of the viewport width — large enough to fill most of a phone's width, not so large that it runs into the edges on a desktop — and the rem ceiling stops the word growing without limit on very wide screens. The vw term is larger than the serif version needed because a sans uppercase is that much narrower at the same size; the two were matched by measuring the rendered width, not by eye.
+
+`margin-bottom: -0.09em` is what pulls the panel up over the glyph bottoms. It is a fraction of the word's own size so the cut holds at every width, and it is smaller than the reference's `-0.12em` because sans caps sit higher in the line box than the serif's did — at the reference's value the panel swallowed a fifth of each letter.
+
+The word is `aria-hidden`: it is a shape, and the brand is already named by the logo slot and the copyright line.
 
 ## Slots
 
