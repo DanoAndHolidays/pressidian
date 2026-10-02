@@ -16,6 +16,7 @@ import BendCard from '@/components/ui/bend-card/BendCard.vue'
 import { BEND_CARD_ARTWORK } from '@/components/ui/bend-card/artwork'
 import DecryptText from '@/components/ui/decrypt-text/DecryptText.vue'
 import PixelPlanet from '@/components/ui/pixel-planet/PixelPlanet.vue'
+import ContributionSkyline from '@/components/ui/contribution-skyline/ContributionSkyline.vue'
 import { NAV_ITEMS, PROFILE, PROJECTS, STATUS_META } from '@/data/site'
 import { useNotesStore } from '@/stores/notes'
 import { formatDate, relativeTime } from '@/lib/format'
@@ -172,6 +173,34 @@ const mapNodes = [
       </div>
     </section>
 
+    <!-- ================= OPEN SOURCE SKYLINE ================= -->
+    <section class="skyline-section shell-wide pt-20" aria-labelledby="open-source-footprint-title">
+      <header class="skyline-section-header">
+        <div>
+          <p class="eyebrow">Open source footprint</p>
+          <h2 id="open-source-footprint-title">
+            一年的代码，长成一座城。
+          </h2>
+          <p>
+            同一份 GitHub 贡献数据，在平面热力图与城市天际线之间连续生长。每一格是一天，每一栋建筑都是一次持续投入。
+          </p>
+        </div>
+        <a
+          href="https://github.com/DanoAndHolidays"
+          target="_blank"
+          rel="noreferrer"
+          class="skyline-section-link group"
+        >
+          <Github :size="15" />
+          查看 GitHub
+          <ArrowUpRight
+            :size="14"
+            class="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          />
+        </a>
+      </header>
+      <ContributionSkyline v-reveal username="DanoAndHolidays" />
+    </section>
     <!-- ================= RECENT NOTES ================= -->
     <section class="shell-wide pt-20">
       <header class="flex flex-wrap items-end justify-between gap-4">
@@ -411,6 +440,11 @@ const mapNodes = [
 
 <style scoped>
 .home-page h2, .home-page h3 { font-family: var(--font-sans); }
+.skyline-section-header { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 26px; }
+.skyline-section-header > div { max-width: 760px; }
+.skyline-section-header h2 { margin-top: 12px; font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.1; letter-spacing: -.045em; }
+.skyline-section-header p:not(.eyebrow) { max-width: 660px; margin-top: 14px; color: var(--muted); font-size: .86rem; line-height: 1.85; }
+.skyline-section-link { display: inline-flex; flex-shrink: 0; align-items: center; gap: 8px; padding-bottom: 5px; border-bottom: 1px solid color-mix(in srgb, var(--ember) 38%, transparent); color: var(--ember); font-size: .78rem; }
 .home-hero { padding-top: 38px; padding-bottom: 72px; border-bottom: 1px solid var(--line); }
 .hero-rail { grid-area: rail; display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--muted); font-size: 12px; }
 .hero-kicker { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; }
@@ -467,6 +501,8 @@ const mapNodes = [
 .shortcut-value { font-family: var(--font-mono); color: var(--muted); font-size: 12px; }
 @media (min-width: 1600px) { .hero-copy { padding-block: 104px 80px; } }
 @media (max-width: 767px) {
+  .skyline-section-header { align-items: flex-start; flex-direction: column; gap: 18px; margin-bottom: 20px; }
+  .skyline-section-header p:not(.eyebrow) { font-size: .8rem; }
   .home-hero { padding-top: 28px; padding-bottom: 48px; grid-template-columns: 1fr; grid-template-areas: "rail" "copy" "visual" "overview"; column-gap: 0; }
   .hero-rail-note { display: none; }
   .hero-copy { padding-block: 56px 40px; }
