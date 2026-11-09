@@ -1,4 +1,4 @@
-import{F as te}from"./FoxMark-DljB0Jt-.js";import{B as se,a as ne}from"./artwork-CeaUSNnQ.js";import{c as z,d as q,S as O,I as A,i as p,h as e,F as I,j as V,f as $,g as H,z as oe,t as m,l as L,L as N,q as d,a as T,s as re,o as ae,b as ie,e as le,y as g,x as b,H as F,n as k,p as de}from"./index-DECTfs2R.js";import{_ as ce}from"./Velaris.vue_vue_type_script_setup_true_lang-CxNczR8p.js";import{S as me}from"./sparkles-o0TRU6VK.js";/**
+import{F as te}from"./FoxMark-Cr25Thih.js";import{B as se,a as ne}from"./artwork-D3qD5sNk.js";import{c as z,d as q,S as O,I as A,i as p,h as e,F as I,j as V,f as $,g as H,z as oe,t as m,l as L,L as N,q as d,a as T,s as re,o as ae,b as ie,e as le,y as g,x as b,H as F,n as k,p as de}from"./index-DjcqSEWh.js";import{_ as ce}from"./Velaris.vue_vue_type_script_setup_true_lang-5UnzzWlf.js";import{S as me}from"./sparkles-CFIORZQ_.js";/**
  * @license lucide-vue-next v1.0.0 - ISC
  *
  * This source code is licensed under the ISC license.
